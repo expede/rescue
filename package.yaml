@@ -1,0 +1,119 @@
+name: hellraiser
+version: '0.1.0'
+category: API
+author:
+  - Brooklyn Zelenka
+maintainer:
+  - hello@brooklynzelenka.com
+copyright: © 2020 Brooklyn Zelenka
+license: AGPL-3.0-or-later
+license-file: LICENSE
+github: hellraiser-suite/web-api
+tested-with: GHC==8.6.5
+extra-source-files:
+  - README.md
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  # Warn about too little
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wpartial-fields
+  # Warn about too much
+  - -Wredundant-constraints
+  # Prettier Development
+  - -fhide-source-paths
+
+dependencies:
+  - aeson
+  - aeson-casing
+  - base
+  - base64-bytestring
+  - bytestring
+  - exceptions
+  - filepath
+  - flow
+  - Glob
+  - lens
+  - mtl
+  - QuickCheck
+  - quickcheck-instances
+  - random-bytestring
+  - regex-compat
+  - rio
+  - rio-orphans
+  - scientific
+  - text
+  - time
+  - transformers
+  - unliftio
+  - uuid
+  - uuid-types
+  - word8
+  - world-peace
+
+library:
+  source-dirs: library
+
+tests:
+  hellraiser-doctest:
+    main: Main.hs
+    source-dirs: doctest
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - directory
+      - directory-tree
+      - doctest
+      - Glob
+      - lens-aeson
+      - yaml
+
+  hellraiser-test:
+    main: Main.hs
+    source-dirs:
+      - library
+      - test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - hspec
+      - hspec-core
+      - hspec-expectations
+      - hellraiser
+      - QuickCheck
+      - quickcheck-instances
+      - tasty
+      - tasty-hunit
+      - tasty-hspec
+      - tasty-smallcheck
+      - tasty-rerun
+      - transformers
+
+  hellraiser-lint:
+    main: Main.hs
+    source-dirs: lint
+    dependencies:
+      - base
+      - hlint
+      - rio
+
+benchmarks:
+  hellraiser-benchmark:
+    main: Main.hs
+    source-dirs: benchmark
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
+    dependencies:
+      - criterion
+      - hellraiser-web-api
