@@ -1,4 +1,4 @@
-name: hellraiser
+name: rescue
 version: '0.1.0'
 category: API
 author:
@@ -8,7 +8,7 @@ maintainer:
 copyright: © 2020 Brooklyn Zelenka
 license: AGPL-3.0-or-later
 license-file: LICENSE
-github: hellraiser-suite/web-api
+github: expede/rescue
 tested-with: GHC==8.6.5
 extra-source-files:
   - README.md
@@ -59,7 +59,7 @@ library:
   source-dirs: library
 
 tests:
-  hellraiser-doctest:
+  rescue-doctest:
     main: Main.hs
     source-dirs: doctest
     ghc-options:
@@ -74,7 +74,7 @@ tests:
       - lens-aeson
       - yaml
 
-  hellraiser-test:
+  rescue-test:
     main: Main.hs
     source-dirs:
       - library
@@ -87,7 +87,7 @@ tests:
       - hspec
       - hspec-core
       - hspec-expectations
-      - hellraiser
+      - rescue
       - QuickCheck
       - quickcheck-instances
       - tasty
@@ -97,7 +97,7 @@ tests:
       - tasty-rerun
       - transformers
 
-  hellraiser-lint:
+  rescue-lint:
     main: Main.hs
     source-dirs: lint
     dependencies:
@@ -106,7 +106,7 @@ tests:
       - rio
 
 benchmarks:
-  hellraiser-benchmark:
+  rescue-benchmark:
     main: Main.hs
     source-dirs: benchmark
     ghc-options:
@@ -116,4 +116,4 @@ benchmarks:
       - -O2
     dependencies:
       - criterion
-      - hellraiser-web-api
+      - rescue-web-api
