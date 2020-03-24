@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
-module OpenUnion.Class (ToOpenUnion (..)) where
+module Data.OpenUnion.Class (ToOpenUnion (..)) where
 
 import           Data.WorldPeace
 
