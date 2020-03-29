@@ -1,16 +1,9 @@
-{-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeApplications           #-}
-
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module Control.Monad.Rescue
   ( module Control.Monad.Rescue.Class
@@ -21,9 +14,10 @@ module Control.Monad.Rescue
  
   , reraise
   , handle
+  , handleOne
 
   , cleanup
-  , handleOne
+  , finally
   ) where
 
 import           Control.Monad.Raise
@@ -32,10 +26,7 @@ import           Control.Monad.Rescue.Class
 import           Data.Proxy
 import           Data.WorldPeace
 
-try :: forall m a errs .
-  MonadRescue errs m
-  => m a
-  -> m (Either (OpenUnion errs) a)
+try :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
 try = try' (Proxy @errs)
 
 reraise :: forall inner outer m a .
@@ -56,6 +47,21 @@ rescue action handler = try' (Proxy @errs) action >>= handler
 
 handle :: MonadRescue errs m => (OpenUnion errs -> m a) -> m a -> m a
 handle onErr action = rescue action (either onErr pure)
+
+handleOne :: forall err outer inner m a .
+  ( ElemRemove err outer
+  , Remove err outer ~ inner
+  , MonadRaise  inner m
+  , MonadRescue outer m
+  )
+  => Proxy outer
+  -> (err -> m a)
+  -> m a
+  -> m a
+handleOne pxyOuter handler action =
+  try' (pxyOuter) action >>= \case
+    Right val -> return val
+    Left errs -> openUnionHandle (raise' (Proxy @inner)) handler errs
 
 rescueWith ::
   MonadRescue errs m
@@ -86,17 +92,13 @@ cleanup acquire onErr onOk action = do
       _ <- onErr resource err
       raiseTo (Proxy @outer) err
 
-handleOne :: forall err outer inner m a .
-  ( ElemRemove err outer
-  , Remove err outer ~ inner
-  , MonadRaise  inner m
-  , MonadRescue outer m
-  )
-  => Proxy outer
-  -> (err -> m a)
-  -> m a
-  -> m a
-handleOne pxyOuter handler action =
-  try' (pxyOuter) action >>= \case
-    Right val -> return val
-    Left errs -> openUnionHandle (raise' (Proxy @inner)) handler errs
+finally :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
+finally action finalizer =
+  try' (Proxy @errs) action >>= \case
+    Right val -> do
+      _ <- finalizer
+      return val
+
+    Left err -> do
+      _ <- finalizer
+      raise err
