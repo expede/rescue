@@ -116,4 +116,4 @@ benchmarks:
       - -O2
     dependencies:
       - criterion
-      - rescue-web-api
+      - rescue
