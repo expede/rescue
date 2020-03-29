@@ -1,50 +1,70 @@
-{-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+{-# LANGUAGE DataKinds #-}
 
 -- | Monadic raise semantics
 
 module Control.Monad.Raise
-  ( MonadRaise  (..)
+  ( module Control.Monad.Raise.Class
   , raise
-  , ensure
+  , raiseInto
+  -- , fromEither
   ) where
 
-import           Data.OpenUnion.Class
+import           Control.Monad.Raise.Class
 import           Data.WorldPeace
-import           Control.Monad.Trans.Except
 
-class Monad m => MonadRaise errs m where
-  raise' :: OpenUnion errs -> m a
+raise :: forall as errs m a .
+  ( Contains as errs
+  , MonadRaise errs m
+  )
+  => OpenUnion as
+  -> m a
+raise err = raise' outerErr
+  where
+    outerErr :: OpenUnion errs
+    outerErr = relaxOpenUnion err
 
-instance MonadRaise errs [] where
-  raise' _ = []
-
-instance MonadRaise errs Maybe where
-  raise' _ = Nothing
-
-instance MonadRaise errs (Either (OpenUnion errs)) where
-  raise' = Left
-
-instance Monad m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
-  raise' = ExceptT . pure . Left
-
-raise :: forall m err errs a .
-  ( ToOpenUnion err errs
-  , MonadRaise      errs m
+raiseInto :: forall err errs m a .
+  ( IsMember err errs
+  , MonadRaise errs m
   )
   => err
   -> m a
-raise err = raise' (toOpenUnion err :: OpenUnion errs)
+raiseInto err = raise' outerErr
+  where
+    outerErr :: OpenUnion errs
+    outerErr = openUnionLift err
 
-ensure :: forall err errs m a .
-  ( ToOpenUnion err errs
-  , MonadRaise errs m
-  )
-  => Either err a
-  -> m a
-ensure = \case
-  Left err  -> raise' (toOpenUnion err :: OpenUnion errs)
-  Right val -> pure val
+-- fromEither ::
+--   ( IsMember err errs
+--   , MonadRaise errs m
+--   )
+--   => Either err a
+--   -> m a
+-- fromEither (Right val) = pure val
+-- fromEither (Left  err) = raiseInto err
+--   where
+
+
+-- fromEitherM :: forall inner outer m a .
+--   ( Contains inner outer
+--   , MonadRaise inner       m
+--   , MonadRaise       outer m
+--   )
+--   => m (Either (OpenUnion inner) a)
+--   -> m a
+-- fromEitherM action = fromEither =<< action
+
+data FakeErr = FakeErr
+data OtherErr = OtherErr
+
+type Errs = '[FakeErr, OtherErr]
+
+foo :: MonadRaise Errs m => Either FakeErr a -> m a
+foo = \case
+  Left FakeErr -> raise' (openUnionLift FakeErr :: OpenUnion Errs)
+  Right ok -> pure ok
