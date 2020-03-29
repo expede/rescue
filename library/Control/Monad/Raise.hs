@@ -8,11 +8,16 @@
 
 module Control.Monad.Raise
   ( module Control.Monad.Raise.Class
+  , raise
+ 
   , raiseAs
   , raiseTo
  
   , ensure
   , ensureM
+
+  , ensure'
+  , ensureM'
 
   , ensure1
   , ensureM1
@@ -22,16 +27,11 @@ import           Control.Monad.Raise.Class
 
 import           Data.Proxy
 import           Data.WorldPeace
+ 
+import           Rescue.Internal.Data.WorldPeace
 
-  -- Not Raise-related, just helpers
-
-liftAs :: IsMember err errs => Proxy errs -> err -> OpenUnion errs
-liftAs _proxy = openUnionLift
-
-liftTo :: Contains inner outer => Proxy outer -> OpenUnion inner -> OpenUnion outer
-liftTo _proxy = relaxOpenUnion
-
-------------------
+raise :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
+raise = raise' (Proxy @errs)
 
 raiseAs :: IsMember err errs => MonadRaise errs m => Proxy errs -> err -> m a
 raiseAs proxy = raise . liftAs proxy
@@ -43,9 +43,7 @@ raiseTo :: forall inner outer m a .
   => Proxy outer
   -> OpenUnion inner
   -> m a
-raiseTo proxy = raise . liftTo proxy
-
----------------------
+raiseTo proxy = raise . relaxTo proxy
 
 ensure1 :: forall m a err errs.
   (IsMember err errs, MonadRaise errs m) => Either err a -> m a
@@ -55,13 +53,31 @@ ensureM1 :: forall err errs m a .
   (IsMember err errs, MonadRaise errs m) => m (Either err a) -> m a
 ensureM1 action = either (raiseAs (Proxy @errs)) pure =<< action
 
+ensure' :: forall m a inner outer .
+  ( Contains inner outer
+  , MonadRaise outer m
+  )
+  => Proxy outer
+  -> Either (OpenUnion inner) a
+  -> m a
+ensure' pxy = either (raiseTo pxy) pure
+
 ensure :: forall m a inner outer .
   ( Contains inner outer
   , MonadRaise outer m
   )
   => Either (OpenUnion inner) a
   -> m a
-ensure = either (raiseTo (Proxy @outer)) pure
+ensure = ensure' (Proxy @outer)
+
+ensureM' :: forall inner outer m a .
+  ( Contains inner outer
+  , MonadRaise outer m
+  )
+  => Proxy outer
+  -> m (Either (OpenUnion inner) a)
+  -> m a
+ensureM' pxy action = either (raiseTo pxy) pure =<< action
 
 ensureM :: forall inner outer m a .
   ( Contains inner outer
@@ -69,4 +85,4 @@ ensureM :: forall inner outer m a .
   )
   => m (Either (OpenUnion inner) a)
   -> m a
-ensureM action = either (raiseTo (Proxy @outer)) pure =<< action
+ensureM = ensureM' (Proxy @outer)
