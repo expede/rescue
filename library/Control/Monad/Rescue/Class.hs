@@ -45,22 +45,22 @@ instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
   try' pxy (ReaderT action) = ReaderT $ \cfg -> try' pxy (action cfg)
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-    try' pxy = Lazy.WriterT . Lazy.runWriterT . try' pxy
+  try' pxy = Lazy.WriterT . Lazy.runWriterT . try' pxy
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
-    try' pxy = Strict.WriterT . Strict.runWriterT . try' pxy
+  try' pxy = Strict.WriterT . Strict.runWriterT . try' pxy
 
 instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
-    try' pxy = Lazy.StateT . Lazy.runStateT . try' pxy
+  try' pxy = Lazy.StateT . Lazy.runStateT . try' pxy
 
 instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
-    try' pxy = Strict.StateT . Strict.runStateT . try' pxy
+  try' pxy = Strict.StateT . Strict.runStateT . try' pxy
 
 instance MonadRescue errs m => MonadRescue errs (ContT r m) where
-    try' pxy = ContT . runContT . try' pxy
+  try' pxy = ContT . runContT . try' pxy
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
-    try' pxy = Lazy.RWST . Lazy.runRWST . try' pxy
+  try' pxy = Lazy.RWST . Lazy.runRWST . try' pxy
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
-    try' pxy = Strict.RWST . Strict.runRWST . try' pxy
+  try' pxy = Strict.RWST . Strict.runRWST . try' pxy
