@@ -7,44 +7,44 @@
 
 module Control.Monad.Rescue
   ( module Control.Monad.Rescue.Class
-  , rescue
-  , reraise
-  , handle
+  -- , rescue
+  -- , reraise
+  -- , handle
   ) where
 
-import           Control.Monad.Raise
+-- import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
-import           Data.WorldPeace
+-- import           Data.WorldPeace
 
-type Relaxable innerErrs outerErrs m =
-  ( Contains    innerErrs  outerErrs
-  , MonadRescue innerErrs            m
-  , MonadRaise             outerErrs m
-  )
+-- type Relaxable innerErrs outerErrs m =
+--   ( Contains    innerErrs  outerErrs
+--   , MonadRescue innerErrs            m
+--   , MonadRaise             outerErrs m
+--   )
 
-reraise :: forall innerErrs outerErrs m a .
-  Relaxable innerErrs outerErrs m
-  => m a
-  -> m a
-reraise action = do
-  attempt :: Either (OpenUnion innerErrs) a <- try action
-  case attempt of
-    Left  err -> raise' ((relaxOpenUnion err) :: OpenUnion outerErrs)
-    Right val -> pure val
+-- reraise :: forall innerErrs outerErrs m a .
+--   Relaxable innerErrs outerErrs m
+--   => m a
+--   -> m a
+-- reraise action = do
+--   attempt :: Either (OpenUnion innerErrs) a <- try action
+--   case attempt of
+--     Left  err -> raise' ((relaxOpenUnion err) :: OpenUnion outerErrs)
+--     Right val -> pure val
 
-rescue :: MonadRescue errs m => m a -> (Either (OpenUnion errs) a -> m b) -> m b
-rescue action handler = try action >>= handler
+-- rescue :: MonadRescue errs m => m a -> (Either (OpenUnion errs) a -> m b) -> m b
+-- rescue action handler = try action >>= handler
 
-handle :: MonadRescue errs m => (OpenUnion errs -> m a) -> m a -> m a
-handle onErr = rescueWith onErr pure
+-- handle :: MonadRescue errs m => (OpenUnion errs -> m a) -> m a -> m a
+-- handle onErr = rescueWith onErr pure
 
-rescueWith ::
-  MonadRescue errs m
-  => (OpenUnion errs -> m b)
-  -> (a -> m b)
-  -> m a
-  -> m b
-rescueWith onErr onOk action = either onErr onOk =<< try action
+-- rescueWith ::
+--   MonadRescue errs m
+--   => (OpenUnion errs -> m b)
+--   -> (a -> m b)
+--   -> m a
+--   -> m b
+-- rescueWith onErr onOk action = either onErr onOk =<< try action
 
 -- cleanup' :: forall innerErrs outerErrs m resource output ignored1 ignored2 .
 --   Relaxable innerErrs outerErrs m

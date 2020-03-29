@@ -2,23 +2,23 @@
 
 -- | Equivalent to MonadMask / MonadBracket pattern
 
-module Control.Monad.Ensure where
+module Control.Monad.Ensure () where
 
-import Data.WorldPeace
+-- import Data.WorldPeace
 
-import Control.Monad.Rescue
+-- import Control.Monad.Rescue
 
-import Control.Monad.Catch (ExitCase (..))
+-- import Control.Monad.Catch (ExitCase (..))
 
--- data AbortWith a =
+-- -- data AbortWith a =
 
-class MonadRescue errs m => MonadEnsure errs m where
-  ensure ::
-       m a -- ^ acquire some resource
-    -> (a              -> m c) -- ^ cleanup when no exception was raised
-    -> (OpenUnion errs -> m c) -- ^ cleanup when an exception was raised
-    -> (a              -> m b) -- ^ inner action to perform with the resource
-    -> m b
+-- class MonadRescue errs m => MonadEnsure errs m where
+--   ensure ::
+--        m a -- ^ acquire some resource
+--     -> (a              -> m c) -- ^ cleanup when no exception was raised
+--     -> (OpenUnion errs -> m c) -- ^ cleanup when an exception was raised
+--     -> (a              -> m b) -- ^ inner action to perform with the resource
+--     -> m b
 
 -- -- BRACKET
 -- ensure ::

@@ -6,7 +6,7 @@
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
 import           Control.Monad.Raise
-import           Control.Monad.Trans.Except
+-- import           Control.Monad.Trans.Except
 
 import           Data.WorldPeace
 
@@ -16,5 +16,5 @@ class MonadRaise errs m => MonadRescue errs m where
 instance MonadRescue errs (Either (OpenUnion errs)) where
   try = Right
 
-instance Monad m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
-  try (ExceptT action) = ExceptT (try <$> action)
+-- instance Monad m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
+--   try (ExceptT action) = ExceptT (try <$> action)
