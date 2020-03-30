@@ -6,9 +6,9 @@ import System.Exit
 arguments :: [String]
 arguments =
     [ "benchmark"
-    , "app"
     , "library"
     , "test"
+    , "doctest"
     ]
 
 main :: IO ()
