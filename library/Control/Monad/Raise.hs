@@ -6,14 +6,25 @@
 -- | Monadic raise semantics & helpers
 
 module Control.Monad.Raise
-  ( module Control.Monad.Raise.Class
+  (
+  -- * Reexports
+   
+    module Control.Monad.Raise.Class
 
+  -- * 'raise' Helpers
+ 
   , raise'
   , raiseAs
   , raiseTo
 
+  -- * 'ensure' Helpers
+
+  -- ** On Bare Errors
+
   , ensureAs
   , ensureAsM
+
+  -- ** On Error Collections
 
   , ensure
   , ensureM

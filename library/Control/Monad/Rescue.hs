@@ -14,8 +14,13 @@
 -- and either handles or exposes it.
 
 module Control.Monad.Rescue
-  ( module Control.Monad.Raise
+  (
+  -- * Reexports
+
+    module Control.Monad.Raise
   , module Control.Monad.Rescue.Class
+ 
+  -- * 'try' Helpers
  
   , try'
  

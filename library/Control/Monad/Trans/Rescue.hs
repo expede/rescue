@@ -6,7 +6,8 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
--- |
+-- | This module supplies a "pure" monad transformer that
+--   can be used for adding 'MonadRescue' behaviour to a transformer stack
 
 module Control.Monad.Trans.Rescue
   ( RescueT (..)
@@ -25,9 +26,11 @@ import           Data.Functor.Identity
 import           Data.Proxy
 import           Data.WorldPeace
 
+-- | Add type-directed error handling abilities to a 'Monad'.
 newtype RescueT errs m a
   = RescueT { runRescueT :: m (Either (OpenUnion errs) a) }
 
+-- | A specialized version of 'RescueT'.
 type Rescue errs = RescueT errs Identity
 
 runRescue :: Rescue errs a -> Either (OpenUnion errs) a
