@@ -1,12 +1,10 @@
 name: rescue
 version: '0.1.0'
 category: Error Handling
-author:
-  - Brooklyn Zelenka
-maintainer:
-  - hello@brooklynzelenka.com
+author: Brooklyn Zelenka
+maintainer: hello@brooklynzelenka.com
 copyright: © 2020 Brooklyn Zelenka
-license: AGPL-3.0-or-later
+license: Apache-2.0
 license-file: LICENSE
 github: expede/rescue
 tested-with: GHC==8.6.5
