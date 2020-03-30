@@ -76,4 +76,4 @@ instance Monad m => MonadRescue errs (RescueT errs m) where
 
 instance forall errs m .
   (IsMember SomeException errs, Monad m) => MonadThrow (RescueT errs m) where
-    throwM err = raiseAs' (Proxy @errs) (toException err)
+    throwM err = raiseAs (Proxy @errs) (toException err)

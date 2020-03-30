@@ -90,7 +90,7 @@ cleanup acquire onErr onOk action = do
 
     Left err  -> do
       _ <- onErr resource err
-      raiseTo' (Proxy @outer) err
+      raiseTo (Proxy @outer) err
 
 finally :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
 finally action finalizer =

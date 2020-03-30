@@ -19,7 +19,7 @@ ghci:
 	$(stack) repl $(package):lib --no-build --no-load --ghci-options='-j6 +RTS -A128m'
 
 quality:
-	$(stack) build --test --fast $(package)
+	make test && make test && make lint && make bench
 
 linter:
 	$(stack) test :$(package)-lint --fast
@@ -34,7 +34,7 @@ docserver:
 doctest:
 	$(stack) test :$(package)-doctest --fast
 
-testsuite:
+test:
 	$(stack) test :$(package)-test --fast
 
 test-ghci:
@@ -49,4 +49,4 @@ dev:
 setup:
 	stack install ghcid && npm install -g http-server
 
-.PHONY : build dirty run install ghci test test-ghci watch
+.PHONY : build dirty run install ghci test test-ghci watch doctest test
