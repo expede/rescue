@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Language.Haskell.HLint (hlint)
+import System.Exit
 
 arguments :: [String]
 arguments =
