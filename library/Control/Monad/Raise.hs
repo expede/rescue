@@ -8,7 +8,7 @@
 module Control.Monad.Raise
   ( module Control.Monad.Raise.Class
 
-  , raise
+  , raise'
   , raiseAs
   , raiseTo
 
@@ -43,7 +43,7 @@ import           Rescue.Internal.Data.WorldPeace
 
 -- | Raise an open sum error
 --
--- A specialized version of @raise'@,
+-- A specialized version of @raise@,
 -- which infers taht the error context is an exact match
 --
 -- Examples:
@@ -55,23 +55,22 @@ import           Rescue.Internal.Data.WorldPeace
 --  goesBoom x =
 --    if x > 50
 --      then return x
---      else raise fooErr
+--      else raise' fooErr
 -- :}
 --
 -- >>> goesBoom 42 :: [Int]
 -- []
-raise :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
-raise = raise' (Proxy @errs)
+raise' :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
+raise' = raise (Proxy @errs)
 
 -- | Raise a single error into a particular context
 --
 -- Examples:
 --
--- >>> let boom = raiseAs (Proxy @MyErrs) FooErr
--- >>> boom :: [Int]
+-- >>> raiseAs (Proxy @MyErrs) FooErr :: [Int]
 -- []
 raiseAs :: (IsMember err errs, MonadRaise errs m) => Proxy errs -> err -> m a
-raiseAs proxy = raise . liftAs proxy
+raiseAs proxy = raise' . liftAs proxy
 
 -- | Raise an existing error union to a wider union
 --
@@ -90,7 +89,7 @@ raiseTo :: forall inner outer m a .
   => Proxy outer
   -> OpenUnion inner
   -> m a
-raiseTo proxy = raise . relaxTo proxy
+raiseTo proxy = raise' . relaxTo proxy
 
 -- | Lift a pure result to a @MonadRaise@ context
 --

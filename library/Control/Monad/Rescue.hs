@@ -61,7 +61,7 @@ handleOne :: forall err outer inner m a .
 handleOne pxyOuter handler action =
   try' pxyOuter action >>= \case
     Right val -> return val
-    Left errs -> openUnionHandle (raise' (Proxy @inner)) handler errs
+    Left errs -> openUnionHandle (raise (Proxy @inner)) handler errs
 
 rescueWith ::
   MonadRescue errs m
@@ -101,4 +101,4 @@ finally action finalizer =
 
     Left err -> do
       _ <- finalizer
-      raise err
+      raise' err

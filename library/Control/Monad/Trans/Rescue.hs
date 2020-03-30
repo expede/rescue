@@ -69,7 +69,7 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
       traverseEither _ (Left  err) = pure (Left err)
 
 instance Monad m => MonadRaise errs (RescueT errs m) where
-  raise' _ = RescueT . pure . Left
+  raise _ = RescueT . pure . Left
 
 instance Monad m => MonadRescue errs (RescueT errs m) where
   try' _ (RescueT action) = RescueT $ fmap Right action
