@@ -39,17 +39,17 @@ import           Rescue.Internal.Data.WorldPeace
 -- >>> data BarErr  = BarErr
 -- >>> data QuuxErr = QuuxErr
 -- >>>
--- >>> type MyErrs  = '[FooErr, BarErr]
+-- >>> type MyErrs = '[FooErr, BarErr]
 
 -- | Raise an open sum error
 --
 -- A specialized version of @raise@,
 -- which infers taht the error context is an exact match
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> let fooErr = openUnionLift FooErr :: OpenUnion MyErrs
---
+-- >>>
 -- >>> :{
 --  goesBoom :: MonadRaise MyErrs m => Int -> m Int
 --  goesBoom x =
@@ -58,30 +58,29 @@ import           Rescue.Internal.Data.WorldPeace
 --      else raise' fooErr
 -- :}
 --
--- >>> goesBoom 42 :: [Int]
--- []
+-- >>> goesBoom 42 :: Maybe Int
+-- Nothing
 raise' :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
 raise' = raise (Proxy @errs)
 
 -- | Raise a single error into a particular context
 --
--- Examples:
+-- ==== __Examples__
 --
--- >>> raiseAs (Proxy @MyErrs) FooErr :: [Int]
--- []
+-- >>> raiseAs (Proxy @MyErrs) FooErr :: Maybe Int
+-- Nothing
 raiseAs :: (IsMember err errs, MonadRaise errs m) => Proxy errs -> err -> m a
 raiseAs proxy = raise' . liftAs proxy
 
 -- | Raise an existing error union to a wider union
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> let smallErr = openUnionLift FooErr :: OpenUnion MyErrs
 -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
--- >>>
--- >>> let boom = raiseTo (Proxy @BigErrs) smallErr
--- >>> boom :: [Int]
--- []
+-- >>> bigErrs = Proxy @BigErrs
+-- >>> raiseTo bigErrs smallErr :: Maybe Int
+-- Nothing
 raiseTo :: forall inner outer m a .
   ( Contains inner outer
   , MonadRaise outer m
@@ -93,7 +92,7 @@ raiseTo proxy = raise' . relaxTo proxy
 
 -- | Lift a pure result to a @MonadRaise@ context
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> let errs = Proxy @MyErrs
 --
@@ -121,7 +120,7 @@ ensureAs pxy = either (raiseAs pxy) pure
 
 -- | Like @ensure1@, but takes a monadic argument
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> :{
 --   mayFailM :: Monad m => Int -> m (Either FooErr Int)
@@ -150,7 +149,7 @@ ensureAsM pxy action = ensureAs pxy =<< action
 -- | Lift a pure error (@Either@) into a @MonadRaise@ context
 -- i.e. Turn @Left@s into @raise@s.
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> :{
 --   mayFail :: Int -> Either (OpenUnion MyErrs) Int
@@ -183,7 +182,7 @@ ensure pxy = either (raiseTo pxy) pure
 
 -- | A version of @ensure@ that takes monadic actions
 --
--- Examples:
+-- ==== __Examples__
 --
 -- >>> :{
 --   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)

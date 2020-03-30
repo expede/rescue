@@ -5,9 +5,19 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 
+-- | Rescue semantics & helpers
+--
+-- Essentially a type-directed version of 'Control.Monad.Catch'.
+--
+-- This is the opposite of 'Control.Monad.Raise', which embeds en error.
+-- 'Rescue' takes a potential error out of the surrounding context
+-- and either handles or exposes it.
+
 module Control.Monad.Rescue
-  ( module Control.Monad.Rescue.Class
-  , try
+  ( module Control.Monad.Raise
+  , module Control.Monad.Rescue.Class
+ 
+  , try'
  
   , rescue
   , rescueWith
@@ -26,8 +36,8 @@ import           Control.Monad.Rescue.Class
 import           Data.Proxy
 import           Data.WorldPeace
 
-try :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
-try = try' (Proxy @errs)
+try' :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
+try' = try (Proxy @errs)
 
 reraise :: forall inner outer m a .
   ( Contains    inner outer
@@ -36,14 +46,14 @@ reraise :: forall inner outer m a .
   )
   => m a
   -> m a
-reraise action = ensureM (Proxy @outer) $ try' (Proxy @inner) action
+reraise action = ensureM (Proxy @outer) $ try (Proxy @inner) action
 
 rescue :: forall m a b errs .
   MonadRescue errs m
   => m a
   -> (Either (OpenUnion errs) a -> m b)
   -> m b
-rescue action handler = try' (Proxy @errs) action >>= handler
+rescue action handler = try (Proxy @errs) action >>= handler
 
 handle :: MonadRescue errs m => (OpenUnion errs -> m a) -> m a -> m a
 handle onErr action = rescue action (either onErr pure)
@@ -59,7 +69,7 @@ handleOne :: forall err outer inner m a .
   -> m a
   -> m a
 handleOne pxyOuter handler action =
-  try' pxyOuter action >>= \case
+  try pxyOuter action >>= \case
     Right val -> return val
     Left errs -> openUnionHandle (raise (Proxy @inner)) handler errs
 
@@ -69,7 +79,7 @@ rescueWith ::
   -> (a -> m b)
   -> m a
   -> m b
-rescueWith onErr onOk action = either onErr onOk =<< try action
+rescueWith onErr onOk action = either onErr onOk =<< try' action
 
 cleanup :: forall inner outer m resource output ignored1 ignored2 .
   ( Contains    inner outer
@@ -83,7 +93,7 @@ cleanup :: forall inner outer m resource output ignored1 ignored2 .
   -> m output
 cleanup acquire onErr onOk action = do
   resource <- acquire
-  try (action resource) >>= \case
+  try' (action resource) >>= \case
     Right val -> do
       _ <- onOk resource val
       return val
@@ -94,7 +104,7 @@ cleanup acquire onErr onOk action = do
 
 finally :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
 finally action finalizer =
-  try' (Proxy @errs) action >>= \case
+  try (Proxy @errs) action >>= \case
     Right val -> do
       _ <- finalizer
       return val

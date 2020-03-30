@@ -39,28 +39,28 @@ class Monad m => MonadRaise errs m where
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
-  -- If you have a case where it can be inferred, see @raise'@.
+  -- If you have a case where it can be inferred, see 'Control.Monad.Raise.raise''.
   --
--- Examples:
---
--- >>> data FooErr  = FooErr
--- >>> data BarErr  = BarErr
--- >>> data QuuxErr = QuuxErr
---
--- >>> type MyErrs  = '[FooErr, BarErr]
--- >>> myErrs = Proxy @MyErrs
---
--- >>> let fooErr = openUnionLift FooErr :: OpenUnion MyErrs
---
--- >>> :{
---  goesBoom x =
---    if x > 50
---      then return x
---      else raise myErrs fooErr
--- :}
---
--- >>> goesBoom 42 :: [Int]
--- []
+  -- ==== __Examples__
+  --
+  -- >>> data FooErr  = FooErr
+  -- >>> data BarErr  = BarErr
+  -- >>> data QuuxErr = QuuxErr
+  -- >>>
+  -- >>> type MyErrs  = '[FooErr, BarErr]
+  -- >>> myErrs = Proxy @MyErrs
+  -- >>>
+  -- >>> let fooErr = openUnionLift FooErr :: OpenUnion MyErrs
+  -- >>>
+  -- >>> :{
+  --  goesBoom x =
+  --    if x > 50
+  --      then return x
+  --      else raise myErrs fooErr
+  -- :}
+  --
+  -- >>> goesBoom 42 :: Maybe Int
+  -- Nothing
   raise :: Proxy errs -> OpenUnion errs -> m a
 
 instance MonadRaise errs [] where
