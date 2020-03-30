@@ -59,7 +59,7 @@ handleOne :: forall err outer inner m a .
   -> m a
   -> m a
 handleOne pxyOuter handler action =
-  try' (pxyOuter) action >>= \case
+  try' pxyOuter action >>= \case
     Right val -> return val
     Left errs -> openUnionHandle (raise' (Proxy @inner)) handler errs
 

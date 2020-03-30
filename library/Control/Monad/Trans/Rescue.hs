@@ -44,9 +44,7 @@ instance Monad m => Monad (RescueT errs m) where
     Right val -> runRescueT (k val)
 
 instance MonadTrans (RescueT errs) where
-  lift action = RescueT $ do
-    inner <- action
-    return (Right inner)
+  lift action = RescueT (Right <$> action)
 
 instance MonadIO m => MonadIO (RescueT errs m) where
   liftIO io = RescueT $ do
