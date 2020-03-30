@@ -36,7 +36,7 @@ reraise :: forall inner outer m a .
   )
   => m a
   -> m a
-reraise action = ensure' (Proxy @outer) =<< try' (Proxy @inner) action
+reraise action = ensureM (Proxy @outer) $ try' (Proxy @inner) action
 
 rescue :: forall m a b errs .
   MonadRescue errs m
