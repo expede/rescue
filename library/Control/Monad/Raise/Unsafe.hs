@@ -15,7 +15,7 @@ import           GHC.ST
 import           GHC.IO
 
 instance MonadRaise errs (ST s) where
-  raise' pxy = GHC.IO.unsafeIOToST . raise' pxy
+  raise pxy = GHC.IO.unsafeIOToST . raise pxy
 
 instance MonadRaise errs IO where
-  raise' _ = IO . raiseIO#
+  raise _ = IO . raiseIO#

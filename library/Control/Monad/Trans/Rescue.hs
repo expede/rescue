@@ -6,11 +6,13 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
--- |
+-- | This module supplies a "pure" monad transformer that
+--   can be used for adding 'MonadRescue' behaviour to a transformer stack
 
 module Control.Monad.Trans.Rescue
   ( RescueT (..)
   , Rescue
+  , runRescue
   ) where
 
 import           Control.Monad.Catch
@@ -24,9 +26,21 @@ import           Data.Functor.Identity
 import           Data.Proxy
 import           Data.WorldPeace
 
-newtype RescueT errs m a = RescueT { runRescueT :: m (Either (OpenUnion errs) a) }
+-- | Add type-directed error handling abilities to a 'Monad'.
+newtype RescueT errs m a
+  = RescueT { runRescueT :: m (Either (OpenUnion errs) a) }
 
+-- | A specialized version of 'RescueT'.
 type Rescue errs = RescueT errs Identity
+
+runRescue :: Rescue errs a -> Either (OpenUnion errs) a
+runRescue = runIdentity . runRescueT
+
+instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT errs m a) where
+  RescueT a == RescueT b = a == b
+
+instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT errs m a) where
+  show (RescueT inner) = "RescueT (" <> show inner <> ")"
 
 instance Functor m => Functor (RescueT errs m) where
   fmap f (RescueT inner) = RescueT $ fmap (fmap f) inner
@@ -36,7 +50,7 @@ instance Applicative m => Applicative (RescueT errs m) where
   (RescueT fs) <*> (RescueT xs) = RescueT $ do
     innerFs <- fs
     innerXs <- xs
-    return(innerFs <*> innerXs)
+    return (innerFs <*> innerXs)
 
 instance Monad m => Monad (RescueT errs m) where
   RescueT action >>= k = RescueT $ action >>= \case
@@ -69,10 +83,10 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
       traverseEither _ (Left  err) = pure (Left err)
 
 instance Monad m => MonadRaise errs (RescueT errs m) where
-  raise' _ = RescueT . pure . Left
+  raise _ = RescueT . pure . Left
 
 instance Monad m => MonadRescue errs (RescueT errs m) where
-  try' _ (RescueT action) = RescueT $ fmap Right action
+  try _ (RescueT action) = RescueT $ fmap Right action
 
 instance forall errs m .
   (IsMember SomeException errs, Monad m) => MonadThrow (RescueT errs m) where
