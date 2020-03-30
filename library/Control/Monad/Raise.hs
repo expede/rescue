@@ -1,134 +1,87 @@
-{-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE BlockArguments             #-}
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE UndecidableInstances       #-} -- FIXME!
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 -- | Monadic raise semantics
 
 module Control.Monad.Raise
-  ( MonadRaise  (..)
-  , MonadRescue (..)
-  , EnsureT (..) -- ... maybe
-  , rescue
+  ( module Control.Monad.Raise.Class
   , raise
-  , reraise
-  , handle
+ 
+  , raiseAs
+  , raiseTo
+ 
   , ensure
+  , ensureM
+
+  , ensure'
+  , ensureM'
+
+  , ensure1
+  , ensureM1
   ) where
 
+import           Control.Monad.Raise.Class
+
+import           Data.Proxy
 import           Data.WorldPeace
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Class
+ 
+import           Rescue.Internal.Data.WorldPeace
 
-class ToOpenUnion elem variants where
-  toOpenUnion :: elem -> OpenUnion variants
+raise :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
+raise = raise' (Proxy @errs)
 
-instance {-# OVERLAPPABLE #-} Contains inner outer => ToOpenUnion (OpenUnion inner) outer where
-  toOpenUnion = relaxOpenUnion
+raiseAs :: IsMember err errs => MonadRaise errs m => Proxy errs -> err -> m a
+raiseAs proxy = raise . liftAs proxy
 
-instance {-# OVERLAPPING #-} IsMember elem variants => ToOpenUnion elem variants where
-  toOpenUnion x = openUnionLift x
-
-------------------------------------------------
-
-class Monad m => MonadRaise errs m where
-  raise' :: OpenUnion errs -> m a
-
-instance MonadRaise errs [] where
-  raise' _ = []
-
-instance MonadRaise errs Maybe where
-  raise' _ = Nothing
-
-instance MonadRaise errs (Either (OpenUnion errs)) where
-  raise' = Left
-
-instance Monad m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
-  raise' = ExceptT . pure . Left
-
-raise :: forall m err errs a .
-  ( ToOpenUnion err errs
-  , MonadRaise      errs m
+raiseTo :: forall inner outer m a .
+  ( Contains inner outer
+  , MonadRaise outer m
   )
-  => err
+  => Proxy outer
+  -> OpenUnion inner
   -> m a
-raise err = raise' (toOpenUnion err :: OpenUnion errs)
+raiseTo proxy = raise . relaxTo proxy
 
--------------------------------------------------------------
+ensure1 :: forall m a err errs.
+  (IsMember err errs, MonadRaise errs m) => Either err a -> m a
+ensure1 = either (raiseAs (Proxy @errs)) pure
 
-class MonadRaise errs m => MonadRescue errs m where
-  expose :: m a -> m (Either (OpenUnion errs) a)
+ensureM1 :: forall err errs m a .
+  (IsMember err errs, MonadRaise errs m) => m (Either err a) -> m a
+ensureM1 action = either (raiseAs (Proxy @errs)) pure =<< action
 
-instance MonadRescue errs (Either (OpenUnion errs)) where
-  expose = Right
-  {-# INLINE expose #-}
-
-instance Monad m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
-  expose (ExceptT action) = ExceptT (expose <$> action)
-
-rescue :: MonadRescue errs m => m a -> (Either (OpenUnion errs) a -> m b) -> m b
-rescue action handler = expose action >>= handler
-
-reraise :: forall innerErrs outerErrs m .
-  ( Contains    innerErrs  outerErrs
-  , MonadRescue innerErrs            m
-  , MonadRaise             outerErrs m
+ensure' :: forall m a inner outer .
+  ( Contains inner outer
+  , MonadRaise outer m
   )
-  => m ()
-  -> m ()
-reraise action = rescue action handler
-  where
-    handler :: Either (OpenUnion innerErrs) () -> m ()
-    handler = \case
-      Left  err -> raise' (relaxOpenUnion err :: OpenUnion outerErrs)
-      Right ()  -> return ()
-
-handle :: MonadRescue errs m => m a -> (OpenUnion errs -> m a) -> m a
-handle action handler = expose action >>= either handler pure
-
-------------------------------
-
--- | Maybe this is just what raise is? But also may have fewer instanes...
-class MonadRaise errs m => MonadEnsure errs m where
-  ensure' :: Either (OpenUnion errs) a -> m a
-
-instance MonadEnsure errs (Either (OpenUnion errs)) where
-  ensure' = id
-
-instance Monad m => MonadEnsure errs (ExceptT (OpenUnion errs) m) where
-  ensure' = ExceptT . pure
-
-ensure :: forall err errs m a .
-  ( ToOpenUnion err errs
-  , MonadEnsure errs m
-  )
-  => Either err a
+  => Proxy outer
+  -> Either (OpenUnion inner) a
   -> m a
-ensure = \case
-  Left err  -> ensure' $ Left (toOpenUnion err :: OpenUnion errs)
-  Right val -> pure val
+ensure' pxy = either (raiseTo pxy) pure
 
--------------------------------------
+ensure :: forall m a inner outer .
+  ( Contains inner outer
+  , MonadRaise outer m
+  )
+  => Either (OpenUnion inner) a
+  -> m a
+ensure = ensure' (Proxy @outer)
 
-newtype EnsureT errs m a = EnsureT { runEnsureT :: ExceptT (OpenUnion errs) m a }
-  deriving (Functor, Applicative, Monad)
+ensureM' :: forall inner outer m a .
+  ( Contains inner outer
+  , MonadRaise outer m
+  )
+  => Proxy outer
+  -> m (Either (OpenUnion inner) a)
+  -> m a
+ensureM' pxy action = either (raiseTo pxy) pure =<< action
 
-instance MonadTrans (EnsureT errs) where
-  lift = EnsureT . lift
-  {-# INLINE lift #-}
-
-instance Monad m => MonadRaise errs (EnsureT errs m) where
-  raise' = EnsureT . raise'
-
-instance Monad m => MonadRescue errs (EnsureT errs m) where
-  expose = EnsureT . expose . runEnsureT
-
-instance Monad m => MonadEnsure errs (EnsureT errs m) where
-  ensure' = EnsureT . ExceptT . pure
+ensureM :: forall inner outer m a .
+  ( Contains inner outer
+  , MonadRaise outer m
+  )
+  => m (Either (OpenUnion inner) a)
+  -> m a
+ensureM = ensureM' (Proxy @outer)
