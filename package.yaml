@@ -1,6 +1,6 @@
 name: rescue
 version: '0.1.0'
-category: API
+category: Error Handling
 author:
   - Brooklyn Zelenka
 maintainer:
