@@ -36,7 +36,7 @@ instance Applicative m => Applicative (RescueT errs m) where
   (RescueT fs) <*> (RescueT xs) = RescueT $ do
     innerFs <- fs
     innerXs <- xs
-    return(innerFs <*> innerXs)
+    return (innerFs <*> innerXs)
 
 instance Monad m => Monad (RescueT errs m) where
   RescueT action >>= k = RescueT $ action >>= \case
@@ -76,4 +76,4 @@ instance Monad m => MonadRescue errs (RescueT errs m) where
 
 instance forall errs m .
   (IsMember SomeException errs, Monad m) => MonadThrow (RescueT errs m) where
-    throwM err = raiseAs (Proxy @errs) (toException err)
+    throwM err = raiseAs' (Proxy @errs) (toException err)
