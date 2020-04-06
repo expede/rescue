@@ -32,6 +32,7 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- >>> :set -XFlexibleContexts
 -- >>> :set -XTypeApplications
 --
+-- >>> import Control.Monad.Trans.Rescue
 -- >>> import Data.Proxy
 -- >>> import Data.WorldPeace as OpenUnion
 --
@@ -42,23 +43,21 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- | Pull a potential error out of the surrounding context
 class MonadRaise errs m => MonadRescue errs m where
   -- | Attempt some action, exposing the success and error branches
+  -- 
+  --  The @Proxy@ gives a type hint to the type checker.
+  --  If you have a case where it can be inferred, see 'Control.Monad.Rescue.try''.
   --
-  -- The @Proxy@ gives a type hint to the type checker.
-  -- If you have a case where it can be inferred, see 'Control.Monad.Rescue.try''.
+  --  ==== __Examples__ 
   --
-  -- ==== __Examples__
+  --  >>> type MyErrs = '[FooErr, BarErr]
+  --  >>> myErrs = Proxy @MyErrs
   --
-  -- >>> import Control.Monad.Trans.Rescue
-  -- >>>
-  -- >>> type MyErrs = '[FooErr, BarErr]
-  -- >>> myErrs = Proxy @MyErrs
-  -- >>>
-  -- >>> :{
-  --  goesBoom :: Int -> Rescue MyErrs Int
-  --  goesBoom x =
-  --    if x > 50
-  --      then return x
-  --      else raiseAs myErrs FooErr
+  --  >>> :{
+  --    goesBoom :: Int -> Rescue MyErrs Int
+  --    goesBoom x =
+  --      if x > 50
+  --        then return x
+  --        else raiseAs myErrs FooErr
   -- :}
   --
   -- >>> runRescue $ try myErrs $ goesBoom 42
