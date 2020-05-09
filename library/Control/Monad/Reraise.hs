@@ -21,8 +21,8 @@ import           Data.WorldPeace
 import Control.Monad.Foo
 
 -- NOTE TO SELF: this shoudl actaully just be a natual transformation, i.e. n a -> m a, becasue n and m have all the error carrying info
-class MonadRescue outer n => MonadReraise outer m n where
-  reraise :: Proxy outer -> m a -> n a
+class MonadReraise n m where
+  reraise :: n a -> m a
   -- ^ TODO: rename function to `relax` or `relaxErr`? `recontextualize`?
   -- ^ TODO: rename class to `MonadCleanup`?
 
@@ -32,8 +32,17 @@ class MonadRescue outer n => MonadReraise outer m n where
 -- rectx :: MonadReraise outer m n => Proxy outer -> m a -> n a
 -- rectx = recontextualize
 
-instance MonadRescue errs m => MonadReraise errs m m where
-  reraise _pxy action = action
+instance MonadReraise m m where
+  reraise action = action
+
+-- instance (ToOpenUnion inner outer, MonadRaise (OpenUnion outer) m, MonadRescue inner n) => MonadReraise n m where
+--   reraise action = try action >>= \case
+
+instance ToOpenUnion inner outer => MonadReraise (Either inner) (Either (OpenUnion outer)) where
+  reraise action =
+    case action of
+      Left  err -> Left $ consistent err -- FIXME perhaps rename consistent to recontextualize?
+      Right val -> Right val
 
 -- -- instance IsMember err errs =>
 -- --   MonadReraise errs (Either err) (Either (OpenUnion errs)) where
