@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- |
 
@@ -7,11 +8,11 @@ module Rescue.Internal.Data.WorldPeace
   , relaxTo
   ) where
 
-import           Data.Proxy
+-- import           Data.Proxy
 import           Data.WorldPeace
 
-liftAs :: IsMember err errs => Proxy errs -> err -> OpenUnion errs
-liftAs _proxy = openUnionLift
+liftAs :: forall errs err . IsMember err errs => err -> OpenUnion errs
+liftAs = openUnionLift
 
-relaxTo :: Contains inner outer => Proxy outer -> OpenUnion inner -> OpenUnion outer
-relaxTo _proxy = relaxOpenUnion
+relaxTo :: forall outer inner . Contains inner outer => OpenUnion inner -> OpenUnion outer
+relaxTo = relaxOpenUnion

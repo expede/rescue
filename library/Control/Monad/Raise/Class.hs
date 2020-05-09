@@ -61,7 +61,7 @@ class Monad m => MonadRaise errs m where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: OpenUnion errs -> m a
+  raise :: OpenUnion errs -> m a -- FIXME if you remobve the OpenUNion on JUST this class, yu can add it in the instances, and get rid of raiseAs.
 
 instance MonadRaise errs [] where
   raise _ = []

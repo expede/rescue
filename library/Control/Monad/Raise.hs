@@ -13,7 +13,6 @@ module Control.Monad.Raise
 
   -- * 'raise' Helpers
  
-  -- , raise'
   , raiseAs
   , raiseTo
 
@@ -32,7 +31,6 @@ module Control.Monad.Raise
 
 import           Control.Monad.Raise.Class
 
-import           Data.Proxy
 import           Data.WorldPeace
  
 import           Rescue.Internal.Data.WorldPeace
@@ -78,10 +76,10 @@ import           Rescue.Internal.Data.WorldPeace
 --
 -- ==== __Examples__
 --
--- >>> raiseAs (Proxy @MyErrs) FooErr :: Maybe Int
+-- >>> raiseAs @MyErrs FooErr :: Maybe Int
 -- Nothing
-raiseAs :: (IsMember err errs, MonadRaise errs m) => Proxy errs -> err -> m a
-raiseAs proxy = raise . liftAs proxy
+raiseAs :: forall errs err m a . (IsMember err errs, MonadRaise errs m) => err -> m a
+raiseAs = raise . liftAs @errs
 
 -- | Raise an existing error union to a wider union
 --
@@ -89,23 +87,19 @@ raiseAs proxy = raise . liftAs proxy
 --
 -- >>> let smallErr = openUnionLift FooErr :: OpenUnion MyErrs
 -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
--- >>> bigErrs = Proxy @BigErrs
--- >>> raiseTo bigErrs smallErr :: Maybe Int
+-- >>> raiseTo @BigErrs smallErr :: Maybe Int
 -- Nothing
-raiseTo :: forall inner outer m a .
+raiseTo :: forall outer inner m a .
   ( Contains inner outer
   , MonadRaise outer m
   )
-  => Proxy outer
-  -> OpenUnion inner
+  => OpenUnion inner
   -> m a
-raiseTo proxy = raise @outer . relaxTo proxy
+raiseTo = raise @outer . relaxTo @outer
 
 -- | Lift a pure result to a @MonadRaise@ context
 --
 -- ==== __Examples__
---
--- >>> let errs = Proxy @MyErrs
 --
 -- >>> :{
 --   mayFail :: Int -> Either FooErr Int
@@ -118,16 +112,20 @@ raiseTo proxy = raise @outer . relaxTo proxy
 -- >>> :{
 --   foo :: MonadRaise MyErrs m => m Int
 --   foo = do
---     first  <- ensureAs errs $ mayFail 100
---     second <- ensureAs errs $ mayFail first
+--     first  <- ensureAs @MyErrs $ mayFail 100
+--     second <- ensureAs @MyErrs $ mayFail first
 --     return (second * 10)
 -- :}
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensureAs :: forall m a err errs.
-  (IsMember err errs, MonadRaise errs m) => Proxy errs -> Either err a -> m a
-ensureAs pxy = either (raiseAs pxy) pure
+ensureAs :: forall errs err m a .
+  ( IsMember err errs
+  , MonadRaise errs m
+  )
+  => Either err a
+  -> m a
+ensureAs = either (raiseAs @errs) pure
 
 -- | Like @ensure1@, but takes a monadic argument
 --
@@ -141,21 +139,23 @@ ensureAs pxy = either (raiseAs pxy) pure
 --       else Right n
 -- :}
 --
--- >>> let errs = Proxy @MyErrs
---
 -- >>> :{
 --   foo :: MonadRaise MyErrs m => m Int
 --   foo = do
---     first  <- ensureAsM errs $ mayFailM 100
---     second <- ensureAsM errs $ mayFailM first
+--     first  <- ensureAsM @MyErrs $ mayFailM 100
+--     second <- ensureAsM @MyErrs $ mayFailM first
 --     return (second * 10)
 -- :}
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensureAsM :: forall err errs m a .
-  (IsMember err errs, MonadRaise errs m) => Proxy errs -> m (Either err a) -> m a
-ensureAsM pxy action = ensureAs pxy =<< action
+ensureAsM :: forall errs err m a .
+  ( IsMember err errs
+  , MonadRaise errs m
+  )
+  => m (Either err a)
+  -> m a
+ensureAsM action = ensureAs @errs =<< action
 
 -- | Lift a pure error (@Either@) into a @MonadRaise@ context
 -- i.e. Turn @Left@s into @raise@s.
@@ -170,26 +170,23 @@ ensureAsM pxy action = ensureAs pxy =<< action
 --       else Right n
 -- :}
 --
--- >>> let errs = Proxy @MyErrs
---
 -- >>> :{
 --   foo :: MonadRaise MyErrs m => m Int
 --   foo = do
---     first  <- ensure errs $ mayFail 100
---     second <- ensure errs $ mayFail first
+--     first  <- ensure @MyErrs $ mayFail 100
+--     second <- ensure @MyErrs $ mayFail first
 --     return (second * 10)
 -- :}
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensure :: forall m a inner outer .
+ensure :: forall outer inner m a .
   ( Contains inner outer
   , MonadRaise outer m
   )
-  => Proxy outer
-  -> Either (OpenUnion inner) a
+  => Either (OpenUnion inner) a
   -> m a
-ensure pxy = either (raiseTo pxy) pure
+ensure = either (raiseTo @outer) pure
 
 -- | A version of @ensure@ that takes monadic actions
 --
@@ -204,23 +201,21 @@ ensure pxy = either (raiseTo pxy) pure
 -- :}
 --
 -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
--- >>> let errs = Proxy @BigErrs
 --
 -- >>> :{
 --   foo :: MonadRaise BigErrs m => m Int
 --   foo = do
---     first  <- ensureM errs $ mayFailM 100
---     second <- ensureM errs $ mayFailM first
+--     first  <- ensureM @BigErrs $ mayFailM 100
+--     second <- ensureM @BigErrs $ mayFailM first
 --     return (second * 10)
 -- :}
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensureM :: forall inner outer m a .
+ensureM :: forall outer inner m a .
   ( Contains inner outer
   , MonadRaise outer m
   )
-  => Proxy outer
-  -> m (Either (OpenUnion inner) a)
+  => m (Either (OpenUnion inner) a)
   -> m a
-ensureM pxy action = either (raiseTo pxy) pure =<< action
+ensureM action = either (raiseTo @outer) pure =<< action

@@ -57,7 +57,7 @@ class MonadRaise errs m => MonadRescue errs m where
   --    goesBoom x =
   --      if x > 50
   --        then return x
-  --        else raiseAs myErrs FooErr
+  --        else raiseAs @MyErrs FooErr
   -- :}
   --
   -- >>> runRescue $ try myErrs $ goesBoom 42

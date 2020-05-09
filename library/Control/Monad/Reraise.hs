@@ -34,14 +34,14 @@ instance MonadRescue errs m => MonadReraise errs m m where
 
 instance IsMember err errs =>
   MonadReraise errs (Either err) (Either (OpenUnion errs)) where
-    reraise pxyErrs = \case
-      Left  err -> raiseAs pxyErrs err
+    reraise _ = \case
+      Left  err -> raiseAs @errs err
       Right val -> return val
 
 instance Contains innerErrs outerErrs =>
   MonadReraise outerErrs (Either (OpenUnion innerErrs)) (Either (OpenUnion outerErrs)) where
-    reraise pxyOuterErrs = \case
-      Left  err -> raiseTo pxyOuterErrs err
+    reraise _pxyOuterErrs = \case
+      Left  err -> raiseTo @outerErrs err
       Right val -> return val
 
 cleanup :: forall outer n m resource output ignored1 ignored2 .

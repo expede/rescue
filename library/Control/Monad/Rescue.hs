@@ -49,7 +49,7 @@ import           Data.WorldPeace
 
 
 
-import Rescue.Internal.Data.WorldPeace
+-- import Rescue.Internal.Data.WorldPeace
 
 -- $setup
 --
@@ -74,7 +74,7 @@ import Rescue.Internal.Data.WorldPeace
 --  goesBoom x =
 --    if x > 50
 --      then return x
---      else raiseAs (Proxy @MyErrs) FooErr
+--      else raiseAs @MyErrs FooErr
 -- :}
 --
 -- >>> try' $ goesBoom 42 :: Rescue MyErrs ((Either (OpenUnion MyErrs) Int))
@@ -132,7 +132,7 @@ try' = try (Proxy @errs)
 -- goesBoom x =
 --   if x > 50
 --     then return (show x)
---     else raiseAs (Proxy @MyErrs) FooErr
+--     else raiseAs @MyErrs FooErr
 -- :}
 --
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
@@ -156,7 +156,7 @@ rescue pxy action handler = either handler pure =<< try pxy action
 -- goesBoom x =
 --   if x > 50
 --     then return (show x)
---     else raiseAs (Proxy @MyErrs) FooErr
+--     else raiseAs @MyErrs FooErr
 -- :}
 --
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
@@ -180,7 +180,7 @@ rescueM pxy action handler = rescue pxy action (pure . handler)
 -- goesBoom x =
 --   if x > 50
 --     then return (show x)
---     else raiseAs (Proxy @MyErrs) FooErr
+--     else raiseAs @MyErrs FooErr
 -- :}
 --
 -- >>> :{
@@ -210,7 +210,7 @@ rescue' action handler = either handler pure =<< try (Proxy @errs) action
 -- goesBoom x =
 --   if x > 50
 --     then return (show x)
---     else raiseAs (Proxy @MyErrs) FooErr
+--     else raiseAs @MyErrs FooErr
 -- :}
 --
 -- >>> :{

@@ -89,5 +89,8 @@ instance Monad m => MonadRescue errs (RescueT errs m) where
   try _ (RescueT action) = RescueT $ fmap Right action
 
 instance forall errs m .
-  (IsMember SomeException errs, Monad m) => MonadThrow (RescueT errs m) where
-    throwM err = raiseAs (Proxy @errs) (toException err)
+  ( IsMember SomeException errs
+  , Monad m
+  )
+  => MonadThrow (RescueT errs m) where
+    throwM err = raiseAs @errs (toException err)
