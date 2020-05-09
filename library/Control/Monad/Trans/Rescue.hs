@@ -15,7 +15,7 @@ module Control.Monad.Trans.Rescue
   , runRescue
   ) where
 
-import           Control.Monad.Catch
+import           Control.Monad.Catch hiding (try) -- FIXME: rename try with catch or attempt or something
 import           Control.Monad.Cont
 import           Control.Monad.Fix
 
@@ -25,6 +25,11 @@ import           Control.Monad.Rescue.Class
 import           Data.Functor.Identity
 import           Data.Proxy
 import           Data.WorldPeace
+
+
+
+
+import Control.Monad.Foo
 
 -- | Add type-directed error handling abilities to a 'Monad'.
 newtype RescueT errs m a
@@ -82,15 +87,21 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
       traverseEither g (Right val) = Right <$> g val
       traverseEither _ (Left  err) = pure (Left err)
 
-instance Monad m => MonadRaise errs (RescueT errs m) where
-  raise  = RescueT . pure . Left
+-- instance (Monad m, ToOpenUnion inner outer, OpenUnion outer ~ OpenUnion errs) => MonadRaise err (RescueT errs m) where
+instance (Monad m, ToOpenUnion err errs) => MonadRaise err (RescueT errs m) where
+  raise  = RescueT . pure . Left . consistent
 
-instance Monad m => MonadRescue errs (RescueT errs m) where
-  try _ (RescueT action) = RescueT $ fmap Right action
+-- instance
+--   ( Monad m
+--   , ToOpenUnion err errs
+--   )
+--   => MonadRescue err (RescueT errs m) where
+--     try (RescueT action) = RescueT $ fmap Right action
 
-instance forall errs m .
-  ( IsMember SomeException errs
-  , Monad m
-  )
-  => MonadThrow (RescueT errs m) where
-    throwM err = raiseAs @errs (toException err)
+-- FIXME
+-- instance forall errs m .
+--   ( IsMember SomeException errs
+--   , Monad m
+--   )
+--   => MonadThrow (RescueT errs m) where
+--     throwM err = raise @errs (toException err)

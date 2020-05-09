@@ -1,11 +1,15 @@
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE LambdaCase   #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | The 'MonadRescue' class
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
-import           Data.Proxy
+import           Data.Functor
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
@@ -25,7 +29,12 @@ import qualified Control.Monad.State.Strict as Strict
 
 import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
- 
+
+
+
+
+import Control.Monad.Foo
+
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -41,7 +50,7 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-class MonadRaise errs m => MonadRescue errs m where
+class MonadRaise (OpenUnion errs) m => MonadRescue errs m where
   -- | Attempt some action, exposing the success and error branches
   -- 
   --  The @Proxy@ gives a type hint to the type checker.
@@ -57,10 +66,10 @@ class MonadRaise errs m => MonadRescue errs m where
   --    goesBoom x =
   --      if x > 50
   --        then return x
-  --        else raiseAs @MyErrs FooErr
+  --        else raise @MyErrs FooErr
   -- :}
   --
-  -- >>> runRescue $ try myErrs $ goesBoom 42
+  -- >>> runRescue . try myErrs $ goesBoom 42
   -- Right (Left (Identity FooErr))
   --
   -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
@@ -70,40 +79,41 @@ class MonadRaise errs m => MonadRescue errs m where
   -- >>> let x = try myErrs (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
-  try :: Proxy errs -> m a -> m (Either (OpenUnion errs) a)
+  try :: m a -> m (Either (OpenUnion errs) a)
 
-instance MonadRescue errs (Either (OpenUnion errs)) where
-  try _ = Right
+-- instance MonadRescue errs (Either (OpenUnion errs)) where
+-- -- instance MonadRaise err (Either (OpenUnion errs)) => MonadRescue err (Either (OpenUnion errs)) where
+--   try = undefined -- Right
 
 instance MonadRescue errs m => MonadRescue errs (MaybeT m) where
-  try pxy (MaybeT action) = MaybeT . fmap sequence $ try pxy action
+  try (MaybeT action) = MaybeT . fmap sequence $ try action
 
 instance MonadRescue errs m => MonadRescue errs (IdentityT m) where
-  try pxy (IdentityT action) = IdentityT (try pxy action)
+  try (IdentityT action) = IdentityT (try action)
 
 instance MonadRescue errs m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
-  try pxy (ExceptT action) = ExceptT (try pxy action)
+  try (ExceptT action) = ExceptT (try action)
 
 instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
-  try pxy (ReaderT action) = ReaderT $ \cfg -> try pxy (action cfg)
+  try (ReaderT action) = ReaderT $ \cfg -> try (action cfg)
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-  try pxy = Lazy.WriterT . Lazy.runWriterT . try pxy
+  try = Lazy.WriterT . Lazy.runWriterT . try
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
-  try pxy = Strict.WriterT . Strict.runWriterT . try pxy
+  try = Strict.WriterT . Strict.runWriterT . try
 
 instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
-  try pxy = Lazy.StateT . Lazy.runStateT . try pxy
+  try = Lazy.StateT . Lazy.runStateT . try
 
 instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
-  try pxy = Strict.StateT . Strict.runStateT . try pxy
+  try = Strict.StateT . Strict.runStateT . try
 
 instance MonadRescue errs m => MonadRescue errs (ContT r m) where
-  try pxy = ContT . runContT . try pxy
+  try = ContT . runContT . try
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
-  try pxy = Lazy.RWST . Lazy.runRWST . try pxy
+  try = Lazy.RWST . Lazy.runRWST . try
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
-  try pxy = Strict.RWST . Strict.runRWST . try pxy
+  try = Strict.RWST . Strict.runRWST . try

@@ -1,5 +1,11 @@
+{-# LANGUAGE AllowAmbiguousTypes   #-}
+{-# LANGUAGE DefaultSignatures     #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 -- |
 
@@ -25,6 +31,12 @@ import qualified Control.Monad.State.Strict as Strict
 import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 
+
+
+
+
+import           Control.Monad.Foo
+
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -35,7 +47,7 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- >>> import Data.WorldPeace
 
 -- | Raise semantics, like a type-directed @MonadThrow@
-class Monad m => MonadRaise errs m where
+class Monad m => MonadRaise err m where
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
@@ -61,24 +73,30 @@ class Monad m => MonadRaise errs m where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: OpenUnion errs -> m a -- FIXME if you remobve the OpenUNion on JUST this class, yu can add it in the instances, and get rid of raiseAs.
+  raise :: err -> m a -- FIXME if you remobve the OpenUNion on JUST this class, yu can add it in the instances, and get rid of raiseAs.
+
+  -- default raise :: MonadRaise e m => (OpenUnion errs) -> m a
+
+-- Basics
 
 instance MonadRaise errs [] where
   raise _ = []
 
 instance MonadRaise errs Maybe where
   raise _ = Nothing
+ 
+instance ToOpenUnion err errs => MonadRaise err (Either (OpenUnion errs)) where
+  raise err = Left $ consistent err
+
+-- Transformers
 
 instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
   raise = lift . raise
 
-instance MonadRaise errs (Either (OpenUnion errs)) where
-  raise = Left
-
 instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
+instance MonadRaise errs m => MonadRaise errs (ExceptT errs m) where
   raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where

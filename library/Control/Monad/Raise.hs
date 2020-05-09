@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies    #-}
 
 -- | Monadic raise semantics & helpers
 
@@ -13,15 +14,15 @@ module Control.Monad.Raise
 
   -- * 'raise' Helpers
  
-  , raiseAs
-  , raiseTo
+  -- , raiseAs
+  -- , raiseTo
 
   -- * 'ensure' Helpers
 
   -- ** On Bare Errors
 
-  , ensureAs
-  , ensureAsM
+  -- , ensureAs
+  -- , ensureAsM
 
   -- ** On Error Collections
 
@@ -34,6 +35,8 @@ import           Control.Monad.Raise.Class
 import           Data.WorldPeace
  
 import           Rescue.Internal.Data.WorldPeace
+
+import Control.Monad.Foo
 
 -- $setup
 --
@@ -72,90 +75,90 @@ import           Rescue.Internal.Data.WorldPeace
 -- raise' :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
 -- raise' = raise (Proxy @errs)
 
--- | Raise a single error into a particular context
---
--- ==== __Examples__
---
--- >>> raiseAs @MyErrs FooErr :: Maybe Int
--- Nothing
-raiseAs :: forall errs err m a . (IsMember err errs, MonadRaise errs m) => err -> m a
-raiseAs = raise . liftAs @errs
+-- -- | Raise a single error into a particular context
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> raiseAs @MyErrs FooErr :: Maybe Int
+-- -- Nothing
+-- raiseAs :: forall errs err m a . (IsMember err errs, MonadRaise errs m) => err -> m a
+-- raiseAs = raise . liftAs @errs
 
--- | Raise an existing error union to a wider union
---
--- ==== __Examples__
---
--- >>> let smallErr = openUnionLift FooErr :: OpenUnion MyErrs
--- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
--- >>> raiseTo @BigErrs smallErr :: Maybe Int
--- Nothing
-raiseTo :: forall outer inner m a .
-  ( Contains inner outer
-  , MonadRaise outer m
-  )
-  => OpenUnion inner
-  -> m a
-raiseTo = raise @outer . relaxTo @outer
+-- -- | Raise an existing error union to a wider union
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> let smallErr = openUnionLift FooErr :: OpenUnion MyErrs
+-- -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
+-- -- >>> raiseTo @BigErrs smallErr :: Maybe Int
+-- -- Nothing
+-- raiseTo :: forall outer inner m a .
+--   ( Contains inner outer
+--   , MonadRaise outer m
+--   )
+--   => OpenUnion inner
+--   -> m a
+-- raiseTo = raise @outer . relaxTo @outer
 
--- | Lift a pure result to a @MonadRaise@ context
---
--- ==== __Examples__
---
--- >>> :{
---   mayFail :: Int -> Either FooErr Int
---   mayFail n =
---     if n > 50
---       then Left FooErr
---       else Right n
--- :}
---
--- >>> :{
---   foo :: MonadRaise MyErrs m => m Int
---   foo = do
---     first  <- ensureAs @MyErrs $ mayFail 100
---     second <- ensureAs @MyErrs $ mayFail first
---     return (second * 10)
--- :}
---
--- >>> foo :: Maybe Int
--- Nothing
-ensureAs :: forall errs err m a .
-  ( IsMember err errs
-  , MonadRaise errs m
-  )
-  => Either err a
-  -> m a
-ensureAs = either (raiseAs @errs) pure
+-- -- | Lift a pure result to a @MonadRaise@ context
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> :{
+-- --   mayFail :: Int -> Either FooErr Int
+-- --   mayFail n =
+-- --     if n > 50
+-- --       then Left FooErr
+-- --       else Right n
+-- -- :}
+-- --
+-- -- >>> :{
+-- --   foo :: MonadRaise MyErrs m => m Int
+-- --   foo = do
+-- --     first  <- ensureAs @MyErrs $ mayFail 100
+-- --     second <- ensureAs @MyErrs $ mayFail first
+-- --     return (second * 10)
+-- -- :}
+-- --
+-- -- >>> foo :: Maybe Int
+-- -- Nothing
+-- ensureAs :: forall errs err m a .
+--   ( ToOpenUnion err errs
+--   , MonadRaise errs m
+--   )
+--   => Either err a
+--   -> m a
+-- ensureAs = either (raise @errs) pure
 
--- | Like @ensure1@, but takes a monadic argument
---
--- ==== __Examples__
---
--- >>> :{
---   mayFailM :: Monad m => Int -> m (Either FooErr Int)
---   mayFailM n =
---     return $ if n > 50
---       then Left FooErr
---       else Right n
--- :}
---
--- >>> :{
---   foo :: MonadRaise MyErrs m => m Int
---   foo = do
---     first  <- ensureAsM @MyErrs $ mayFailM 100
---     second <- ensureAsM @MyErrs $ mayFailM first
---     return (second * 10)
--- :}
---
--- >>> foo :: Maybe Int
--- Nothing
-ensureAsM :: forall errs err m a .
-  ( IsMember err errs
-  , MonadRaise errs m
-  )
-  => m (Either err a)
-  -> m a
-ensureAsM action = ensureAs @errs =<< action
+-- -- | Like @ensure1@, but takes a monadic argument
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> :{
+-- --   mayFailM :: Monad m => Int -> m (Either FooErr Int)
+-- --   mayFailM n =
+-- --     return $ if n > 50
+-- --       then Left FooErr
+-- --       else Right n
+-- -- :}
+-- --
+-- -- >>> :{
+-- --   foo :: MonadRaise MyErrs m => m Int
+-- --   foo = do
+-- --     first  <- ensureAsM @MyErrs $ mayFailM 100
+-- --     second <- ensureAsM @MyErrs $ mayFailM first
+-- --     return (second * 10)
+-- -- :}
+-- --
+-- -- >>> foo :: Maybe Int
+-- -- Nothing
+-- ensureAsM :: forall errs err m a .
+--   ( IsMember err errs
+--   , MonadRaise errs m
+--   )
+--   => m (Either err a)
+--   -> m a
+-- ensureAsM action = ensureAs @errs =<< action
 
 -- | Lift a pure error (@Either@) into a @MonadRaise@ context
 -- i.e. Turn @Left@s into @raise@s.
@@ -180,13 +183,14 @@ ensureAsM action = ensureAs @errs =<< action
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensure :: forall outer inner m a .
-  ( Contains inner outer
-  , MonadRaise outer m
+ensure :: forall outer inner m a errs .
+  ( ToOpenUnion inner outer
+  , MonadRaise (OpenUnion outer) m
+  , errs ~ OpenUnion outer
   )
-  => Either (OpenUnion inner) a
+  => Either inner a
   -> m a
-ensure = either (raiseTo @outer) pure
+ensure = either (raise @errs . consistent) pure
 
 -- | A version of @ensure@ that takes monadic actions
 --
@@ -212,10 +216,11 @@ ensure = either (raiseTo @outer) pure
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensureM :: forall outer inner m a .
-  ( Contains inner outer
-  , MonadRaise outer m
+ensureM :: forall outer inner m a errs .
+  ( ToOpenUnion inner outer
+  , MonadRaise (OpenUnion outer) m
+  , errs ~ OpenUnion outer
   )
-  => m (Either (OpenUnion inner) a)
+  => m (Either inner a)
   -> m a
-ensureM action = either (raiseTo @outer) pure =<< action
+ensureM action = either (raise @errs . consistent) pure =<< action

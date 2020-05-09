@@ -22,14 +22,14 @@ module Control.Monad.Rescue
  
   -- * 'try' Helpers
  
-  , try'
+  -- , try'
  
   , rescue
   , rescue'
   -- , rescueWith
 
-  , rescueM
-  , rescueM'
+  -- , rescueM
+  -- , rescueM'
  
   -- -- , reraiseTo
   -- , handle
@@ -38,7 +38,7 @@ module Control.Monad.Rescue
   , cleanup''
  
   , finally
-  , finally'
+  -- , finally'
   ) where
 
 import           Control.Monad.Raise
@@ -49,38 +49,40 @@ import           Data.WorldPeace
 
 
 
+import Control.Monad.Foo
+
 -- import Rescue.Internal.Data.WorldPeace
 
--- $setup
---
--- >>> :set -XDataKinds
--- >>> :set -XFlexibleContexts
--- >>> :set -XTypeApplications
---
--- >>> import Control.Monad.Trans.Rescue
--- >>> import Data.Proxy
--- >>> import Data.WorldPeace as OpenUnion
---
--- >>> data FooErr  = FooErr  deriving Show
--- >>> data BarErr  = BarErr  deriving Show
--- >>> data QuuxErr = QuuxErr deriving Show
+-- -- $setup
+-- --
+-- -- >>> :set -XDataKinds
+-- -- >>> :set -XFlexibleContexts
+-- -- >>> :set -XTypeApplications
+-- --
+-- -- >>> import Control.Monad.Trans.Rescue
+-- -- >>> import Data.Proxy
+-- -- >>> import Data.WorldPeace as OpenUnion
+-- --
+-- -- >>> data FooErr  = FooErr  deriving Show
+-- -- >>> data BarErr  = BarErr  deriving Show
+-- -- >>> data QuuxErr = QuuxErr deriving Show
 
--- | A version of 'try' that infers the 'Proxy' from context
---
--- >>> type MyErrs = '[FooErr, BarErr]
---
--- >>> :{
---  goesBoom :: Int -> Rescue MyErrs Int
---  goesBoom x =
---    if x > 50
---      then return x
---      else raiseAs @MyErrs FooErr
--- :}
---
--- >>> try' $ goesBoom 42 :: Rescue MyErrs ((Either (OpenUnion MyErrs) Int))
--- RescueT (Identity (Right (Left (Identity FooErr))))
-try' :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
-try' = try (Proxy @errs)
+-- -- | A version of 'try' that infers the 'Proxy' from context
+-- --
+-- -- >>> type MyErrs = '[FooErr, BarErr]
+-- --
+-- -- >>> :{
+-- --  goesBoom :: Int -> Rescue MyErrs Int
+-- --  goesBoom x =
+-- --    if x > 50
+-- --      then return x
+-- --      else raiseAs @MyErrs FooErr
+-- -- :}
+-- --
+-- -- >>> try' $ goesBoom 42 :: Rescue MyErrs ((Either (OpenUnion MyErrs) Int))
+-- -- RescueT (Identity (Right (Left (Identity FooErr))))
+-- try' :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
+-- try' = try @errs
 
 -- -- | FIXME add one-liner
 -- --
@@ -138,37 +140,35 @@ try' = try (Proxy @errs)
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
 -- >>> rescue myErrs (goesBoom 42) (pure . handler)
 -- RescueT (Identity (Right "Foo: FooErr"))
-rescue :: forall m a errs .
+rescue :: forall errs err m a .
   MonadRescue errs m
-  => Proxy errs
-  -> m a
+  => m a
   -> (OpenUnion errs -> m a)
   -> m a
-rescue pxy action handler = either handler pure =<< try pxy action
+rescue action handler = either handler pure =<< try action
 
--- | FIXME add one-liner
---
--- >>> type MyErrs = '[FooErr, BarErr]
--- >>> myErrs = Proxy @MyErrs
---
--- >>> :{
--- goesBoom :: Int -> Rescue MyErrs String
--- goesBoom x =
---   if x > 50
---     then return (show x)
---     else raiseAs @MyErrs FooErr
--- :}
---
--- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
--- >>> rescueM myErrs (goesBoom 42) handler
--- RescueT (Identity (Right "Foo: FooErr"))
-rescueM :: forall m a errs .
-  MonadRescue errs m
-  => Proxy errs
-  -> m a
-  -> (OpenUnion errs -> a)
-  -> m a
-rescueM pxy action handler = rescue pxy action (pure . handler)
+-- -- | FIXME add one-liner
+-- --
+-- -- >>> type MyErrs = '[FooErr, BarErr]
+-- -- >>> myErrs = Proxy @MyErrs
+-- --
+-- -- >>> :{
+-- -- goesBoom :: Int -> Rescue MyErrs String
+-- -- goesBoom x =
+-- --   if x > 50
+-- --     then return (show x)
+-- --     else raiseAs @MyErrs FooErr
+-- -- :}
+-- --
+-- -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
+-- -- >>> rescueM myErrs (goesBoom 42) handler
+-- -- RescueT (Identity (Right "Foo: FooErr"))
+-- rescueM :: forall m a errs .
+--   MonadRescue errs m
+--   => m a
+--   -> (OpenUnion errs -> a)
+--   -> m a
+-- rescueM action handler = rescue action (pure . handler)
 
 -- | FIXME add one-liner
 --
@@ -198,7 +198,7 @@ rescue' :: forall m a errs .
   => m a
   -> (OpenUnion errs -> m a)
   -> m a
-rescue' action handler = either handler pure =<< try (Proxy @errs) action
+rescue' action handler = either handler pure =<< try action
 
 -- | FIXME add one-liner
 --
@@ -223,12 +223,12 @@ rescue' action handler = either handler pure =<< try (Proxy @errs) action
 --
 -- >>> rescueM' (goesBoom 42) handler :: Rescue MyErrs String
 -- RescueT (Identity (Right "Foo: FooErr"))
-rescueM' :: forall m a errs .
-  MonadRescue errs m
-  => m a
-  -> (OpenUnion errs -> a)
-  -> m a
-rescueM' action handler = rescue' action (pure . handler)
+-- rescueM' :: forall m a errs .
+--   MonadRescue errs m
+--   => m a
+--   -> (OpenUnion errs -> a)
+--   -> m a
+-- rescueM' action handler = rescue' action (pure . handler)
 
 -- cleanup :: forall inner outer m resource output ignored1 ignored2 .
 --   ( Contains    inner outer
@@ -253,12 +253,11 @@ rescueM' action handler = rescue' action (pure . handler)
 
 finally :: forall errs m a b .
   MonadRescue errs m
-  => Proxy errs
-  -> m a
+  => m a
   -> m b
   -> m a
-finally pxy action finalizer =
-  try pxy action >>= \case
+finally action finalizer =
+  try @errs action >>= \case
     Right val -> do
       _ <- finalizer
       return val
@@ -267,8 +266,8 @@ finally pxy action finalizer =
       _ <- finalizer
       raise err
 
-finally' :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
-finally' = finally (Proxy @errs)
+-- finally' :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
+-- finally' = finally (Proxy @errs)
 
 cleanup'' :: forall errs m a resource _ignored1 _ignored2 .
   MonadRescue errs m
@@ -279,7 +278,7 @@ cleanup'' :: forall errs m a resource _ignored1 _ignored2 .
   -> m a
 cleanup'' acquire onErr onOk action = do
   resource <- acquire
-  try' (action resource) >>= \case
+  try (action resource) >>= \case
     Left err -> do
       _ <- onErr resource err
       raise err
