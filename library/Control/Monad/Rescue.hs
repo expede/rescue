@@ -47,6 +47,10 @@ import           Control.Monad.Rescue.Class
 import           Data.Proxy
 import           Data.WorldPeace
 
+
+
+import Rescue.Internal.Data.WorldPeace
+
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -95,8 +99,9 @@ try' = try (Proxy @errs)
 -- outerBoom :: [x] -> Rescue OuterErrs [x]
 -- outerBoom [] = return []
 -- outerBoom list@(x:xs) = do
---   okCount <- reraiseTo (Proxy @OuterErrs) (Proxy @InnerErrs) $ innerBoom (length list)
---   return $ take okCount $ repeat x
+--   let attempt = innerBoom (length list)
+--   okCount <- reraiseTo (Proxy @OuterErrs) (Proxy @OuterErrs) attempt
+--   return . take okCount $ repeat x
 -- :}
 --
 -- >>> outerBoom [1,2,3]
@@ -112,9 +117,9 @@ reraiseTo :: forall inner outer m a .
   -> m a
   -> m a
 reraiseTo pxyO pxyI action =
-  case sequence $ try pxyI action of
-    Left  err  -> raiseTo pxyO err -- has outer errs
-    Right mVal -> mVal -- has inner errors
+  case sequence (try pxyI action) :: Either (OpenUnion inner) (m a) of
+    Left  err  -> raise pxyO $ (relaxTo pxyO err :: OpenUnion outer) -- raiseTo pxyO err -- has outer errs
+    Right mVal -> (mVal :: m a) -- has inner errors
 
 -- | FIXME add one-liner
 --
