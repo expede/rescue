@@ -56,54 +56,54 @@ class Monad m => MonadRaise errs m where
   --  goesBoom x =
   --    if x > 50
   --      then return x
-  --      else raise myErrs fooErr
+  --      else raise @MyErrs fooErr
   -- :}
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: Proxy errs -> OpenUnion errs -> m a
+  raise :: OpenUnion errs -> m a
 
 instance MonadRaise errs [] where
-  raise _ _ = []
+  raise _ = []
 
 instance MonadRaise errs Maybe where
-  raise _ _ = Nothing
+  raise _ = Nothing
 
 instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs (Either (OpenUnion errs)) where
-  raise _ = Left
+  raise = Left
 
 instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (CatchT m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (ContT r m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Lazy.WriterT w m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Strict.WriterT w m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Lazy.RWST r w s m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise
 
 instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Strict.RWST r w s m) where
-  raise pxy = lift . raise pxy
+  raise = lift . raise

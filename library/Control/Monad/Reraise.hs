@@ -59,7 +59,7 @@ cleanup pxyO acquire onErr onOk action = do
   try pxyO (action resource) >>= \case
     Left err -> do
       _ <- onErr resource err
-      raise pxyO err
+      raise err
 
     Right output -> do
       _ <- onOk resource output

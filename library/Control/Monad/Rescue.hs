@@ -82,44 +82,45 @@ import Rescue.Internal.Data.WorldPeace
 try' :: forall m a errs . MonadRescue errs m => m a -> m (Either (OpenUnion errs) a)
 try' = try (Proxy @errs)
 
--- | FIXME add one-liner
---
--- >>> type InnerErrs = '[FooErr, BarErr]
--- >>> type OuterErrs = '[FooErr, BarErr, QuuxErr]
---
--- >>> :{
--- innerBoom :: Int -> Rescue InnerErrs Int
--- innerBoom x =
---   if x > 50
---     then return x
---     else raiseAs (Proxy @InnerErrs) FooErr
--- :}
---
--- >>> :{
--- outerBoom :: [x] -> Rescue OuterErrs [x]
--- outerBoom [] = return []
--- outerBoom list@(x:xs) = do
---   let attempt = innerBoom (length list)
---   okCount <- reraiseTo (Proxy @OuterErrs) (Proxy @OuterErrs) attempt
---   return . take okCount $ repeat x
--- :}
---
--- >>> outerBoom [1,2,3]
--- RescueT (Identity (Right (Left (Identity FooErr))))
-reraiseTo :: forall inner outer m a .
-  ( Contains    inner outer
-  , MonadRescue inner       m
-  , MonadRaise        outer m
-  , Traversable m
-  )
-  => Proxy outer
-  -> Proxy inner
-  -> m a
-  -> m a
-reraiseTo pxyO pxyI action =
-  case sequence (try pxyI action) :: Either (OpenUnion inner) (m a) of
-    Left  err  -> raise pxyO $ (relaxTo pxyO err :: OpenUnion outer) -- raiseTo pxyO err -- has outer errs
-    Right mVal -> (mVal :: m a) -- has inner errors
+-- -- | FIXME add one-liner
+-- --
+-- -- >>> type InnerErrs = '[FooErr, BarErr]
+-- -- >>> type OuterErrs = '[FooErr, BarErr, QuuxErr]
+-- --
+-- -- >>> :{
+-- -- innerBoom :: Int -> Rescue InnerErrs Int
+-- -- innerBoom x =
+-- --   if x > 50
+-- --     then return x
+-- --     else raiseAs (Proxy @InnerErrs) FooErr
+-- -- :}
+-- --
+-- -- >>> :{
+-- -- outerBoom :: [x] -> Rescue OuterErrs [x]
+-- -- outerBoom [] = return []
+-- -- outerBoom list@(x:xs) = do
+-- --   let attempt = (innerBoom (length list) :: Rescue InnerErrs Int)
+-- --   okCount <- reraiseTo (Proxy @OuterErrs) (Proxy @InnerErrs) attempt
+-- --   return . take okCount $ repeat x
+-- -- :}
+-- --
+-- -- >>> outerBoom [1,2,3] :: Rescue OuterErrs [Int]
+-- -- RescueT (Identity (Right (Left (Identity FooErr))))
+-- reraiseTo :: forall inner outer m n a .
+--   ( Contains    inner outer
+--   , MonadRescue inner       n
+--   , MonadRaise        outer m
+--   , Traversable n
+--   , n ~ m
+--   )
+--   => Proxy outer
+--   -> Proxy inner
+--   -> n a
+--   -> m a
+-- reraiseTo pxyO pxyI action =
+--   case sequence (try pxyI action) :: Either (OpenUnion inner) (m a) of
+--     Left  err  -> raise @outer $ (relaxTo pxyO err :: OpenUnion outer) -- raiseTo pxyO err -- has outer errs
+--     Right mVal -> (mVal :: m a) -- has inner errors
 
 -- | FIXME add one-liner
 --
@@ -220,7 +221,7 @@ rescue' action handler = either handler pure =<< try (Proxy @errs) action
 --     )
 -- :}
 --
--- >>> rescueM' (goesBoom 42) (pure . handler) :: Rescue MyErrs String
+-- >>> rescueM' (goesBoom 42) handler :: Rescue MyErrs String
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescueM' :: forall m a errs .
   MonadRescue errs m
@@ -264,7 +265,7 @@ finally pxy action finalizer =
 
     Left err -> do
       _ <- finalizer
-      raise pxy err
+      raise err
 
 finally' :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
 finally' = finally (Proxy @errs)
@@ -281,7 +282,7 @@ cleanup'' acquire onErr onOk action = do
   try' (action resource) >>= \case
     Left err -> do
       _ <- onErr resource err
-      raise' err
+      raise err
 
     Right output -> do
       _ <- onOk resource output

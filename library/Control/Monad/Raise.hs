@@ -13,7 +13,7 @@ module Control.Monad.Raise
 
   -- * 'raise' Helpers
  
-  , raise'
+  -- , raise'
   , raiseAs
   , raiseTo
 
@@ -52,27 +52,27 @@ import           Rescue.Internal.Data.WorldPeace
 -- >>>
 -- >>> type MyErrs = '[FooErr, BarErr]
 
--- | Raise an open sum error
---
--- A specialized version of @raise@,
--- which infers taht the error context is an exact match
---
--- ==== __Examples__
---
--- >>> let fooErr = openUnionLift FooErr :: OpenUnion MyErrs
--- >>>
--- >>> :{
---  goesBoom :: MonadRaise MyErrs m => Int -> m Int
---  goesBoom x =
---    if x > 50
---      then return x
---      else raise' fooErr
--- :}
---
--- >>> goesBoom 42 :: Maybe Int
--- Nothing
-raise' :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
-raise' = raise (Proxy @errs)
+-- -- | Raise an open sum error
+-- --
+-- -- A specialized version of @raise@,
+-- -- which infers taht the error context is an exact match
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> let fooErr = openUnionLift FooErr :: OpenUnion MyErrs
+-- -- >>>
+-- -- >>> :{
+-- --  goesBoom :: MonadRaise MyErrs m => Int -> m Int
+-- --  goesBoom x =
+-- --    if x > 50
+-- --      then return x
+-- --      else raise' fooErr
+-- -- :}
+-- --
+-- -- >>> goesBoom 42 :: Maybe Int
+-- -- Nothing
+-- raise' :: forall errs m a . MonadRaise errs m => OpenUnion errs -> m a
+-- raise' = raise (Proxy @errs)
 
 -- | Raise a single error into a particular context
 --
@@ -81,7 +81,7 @@ raise' = raise (Proxy @errs)
 -- >>> raiseAs (Proxy @MyErrs) FooErr :: Maybe Int
 -- Nothing
 raiseAs :: (IsMember err errs, MonadRaise errs m) => Proxy errs -> err -> m a
-raiseAs proxy = raise' . liftAs proxy
+raiseAs proxy = raise . liftAs proxy
 
 -- | Raise an existing error union to a wider union
 --
@@ -99,7 +99,7 @@ raiseTo :: forall inner outer m a .
   => Proxy outer
   -> OpenUnion inner
   -> m a
-raiseTo proxy = raise' . relaxTo proxy
+raiseTo proxy = raise @outer . relaxTo proxy
 
 -- | Lift a pure result to a @MonadRaise@ context
 --
