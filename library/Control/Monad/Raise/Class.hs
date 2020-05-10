@@ -58,10 +58,13 @@ instance MonadRaise errs [] where
 instance MonadRaise errs Maybe where
   raise _ = Nothing
 
+instance MonadRaise (OpenUnion errs) (Either (OpenUnion errs)) where
+  raise err = Left err
+
 instance IsMember err errs => MonadRaise err (Either (OpenUnion errs)) where
   raise err = Left $ openUnionLift err
 
-instance Contains inner errs => MonadRaise (OpenUnion inner) (Either (OpenUnion errs)) where
+instance Contains inner outer => MonadRaise (OpenUnion inner) (Either (OpenUnion outer)) where
   raise err = Left $ relaxOpenUnion err
 
 instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
