@@ -90,38 +90,41 @@ instance ToOpenUnion err errs => MonadRaise err (Either (OpenUnion errs)) where
 
 -- Transformers
 
-instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
+instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ExceptT errs m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (ExceptT errs m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (CatchT m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ContT r m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (CatchT m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (ContT r m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
+--   raise = lift . raise
 
-instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Lazy.WriterT w m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
+--   raise = lift . raise
 
-instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Strict.WriterT w m) where
-  raise = lift . raise
+-- instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Lazy.WriterT w m) where
+--   raise = lift . raise
 
-instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Lazy.RWST r w s m) where
-  raise = lift . raise
+-- instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Strict.WriterT w m) where
+--   raise = lift . raise
 
-instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Strict.RWST r w s m) where
-  raise = lift . raise
+-- instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Lazy.RWST r w s m) where
+--   raise = lift . raise
+
+-- instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Strict.RWST r w s m) where
+--   raise = lift . raise

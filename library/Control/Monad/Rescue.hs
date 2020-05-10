@@ -25,7 +25,7 @@ module Control.Monad.Rescue
   -- , try'
  
   , rescue
-  , rescue'
+  -- , rescue'
   -- , rescueWith
 
   -- , rescueM
@@ -35,7 +35,7 @@ module Control.Monad.Rescue
   -- , handle
   -- , handleOne
 
-  , cleanup''
+  , cleanup
  
   , finally
   -- , finally'
@@ -147,6 +147,50 @@ rescue :: forall errs err m a .
   -> m a
 rescue action handler = either handler pure =<< try action
 
+-- -- | A version of @ensure@ that takes monadic actions
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> :{
+-- --   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)
+-- --   mayFailM n =
+-- --     return $ if n > 50
+-- --       then Left (openUnionLift FooErr)
+-- --       else Right n
+-- -- :}
+-- --
+-- -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
+-- --
+-- -- >>> :{
+-- --   foo :: MonadRaise BigErrs m => m Int
+-- --   foo = do
+-- --     first  <- ensureM @BigErrs $ mayFailM 100
+-- --     second <- ensureM @BigErrs $ mayFailM first
+-- --     return (second * 10)
+-- -- :}
+-- --
+-- -- >>> foo :: Maybe Int
+-- -- Nothing
+-- ensureM :: forall outer inner m a errs .
+--   ( ToOpenUnion inner outer
+--   , MonadRaise (OpenUnion outer) m
+--   , errs ~ OpenUnion outer
+--   )
+--   => m (Either inner a)
+--   -> m a
+-- ensureM action = ensure =<< try action
+
+-- reraise :: forall outerErr innerErr n m a .
+--   ( ToOpenUnion (OpenUnion innerErr) outerErr
+--   , MonadRaise (OpenUnion outerErr) m
+--   , MonadRescue innerErr n
+--   )
+--   => n a
+--   -> m a
+-- reraise action = try action >>= \case
+--   Left  innerErr -> raise @(OpenUnion outerErr) $ consistent innerErr
+--   Right value    -> pure value
+
 -- -- | FIXME add one-liner
 -- --
 -- -- >>> type MyErrs = '[FooErr, BarErr]
@@ -170,35 +214,35 @@ rescue action handler = either handler pure =<< try action
 --   -> m a
 -- rescueM action handler = rescue action (pure . handler)
 
--- | FIXME add one-liner
---
--- >>> type MyErrs = '[FooErr, BarErr]
--- >>> myErrs = Proxy @MyErrs
---
--- >>> :{
--- goesBoom :: Int -> Rescue MyErrs String
--- goesBoom x =
---   if x > 50
---     then return (show x)
---     else raiseAs @MyErrs FooErr
--- :}
---
--- >>> :{
---   handler :: OpenUnion MyErrs -> String
---   handler = catchesOpenUnion
---     ( \foo -> "Foo: " <> show foo
---     , \bar -> "Bar: " <> show bar
---     )
--- :}
--- 
--- >>> rescue' (goesBoom 42) (pure . handler) :: Rescue MyErrs String
--- RescueT (Identity (Right "Foo: FooErr"))
-rescue' :: forall m a errs .
-  MonadRescue errs m
-  => m a
-  -> (OpenUnion errs -> m a)
-  -> m a
-rescue' action handler = either handler pure =<< try action
+-- -- | FIXME add one-liner
+-- --
+-- -- >>> type MyErrs = '[FooErr, BarErr]
+-- -- >>> myErrs = Proxy @MyErrs
+-- --
+-- -- >>> :{
+-- -- goesBoom :: Int -> Rescue MyErrs String
+-- -- goesBoom x =
+-- --   if x > 50
+-- --     then return (show x)
+-- --     else raiseAs @MyErrs FooErr
+-- -- :}
+-- --
+-- -- >>> :{
+-- --   handler :: OpenUnion MyErrs -> String
+-- --   handler = catchesOpenUnion
+-- --     ( \foo -> "Foo: " <> show foo
+-- --     , \bar -> "Bar: " <> show bar
+-- --     )
+-- -- :}
+-- --
+-- -- >>> rescue' (goesBoom 42) (pure . handler) :: Rescue MyErrs String
+-- -- RescueT (Identity (Right "Foo: FooErr"))
+-- rescue' :: forall m a errs .
+--   MonadRescue errs m
+--   => m a
+--   -> (OpenUnion errs -> m a)
+--   -> m a
+-- rescue' action handler = either handler pure =<< try action
 
 -- | FIXME add one-liner
 --
@@ -267,16 +311,15 @@ finally action finalizer =
       raise err
 
 -- finally' :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
--- finally' = finally (Proxy @errs)
-
-cleanup'' :: forall errs m a resource _ignored1 _ignored2 .
+-- finally' = finally (Proxy @
+cleanup :: forall errs m a resource _ignored1 _ignored2 .
   MonadRescue errs m
   => m resource
   -> (resource -> OpenUnion errs -> m _ignored1)
   -> (resource ->   a            -> m _ignored2)
   -> (resource -> m a)
   -> m a
-cleanup'' acquire onErr onOk action = do
+cleanup acquire onErr onOk action = do
   resource <- acquire
   try (action resource) >>= \case
     Left err -> do

@@ -18,25 +18,42 @@ import Control.Monad.Raise
 import           Data.Proxy
 import           Data.WorldPeace
 
+
+
+ 
+
 import Control.Monad.Foo
 
--- FIXME So, I gues sthis is just a MonadRaise function!
-reraise :: forall outerErrs innerErrs m a .
-  ( ToOpenUnion innerErrs outerErrs
-  , MonadRaise (OpenUnion outerErrs) m
-  )
-  => Proxy outerErrs
-  -> Either innerErrs a
-  -> a
-  -> m a
-reraise _pxy action fallback =
-  case action of
-    Left err -> do
-      _ <- raise @(OpenUnion outerErrs) $ consistent err
-      return fallback
+import           Data.Proxy
+import           Data.WorldPeace
 
-    Right val ->
-      pure val
+import           Control.Monad.Catch.Pure
+import           Control.Monad.Cont
+
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Identity
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Reader
+
+import qualified Control.Monad.RWS.Lazy   as Lazy
+import qualified Control.Monad.RWS.Strict as Strict
+
+import qualified Control.Monad.State.Lazy   as Lazy
+import qualified Control.Monad.State.Strict as Strict
+
+import qualified Control.Monad.Writer.Lazy   as Lazy
+import qualified Control.Monad.Writer.Strict as Strict
+
+
+-- FIXME So, I gues sthis is just a MonadRaise function!
+-- FIXME needs a better name / ensure
+-- reraise :: forall err(ToOpenUnion errs outer, MonadRaise (OpenUnion outer) m) => Either errs a -> m a
+-- reraise = \case
+--   Right val -> pure val
+--   Left  err -> raise @(OpenUnion outer) $ consistent err
+
+-- reraiseM :: MonadRaise innerErrs m => m (Either innerErrs a) -> m a
+-- reraiseM action = reraise =<< action
 
 -- -- NOTE TO SELF: this shoudl actaully just be a natual transformation, i.e. n a -> m a, becasue n and m have all the error carrying info
 -- class MonadRaise outerErrs m => MonadReraise innerErrs outerErrs m where
@@ -44,8 +61,25 @@ reraise _pxy action fallback =
 --   -- ^ TODO: rename function to `relax` or `relaxErr`? `recontextualize`?
 --   -- ^ TODO: rename class to `MonadCleanup`?
 
+class MonadReraise n m where
+  recontextualize :: n a -> m a
+ 
+instance MonadReraise m m where
+  recontextualize action = action
+
 -- instance MonadReraise errs errs m where
 --   reraise action = action
+ 
+-- reraise :: forall outerErr innerErr n m a .
+--   ( ToOpenUnion (OpenUnion innerErr) outerErr
+--   , MonadRaise (OpenUnion outerErr) m
+--   , MonadRescue innerErr n
+--   )
+--   => n a
+--   -> m a
+-- reraise = try action >>= \case
+--   Left  innerErr -> raise @(OpenUnion outerErr) $ consistent innerErr
+--   Right value    -> pure value
 
 -- recontextualize :: MonadReraise outer m n => Proxy outer -> m a -> n a
 -- recontextualize = reraise
@@ -53,38 +87,72 @@ reraise _pxy action fallback =
 -- rectx :: MonadReraise outer m n => Proxy outer -> m a -> n a
 -- rectx = recontextualize
 
--- instance MonadReraise m m where
---   reraise action = action
-
 -- instance (ToOpenUnion inner outer, MonadRaise (OpenUnion outer) m, MonadRescue inner n) => MonadReraise n m where
 --   reraise action = try action >>= \case
 
--- instance MonadReraise [] Maybe where
---   reraise [] = Nothing
+instance MonadReraise Maybe [] where
+  recontextualize Nothing  = []
+  recontextualize (Just x) = [x]
 
--- instance MonadReraise Maybe [] where
---   reraise Nothing = []
+instance MonadReraise (Either errs) Maybe where
+  recontextualize (Left  _)   = Nothing
+  recontextualize (Right val) = Just val
 
--- instance MonadReraise (Either errs) Maybe where
---   reraise (Left  _)   = Nothing
---   reraise (Right val) = Just val
+instance MonadReraise (Either errs) [] where
+  recontextualize (Left  _)   = []
+  recontextualize (Right val) = [val]
 
--- instance MonadReraise (Either errs) [] where
---   reraise (Left  _)   = []
---   reraise (Right val) = [val]
+instance ToOpenUnion inner outer => MonadReraise (Either inner) (Either (OpenUnion outer)) where
+  recontextualize (Left err)  = raise err
+  recontextualize (Right val) = pure val
 
--- instance ToOpenUnion inner outer => MonadReraise (Either inner) (Either (OpenUnion outer)) where
---   reraise action =
---     case action of
---       Left  err -> Left $ consistent err -- FIXME perhaps rename consistent to recontextualize?
---       Right val -> Right val
+-- Transformers
+
+-- instance (Monad m, MonadReraise n m) => MonadReraise n (MaybeT m) where
+--   recontextualize = lift . recontextualize
+
+instance (Monad m, MonadTrans t, MonadReraise n m) => MonadReraise n (t m) where
+  recontextualize = lift . recontextualize
+
+-- reraise action = try action
+
+-- instance MonadReraise n m => MonadReraise n (IdentityT m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise n (ExceptT errs m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise errs (ReaderT cfg m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise errs (CatchT m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise errs (ContT r m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise errs (Lazy.StateT s m) where
+--   recontextualize = lift . recontextualize
+
+-- instance MonadReraise n m => MonadReraise errs (Strict.StateT s m) where
+--   recontextualize = lift . recontextualize
+
+-- instance (Monoid w, MonadReraise errs m) => MonadReraise errs (Lazy.WriterT w m) where
+--   recontextualize = lift . recontextualize
+
+-- instance (Monoid w, MonadReraise errs m) => MonadReraise errs (Strict.WriterT w m) where
+--   recontextualize = lift . recontextualize
+
+-- instance (MonadReraise errs m, Monoid w) => MonadReraise errs (Lazy.RWST r w s m) where
+--   recontextualize = lift . recontextualize
+
+-- instance (MonadReraise errs m, Monoid w) => MonadReraise errs (Strict.RWST r w s m) where
+--   recontextualize = lift . recontextualize
 
 -- data NotFound subject = NotFound
-
--- instance IsMember (NotFound subject) errs => MonadReraise Maybe (Either (OpenUnion errs)) where
---   reraise Nothing  = raise NotFound
---   reraise Just val = pure val
-
+-- instance forall subject errs . IsMember (NotFound subject) errs => MonadReraise Maybe (Either (OpenUnion errs)) where
+--   recontextualize Nothing    = raise (NotFound @subject)
+--   recontextualize (Just val) = pure val
 
 -- -- instance IsMember err errs =>
 -- --   MonadReraise errs (Either err) (Either (OpenUnion errs)) where

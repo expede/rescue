@@ -3,6 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE LambdaCase   #-}
 
 -- | Monadic raise semantics & helpers
 
@@ -27,7 +28,7 @@ module Control.Monad.Raise
   -- ** On Error Collections
 
   , ensure
-  , ensureM
+  -- , ensureM
   ) where
 
 import           Control.Monad.Raise.Class
@@ -190,37 +191,39 @@ ensure :: forall outer inner m a errs .
   )
   => Either inner a
   -> m a
-ensure = either (raise @errs . consistent) pure
+ensure = \case
+  Left  err -> raise @errs (consistent err)
+  Right val -> pure val
 
--- | A version of @ensure@ that takes monadic actions
---
--- ==== __Examples__
---
--- >>> :{
---   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)
---   mayFailM n =
---     return $ if n > 50
---       then Left (openUnionLift FooErr)
---       else Right n
--- :}
---
--- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
---
--- >>> :{
---   foo :: MonadRaise BigErrs m => m Int
---   foo = do
---     first  <- ensureM @BigErrs $ mayFailM 100
---     second <- ensureM @BigErrs $ mayFailM first
---     return (second * 10)
--- :}
---
--- >>> foo :: Maybe Int
--- Nothing
-ensureM :: forall outer inner m a errs .
-  ( ToOpenUnion inner outer
-  , MonadRaise (OpenUnion outer) m
-  , errs ~ OpenUnion outer
-  )
-  => m (Either inner a)
-  -> m a
-ensureM action = either (raise @errs . consistent) pure =<< action
+-- -- | A version of @ensure@ that takes monadic actions
+-- --
+-- -- ==== __Examples__
+-- --
+-- -- >>> :{
+-- --   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)
+-- --   mayFailM n =
+-- --     return $ if n > 50
+-- --       then Left (openUnionLift FooErr)
+-- --       else Right n
+-- -- :}
+-- --
+-- -- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
+-- --
+-- -- >>> :{
+-- --   foo :: MonadRaise BigErrs m => m Int
+-- --   foo = do
+-- --     first  <- ensureM @BigErrs $ mayFailM 100
+-- --     second <- ensureM @BigErrs $ mayFailM first
+-- --     return (second * 10)
+-- -- :}
+-- --
+-- -- >>> foo :: Maybe Int
+-- -- Nothing
+-- ensureM :: forall outer inner m a errs .
+--   ( ToOpenUnion inner outer
+--   , MonadRaise (OpenUnion outer) m
+--   , errs ~ OpenUnion outer
+--   )
+--   => m (Either inner a)
+--   -> m a
+-- ensureM action = either (raise @errs . consistent) pure =<< action
