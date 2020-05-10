@@ -37,7 +37,7 @@ instance MonadReraise (Either errs) [] where
   recontextualize (Left  _)   = []
   recontextualize (Right val) = [val]
 
-instance ToOpenUnion inner outer => MonadReraise (Either inner) (Either (OpenUnion outer)) where
+instance ToOpenUnion outer inner => MonadReraise (Either inner) (Either (OpenUnion outer)) where
   recontextualize (Left err)  = raise err
   recontextualize (Right val) = pure val
 

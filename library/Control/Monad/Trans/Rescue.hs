@@ -1,35 +1,23 @@
-{-# LANGUAGE ApplicativeDo         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ApplicativeDo        #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | This module supplies a "pure" monad transformer that
 --   can be used for adding 'MonadRescue' behaviour to a transformer stack
 
-module Control.Monad.Trans.Rescue
+module Control.Monad.Trans.Rescue -- FIXME types
   ( RescueT (..)
   , Rescue
   , runRescue
   ) where
 
-import           Control.Monad.Catch hiding (try) -- FIXME: rename try with catch or attempt or something
 import           Control.Monad.Cont
 import           Control.Monad.Fix
 
-import           Control.Monad.Raise
-import           Control.Monad.Rescue.Class
-
 import           Data.Functor.Identity
-import           Data.Proxy
 import           Data.WorldPeace
-
-
-
-
-import Control.Monad.Foo
 
 -- | Add type-directed error handling abilities to a 'Monad'.
 newtype RescueT errs m a
@@ -86,22 +74,3 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
     where
       traverseEither g (Right val) = Right <$> g val
       traverseEither _ (Left  err) = pure (Left err)
-
--- instance (Monad m, ToOpenUnion inner outer, OpenUnion outer ~ OpenUnion errs) => MonadRaise err (RescueT errs m) where
-instance (Monad m, ToOpenUnion err errs) => MonadRaise err (RescueT errs m) where
-  raise  = RescueT . pure . Left . consistent
-
--- instance
---   ( Monad m
---   , ToOpenUnion err errs
---   )
---   => MonadRescue err (RescueT errs m) where
---     try (RescueT action) = RescueT $ fmap Right action
-
--- FIXME
--- instance forall errs m .
---   ( IsMember SomeException errs
---   , Monad m
---   )
---   => MonadThrow (RescueT errs m) where
---     throwM err = raise @errs (toException err)

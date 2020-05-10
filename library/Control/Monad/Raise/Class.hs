@@ -81,7 +81,7 @@ instance MonadRaise errs [] where
 instance MonadRaise errs Maybe where
   raise _ = Nothing
  
-instance ToOpenUnion err errs => MonadRaise err (Either (OpenUnion errs)) where
+instance ToOpenUnion errs err => MonadRaise err (Either (OpenUnion errs)) where
   raise err = Left $ consistent err
 
 instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
