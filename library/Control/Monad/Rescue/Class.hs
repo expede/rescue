@@ -95,34 +95,34 @@ instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
   try = mapReaderT try
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-  try = Lazy.mapWriterT foo
+  try = Lazy.mapWriterT runner2
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
-  try = Strict.mapWriterT foo
+  try = Strict.mapWriterT runner2
 
 instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
-  try = Lazy.mapStateT foo
+  try = Lazy.mapStateT runner2
 
 instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
-  try = Strict.mapStateT foo
+  try = Strict.mapStateT runner2
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
-  try = Lazy.mapRWST foo2
+  try = Lazy.mapRWST runner3
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
-  try = Strict.mapRWST foo2
+  try = Strict.mapRWST runner3
  
 instance MonadRescue errs m => MonadRescue errs (ContT r m) where
-  try = withContT $ \bmr current -> bmr =<< try (pure current)
+  try = withContT $ \b_mr current -> b_mr =<< try (pure current)
 
-foo :: MonadRescue errs m => m (a, w) -> m (Either (OpenUnion errs) a, w)
-foo tuple = do
-  (a, w)   <- tuple
+runner2 :: MonadRescue errs m => m (a, w) -> m (Either (OpenUnion errs) a, w)
+runner2 inner = do
+  (a, w)   <- inner
   errOrVal <- try (pure a)
   return (errOrVal, w)
 
-foo2 :: MonadRescue errs m => m (a, b, c) -> m (Either (OpenUnion errs) a, b, c)
-foo2 triple = do
-  (a, s, w) <- triple
+runner3 :: MonadRescue errs m => m (a, b, c) -> m (Either (OpenUnion errs) a, b, c)
+runner3 inner = do
+  (a, s, w) <- inner
   errOrVal  <- try (pure a)
   return (errOrVal, s, w)
