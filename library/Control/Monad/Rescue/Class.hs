@@ -94,30 +94,35 @@ instance MonadRescue errs m => MonadRescue errs (ExceptT (OpenUnion errs) m) whe
 instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
   try = mapReaderT try
 
-instance (MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-  try action = Lazy.mapWriterT runner action
-    where
-      runner :: m (a, w) -> m (Either (OpenUnion errs) a, w)
-      runner inner = fmap (swap . try) $ sequence $ fmap swap inner -- try $ (sequence inner :: (m a, w))
+instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
+  try = Lazy.mapWriterT foo
 
-      foo :: (a, w) -> (Either (OpenUnion errs) a, w)
-      foo (a, w) = (try a, w)
+instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
+  try = Strict.mapWriterT foo
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
---   try = Strict.WriterT . Strict.runWriterT . try
+instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
+  try = Lazy.mapStateT foo
 
--- instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
---   try = Lazy.StateT . Lazy.runStateT . try
+instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
+  try = Strict.mapStateT foo
 
--- instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
---   try = Strict.StateT . Strict.runStateT . try
+instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
+  try = Lazy.mapRWST foo2
 
--- instance MonadRescue errs m => MonadRescue errs (ContT r m) where
---   try = ContT . runContT . try
+instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
+  try = Strict.mapRWST foo2
+ 
+instance MonadRescue errs m => MonadRescue errs (ContT r m) where
+  try = withContT $ \bmr current -> bmr =<< try (pure current)
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
---   try = Lazy.RWST . Lazy.runRWST . try
+foo :: MonadRescue errs m => m (a, w) -> m (Either (OpenUnion errs) a, w)
+foo tuple = do
+  (a, w)   <- tuple
+  errOrVal <- try (pure a)
+  return (errOrVal, w)
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
---   try = Strict.RWST . Strict.runRWST . try
+foo2 :: MonadRescue errs m => m (a, b, c) -> m (Either (OpenUnion errs) a, b, c)
+foo2 triple = do
+  (a, s, w) <- triple
+  errOrVal  <- try (pure a)
+  return (errOrVal, s, w)
