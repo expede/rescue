@@ -24,6 +24,3 @@ instance IsMember elem set => ToOpenUnion elem set where
 
 instance Contains inner outer => ToOpenUnion (OpenUnion inner) outer where
   consistent inner = relaxOpenUnion inner
-
--- instance (set' ~ OpenUnion set) => ToOpenUnion set' set where
---   consistent set = set

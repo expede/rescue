@@ -14,42 +14,26 @@
 -- and either handles or exposes it.
 
 module Control.Monad.Rescue
-  (
+  ( rescue
+  , cleanup
+  , finally
+
   -- * Reexports
 
-    module Control.Monad.Raise
+  , module Control.Monad.Raise
   , module Control.Monad.Rescue.Class
- 
-  -- * 'try' Helpers
- 
-  -- , try'
- 
-  , rescue
-  -- , rescue'
-  -- , rescueWith
-
-  -- , rescueM
-  -- , rescueM'
- 
-  -- -- , reraiseTo
-  -- , handle
-  -- , handleOne
-
-  , cleanup
- 
-  , finally
-  -- , finally'
   ) where
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
  
-import           Data.Proxy
 import           Data.WorldPeace
 
 
 
+
 import Control.Monad.Foo
+
 
 -- import Rescue.Internal.Data.WorldPeace
 
@@ -108,22 +92,7 @@ import Control.Monad.Foo
 -- --
 -- -- >>> outerBoom [1,2,3] :: Rescue OuterErrs [Int]
 -- -- RescueT (Identity (Right (Left (Identity FooErr))))
--- reraiseTo :: forall inner outer m n a .
---   ( Contains    inner outer
---   , MonadRescue inner       n
---   , MonadRaise        outer m
---   , Traversable n
---   , n ~ m
---   )
---   => Proxy outer
---   -> Proxy inner
---   -> n a
---   -> m a
--- reraiseTo pxyO pxyI action =
---   case sequence (try pxyI action) :: Either (OpenUnion inner) (m a) of
---     Left  err  -> raise @outer $ (relaxTo pxyO err :: OpenUnion outer) -- raiseTo pxyO err -- has outer errs
---     Right mVal -> (mVal :: m a) -- has inner errors
-
+ 
 -- | FIXME add one-liner
 --
 -- >>> type MyErrs = '[FooErr, BarErr]
@@ -140,11 +109,7 @@ import Control.Monad.Foo
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
 -- >>> rescue myErrs (goesBoom 42) (pure . handler)
 -- RescueT (Identity (Right "Foo: FooErr"))
-rescue :: forall errs err m a .
-  MonadRescue errs m
-  => m a
-  -> (OpenUnion errs -> m a)
-  -> m a
+rescue :: MonadRescue errs m => m a -> (OpenUnion errs -> m a) -> m a
 rescue action handler = either handler pure =<< try action
 
 -- -- | A version of @ensure@ that takes monadic actions
@@ -171,14 +136,17 @@ rescue action handler = either handler pure =<< try action
 -- --
 -- -- >>> foo :: Maybe Int
 -- -- Nothing
--- ensureM :: forall outer inner m a errs .
---   ( ToOpenUnion inner outer
---   , MonadRaise (OpenUnion outer) m
---   , errs ~ OpenUnion outer
---   )
---   => m (Either inner a)
---   -> m a
--- ensureM action = ensure =<< try action
+
+ 
+
+ensureM :: forall outer inner m a errs .
+  ( ToOpenUnion inner outer
+  , MonadRaise (OpenUnion outer) m
+  , errs ~ OpenUnion outer
+  )
+  => m (Either inner a)
+  -> m a
+ensureM action = ensure =<< action
 
 -- reraise :: forall outerErr innerErr n m a .
 --   ( ToOpenUnion (OpenUnion innerErr) outerErr
@@ -274,27 +242,6 @@ rescue action handler = either handler pure =<< try action
 --   -> m a
 -- rescueM' action handler = rescue' action (pure . handler)
 
--- cleanup :: forall inner outer m resource output ignored1 ignored2 .
---   ( Contains    inner outer
---   , MonadRescue inner       m
---   , MonadRaise        outer m
---   )
---   => m resource                                  -- ^ Acquire resource
---   -> (resource -> OpenUnion inner -> m ignored1) -- ^ Cleanup exception case; The exception will be reraised
---   -> (resource -> output          -> m ignored2) -- ^ Cleanup happy path
---   -> (resource -> m output)                      -- ^ Inner action
---   -> m output
--- cleanup acquire onErr onOk action = do
---   resource <- acquire
---   try' (action resource) >>= \case
---     Right val -> do
---       _ <- onOk resource val
---       return val
-
---     Left err  -> do
---       _ <- onErr resource err
---       raiseTo (Proxy @outer) err
-
 finally :: forall errs m a b .
   MonadRescue errs m
   => m a
@@ -310,8 +257,6 @@ finally action finalizer =
       _ <- finalizer
       raise err
 
--- finally' :: forall errs m a b . MonadRescue errs m => m a -> m b -> m a
--- finally' = finally (Proxy @
 cleanup :: forall errs m a resource _ignored1 _ignored2 .
   MonadRescue errs m
   => m resource
