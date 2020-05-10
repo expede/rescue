@@ -1,13 +1,10 @@
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE LambdaCase   #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-}
-
-
-
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 -- | The 'MonadRescue' class FIXME expand text
 
@@ -15,7 +12,6 @@ module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
 import           Data.WorldPeace
 
-import           Control.Monad.Raise
 import           Control.Monad.Cont
 
 import           Control.Monad.Trans.Except
@@ -47,16 +43,16 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-class MonadRaise (OpenUnion errs) m => MonadRescue errs m where
+class Monad m => MonadRescue errs m where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
   -- | Attempt some action, exposing the success and error branches
   -- 
-  --  The @Proxy@ gives a type hint to the type checker.
-  --  If you have a case where it can be inferred, see 'Control.Monad.Rescue.try''.
+  --  The @Proxy@ gives a type hint to the type checker. -- FIXME
+  --  If you have a case where it can be inferred, see 'Control.Monad.Rescue.attempt''.
   --
   --  ==== __Examples__ 
   --
   --  >>> type MyErrs = '[FooErr, BarErr]
-  --  >>> myErrs = Proxy @MyErrs
+  --  >>> myErrs = Proxy @MyErrs -- FIXME
   --
   --  >>> :{
   --    goesBoom :: Int -> Rescue MyErrs Int
@@ -66,63 +62,62 @@ class MonadRaise (OpenUnion errs) m => MonadRescue errs m where
   --        else raise @MyErrs FooErr
   -- :}
   --
-  -- >>> runRescue . try myErrs $ goesBoom 42
+  -- >>> runRescue . attempt myErrs $ goesBoom 42
   -- Right (Left (Identity FooErr))
   --
   -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
   -- In practice you would handle the 'OpenUnion' like so:
   --
   -- >>> let handleErr = catchesOpenUnion (show, show)
-  -- >>> let x = try myErrs (goesBoom 42) >>= pure . either handleErr show
+  -- >>> let x = attempt myErrs (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
-  try :: m a -> m (Either (OpenUnion errs) a) -- FIXME rename attempt
+  attempt :: m a -> m (Either (OpenUnion errs) a)
 
-instance MonadRaise (OpenUnion errs) (Either (OpenUnion errs))
-  => MonadRescue errs (Either (OpenUnion errs)) where
-    try action = Right action
+instance MonadRescue errs (Either (OpenUnion errs)) where
+    attempt action = Right action
 
 instance MonadRescue errs m => MonadRescue errs (MaybeT m) where
-  try (MaybeT action) = MaybeT . fmap sequence $ try action
+  attempt (MaybeT action) = MaybeT . fmap sequence $ attempt action
 
 instance MonadRescue errs m => MonadRescue errs (IdentityT m) where
-  try (IdentityT action) = lift (try action)
+  attempt (IdentityT action) = lift (attempt action)
 
-instance MonadRescue errs m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
-  try (ExceptT action) = ExceptT (try action)
+instance Monad m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
+  attempt (ExceptT action) = ExceptT $ fmap attempt action
 
 instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
-  try = mapReaderT try
+  attempt = mapReaderT attempt
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-  try = Lazy.mapWriterT runner2
+  attempt = Lazy.mapWriterT runner2
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
-  try = Strict.mapWriterT runner2
+  attempt = Strict.mapWriterT runner2
 
 instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
-  try = Lazy.mapStateT runner2
+  attempt = Lazy.mapStateT runner2
 
 instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
-  try = Strict.mapStateT runner2
+  attempt = Strict.mapStateT runner2
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
-  try = Lazy.mapRWST runner3
+  attempt = Lazy.mapRWST runner3
 
 instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
-  try = Strict.mapRWST runner3
+  attempt = Strict.mapRWST runner3
  
 instance MonadRescue errs m => MonadRescue errs (ContT r m) where
-  try = withContT $ \b_mr current -> b_mr =<< try (pure current)
+  attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
 
 runner2 :: MonadRescue errs m => m (a, w) -> m (Either (OpenUnion errs) a, w)
 runner2 inner = do
   (a, w)   <- inner
-  errOrVal <- try (pure a)
+  errOrVal <- attempt (pure a)
   return (errOrVal, w)
 
 runner3 :: MonadRescue errs m => m (a, b, c) -> m (Either (OpenUnion errs) a, b, c)
 runner3 inner = do
   (a, s, w) <- inner
-  errOrVal  <- try (pure a)
+  errOrVal  <- attempt (pure a)
   return (errOrVal, s, w)

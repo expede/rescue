@@ -12,6 +12,23 @@
 module Control.Monad.Raise.Class (MonadRaise (..)) where
 
 import           Control.Monad.Cont
+
+import           Control.Monad.Catch.Pure
+
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Identity
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Reader
+
+import qualified Control.Monad.RWS.Lazy   as Lazy
+import qualified Control.Monad.RWS.Strict as Strict
+
+import qualified Control.Monad.State.Lazy   as Lazy
+import qualified Control.Monad.State.Strict as Strict
+
+import qualified Control.Monad.Writer.Lazy   as Lazy
+import qualified Control.Monad.Writer.Strict as Strict
+
 import           Data.WorldPeace
 
 -- $setup
@@ -59,13 +76,50 @@ instance MonadRaise errs Maybe where
   raise _ = Nothing
 
 instance MonadRaise (OpenUnion errs) (Either (OpenUnion errs)) where
-  raise err = Left err
+  raise = Left
 
 instance IsMember err errs => MonadRaise err (Either (OpenUnion errs)) where
-  raise err = Left $ openUnionLift err
+  raise = Left . openUnionLift
 
 instance Contains inner outer => MonadRaise (OpenUnion inner) (Either (OpenUnion outer)) where
-  raise err = Left $ relaxOpenUnion err
+  raise = Left . relaxOpenUnion
+ 
+instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
+  raise = lift . raise
 
-instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
+instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
+  raise = lift . raise
+
+instance (IsMember err errs, Monad m) => MonadRaise err (ExceptT (OpenUnion errs) m) where
+  raise = ExceptT . pure . Left . openUnionLift
+
+instance (Contains inner outer, Monad m)
+  => MonadRaise (OpenUnion inner) (ExceptT (OpenUnion outer) m) where
+    raise = ExceptT . pure . Left . relaxOpenUnion
+
+instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
+  raise = lift . raise
+
+instance MonadRaise errs m => MonadRaise errs (CatchT m) where
+  raise = lift . raise
+
+instance MonadRaise errs m => MonadRaise errs (ContT r m) where
+  raise = lift . raise
+
+instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
+  raise = lift . raise
+
+instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
+  raise = lift . raise
+
+instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Lazy.WriterT w m) where
+  raise = lift . raise
+
+instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Strict.WriterT w m) where
+  raise = lift . raise
+
+instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Lazy.RWST r w s m) where
+  raise = lift . raise
+
+instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Strict.RWST r w s m) where
   raise = lift . raise

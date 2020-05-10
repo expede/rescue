@@ -61,7 +61,7 @@ import           Control.Monad.Rescue.Class
 -- >>> rescue myErrs (goesBoom 42) (pure . handler)
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescue :: MonadRescue errs m => m a -> (OpenUnion errs -> m a) -> m a
-rescue action handler = either handler pure =<< try action
+rescue action handler = either handler pure =<< attempt action
 
 -- | A version of @ensure@ that takes monadic actions
 --
@@ -103,7 +103,7 @@ finally :: forall errs m a b .
   -> m b
   -> m a
 finally action finalizer =
-  try @errs action >>= \case
+  attempt @errs action >>= \case
     Left  err -> finalizer >> raise err
     Right val -> finalizer >> pure  val
 
@@ -118,6 +118,6 @@ cleanup ::
   -> m a
 cleanup acquire onErr onOk action = do
   resource <- acquire
-  try (action resource) >>= \case
+  attempt (action resource) >>= \case
     Left  err    -> onErr resource err    >> raise err
     Right output -> onOk  resource output >> pure output
