@@ -29,7 +29,6 @@ import           Data.WorldPeace
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
-import Control.Monad.Foo
 
 -- $setup
 --
@@ -89,15 +88,17 @@ rescue action handler = either handler pure =<< try action
 -- >>> foo :: Maybe Int
 -- Nothing
 ensureM :: forall outer inner m a .
-  ( ToOpenUnion outer inner
+  ( Contains inner outer
   , MonadRaise (OpenUnion outer) m
   )
-  => m (Either inner a)
+  => m (Either (OpenUnion inner) a)
   -> m a
 ensureM action = ensure @outer =<< action
 
 finally :: forall errs m a b .
-  MonadRescue errs m
+  ( MonadRaise (OpenUnion errs) m -- FIXME probably can be cut
+  , MonadRescue errs m
+  )
   => m a
   -> m b
   -> m a
@@ -106,8 +107,10 @@ finally action finalizer =
     Left  err -> finalizer >> raise err
     Right val -> finalizer >> pure  val
 
-cleanup :: forall errs m a resource _ignored1 _ignored2 .
-  MonadRescue errs m
+cleanup ::
+  ( MonadRaise (OpenUnion errs) m -- FIXME probably can be cut
+  , MonadRescue errs m
+  )
   => m resource
   -> (resource -> OpenUnion errs -> m _ignored1)
   -> (resource ->   a            -> m _ignored2)

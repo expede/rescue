@@ -15,7 +15,6 @@ module Control.Monad.Raise
 import           Data.WorldPeace
 
 import           Control.Monad.Raise.Class
-import           Control.Monad.Foo
 
 -- $setup
 --
@@ -54,11 +53,11 @@ import           Control.Monad.Foo
 -- >>> foo :: Maybe Int
 -- Nothing
 ensure :: forall outer inner m a .
-  ( ToOpenUnion outer inner
+  ( Contains inner outer
   , MonadRaise (OpenUnion outer) m
   )
-  => Either inner a
+  => Either (OpenUnion inner) a
   -> m a
 ensure = \case
-  Left  err -> raise @(OpenUnion outer) (consistent err)
+  Left  err -> raise @(OpenUnion outer) (relaxOpenUnion err)
   Right val -> pure val

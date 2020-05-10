@@ -9,7 +9,6 @@
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
-import           Data.Functor
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
@@ -30,11 +29,6 @@ import qualified Control.Monad.State.Strict as Strict
 import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 
-
-
-
-import Control.Monad.Foo
-
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -51,6 +45,7 @@ import Control.Monad.Foo
 
 -- | Pull a potential error out of the surrounding context
 class MonadRaise (OpenUnion errs) m => MonadRescue errs m where
+-- class Monad m => MonadRescue errs m where
   -- | Attempt some action, exposing the success and error branches
   -- 
   --  The @Proxy@ gives a type hint to the type checker.
@@ -79,11 +74,10 @@ class MonadRaise (OpenUnion errs) m => MonadRescue errs m where
   -- >>> let x = try myErrs (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
-  try :: m a -> m (Either (OpenUnion errs) a)
+  try :: m a -> m (Either (OpenUnion errs) a) -- FIXME rename attempt
 
--- instance MonadRescue errs (Either (OpenUnion errs)) where
--- -- instance MonadRaise err (Either (OpenUnion errs)) => MonadRescue err (Either (OpenUnion errs)) where
---   try = undefined -- Right
+instance MonadRescue errs (Either (OpenUnion errs)) where
+  try action = Right action
 
 instance MonadRescue errs m => MonadRescue errs (MaybeT m) where
   try (MaybeT action) = MaybeT . fmap sequence $ try action

@@ -7,35 +7,12 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
--- |
+-- | FIXME
 
 module Control.Monad.Raise.Class (MonadRaise (..)) where
 
-import           Data.Proxy
-import           Data.WorldPeace
-
-import           Control.Monad.Catch.Pure
 import           Control.Monad.Cont
-
-import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.Identity
-import           Control.Monad.Trans.Maybe
-import           Control.Monad.Trans.Reader
-
-import qualified Control.Monad.RWS.Lazy   as Lazy
-import qualified Control.Monad.RWS.Strict as Strict
-
-import qualified Control.Monad.State.Lazy   as Lazy
-import qualified Control.Monad.State.Strict as Strict
-
-import qualified Control.Monad.Writer.Lazy   as Lazy
-import qualified Control.Monad.Writer.Strict as Strict
-
-
-
-
-
-import           Control.Monad.Foo
+import           Data.WorldPeace
 
 -- $setup
 --
@@ -80,9 +57,12 @@ instance MonadRaise errs [] where
 
 instance MonadRaise errs Maybe where
   raise _ = Nothing
- 
-instance ToOpenUnion errs err => MonadRaise err (Either (OpenUnion errs)) where
-  raise err = Left $ consistent err
+
+instance IsMember err errs => MonadRaise err (Either (OpenUnion errs)) where
+  raise err = Left $ openUnionLift err
+
+instance Contains inner errs => MonadRaise (OpenUnion inner) (Either (OpenUnion errs)) where
+  raise err = Left $ relaxOpenUnion err
 
 instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
   raise = lift . raise
