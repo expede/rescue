@@ -5,6 +5,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+
+
+{-# LANGUAGE TypeApplications #-}
+
 -- | The 'MonadRescue' class FIXME expand text
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
@@ -82,31 +86,38 @@ instance MonadRescue errs m => MonadRescue errs (MaybeT m) where
   try (MaybeT action) = MaybeT . fmap sequence $ try action
 
 instance MonadRescue errs m => MonadRescue errs (IdentityT m) where
-  try (IdentityT action) = IdentityT (try action)
+  try (IdentityT action) = lift (try action)
 
 instance MonadRescue errs m => MonadRescue errs (ExceptT (OpenUnion errs) m) where
   try (ExceptT action) = ExceptT (try action)
 
 instance MonadRescue errs m => MonadRescue errs (ReaderT cfg m) where
-  try (ReaderT action) = ReaderT $ \cfg -> try (action cfg)
+  try = mapReaderT try
 
-instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
-  try = Lazy.WriterT . Lazy.runWriterT . try
+instance (MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
+-- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
+  try action = Lazy.mapWriterT runner action
+    where
+      runner :: m (a, w) -> m (Either (OpenUnion errs) a, w)
+      runner inner = fmap (swap . try) $ sequence $ fmap swap inner -- try $ (sequence inner :: (m a, w))
 
-instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
-  try = Strict.WriterT . Strict.runWriterT . try
+      foo :: (a, w) -> (Either (OpenUnion errs) a, w)
+      foo (a, w) = (try a, w)
 
-instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
-  try = Lazy.StateT . Lazy.runStateT . try
+-- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
+--   try = Strict.WriterT . Strict.runWriterT . try
 
-instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
-  try = Strict.StateT . Strict.runStateT . try
+-- instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
+--   try = Lazy.StateT . Lazy.runStateT . try
 
-instance MonadRescue errs m => MonadRescue errs (ContT r m) where
-  try = ContT . runContT . try
+-- instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
+--   try = Strict.StateT . Strict.runStateT . try
 
-instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
-  try = Lazy.RWST . Lazy.runRWST . try
+-- instance MonadRescue errs m => MonadRescue errs (ContT r m) where
+--   try = ContT . runContT . try
 
-instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
-  try = Strict.RWST . Strict.runRWST . try
+-- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
+--   try = Lazy.RWST . Lazy.runRWST . try
+
+-- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
+--   try = Strict.RWST . Strict.runRWST . try
