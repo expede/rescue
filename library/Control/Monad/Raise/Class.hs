@@ -73,11 +73,7 @@ class Monad m => MonadRaise err m where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: err -> m a -- FIXME if you remobve the OpenUNion on JUST this class, yu can add it in the instances, and get rid of raiseAs.
-
-  -- default raise :: MonadRaise e m => (OpenUnion errs) -> m a
-
--- Basics
+  raise :: err -> m a
 
 instance MonadRaise errs [] where
   raise _ = []
@@ -88,43 +84,5 @@ instance MonadRaise errs Maybe where
 instance ToOpenUnion err errs => MonadRaise err (Either (OpenUnion errs)) where
   raise err = Left $ consistent err
 
--- Transformers
-
 instance (MonadTrans t, Monad (t m), MonadRaise errs m) => MonadRaise errs (t m) where
   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (ExceptT errs m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (CatchT m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (ContT r m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
---   raise = lift . raise
-
--- instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
---   raise = lift . raise
-
--- instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Lazy.WriterT w m) where
---   raise = lift . raise
-
--- instance (Monoid w, MonadRaise errs m) => MonadRaise errs (Strict.WriterT w m) where
---   raise = lift . raise
-
--- instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Lazy.RWST r w s m) where
---   raise = lift . raise
-
--- instance (MonadRaise errs m, Monoid w) => MonadRaise errs (Strict.RWST r w s m) where
---   raise = lift . raise

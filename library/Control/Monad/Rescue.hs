@@ -17,6 +17,7 @@ module Control.Monad.Rescue
   ( rescue
   , cleanup
   , finally
+  , ensureM
 
   -- * Reexports
 
@@ -139,30 +140,9 @@ rescue action handler = either handler pure =<< try action
 
  
 
-ensureM :: forall outer inner m a errs .
-  ( ToOpenUnion inner outer
-  , MonadRaise (OpenUnion outer) m
-  , errs ~ OpenUnion outer
-  )
-  => m (Either inner a)
-  -> m a
-ensureM action = ensure =<< action
-
--- reraise :: forall outerErr innerErr n m a .
---   ( ToOpenUnion (OpenUnion innerErr) outerErr
---   , MonadRaise (OpenUnion outerErr) m
---   , MonadRescue innerErr n
---   )
---   => n a
---   -> m a
--- reraise action = try action >>= \case
---   Left  innerErr -> raise @(OpenUnion outerErr) $ consistent innerErr
---   Right value    -> pure value
-
 -- -- | FIXME add one-liner
 -- --
 -- -- >>> type MyErrs = '[FooErr, BarErr]
--- -- >>> myErrs = Proxy @MyErrs
 -- --
 -- -- >>> :{
 -- -- goesBoom :: Int -> Rescue MyErrs String
@@ -173,74 +153,16 @@ ensureM action = ensure =<< action
 -- -- :}
 -- --
 -- -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
--- -- >>> rescueM myErrs (goesBoom 42) handler
+-- -- >>> rescueM @MyErrs (goesBoom 42) handler
 -- -- RescueT (Identity (Right "Foo: FooErr"))
--- rescueM :: forall m a errs .
---   MonadRescue errs m
---   => m a
---   -> (OpenUnion errs -> a)
---   -> m a
--- rescueM action handler = rescue action (pure . handler)
 
--- -- | FIXME add one-liner
--- --
--- -- >>> type MyErrs = '[FooErr, BarErr]
--- -- >>> myErrs = Proxy @MyErrs
--- --
--- -- >>> :{
--- -- goesBoom :: Int -> Rescue MyErrs String
--- -- goesBoom x =
--- --   if x > 50
--- --     then return (show x)
--- --     else raiseAs @MyErrs FooErr
--- -- :}
--- --
--- -- >>> :{
--- --   handler :: OpenUnion MyErrs -> String
--- --   handler = catchesOpenUnion
--- --     ( \foo -> "Foo: " <> show foo
--- --     , \bar -> "Bar: " <> show bar
--- --     )
--- -- :}
--- --
--- -- >>> rescue' (goesBoom 42) (pure . handler) :: Rescue MyErrs String
--- -- RescueT (Identity (Right "Foo: FooErr"))
--- rescue' :: forall m a errs .
---   MonadRescue errs m
---   => m a
---   -> (OpenUnion errs -> m a)
---   -> m a
--- rescue' action handler = either handler pure =<< try action
-
--- | FIXME add one-liner
---
--- >>> type MyErrs = '[FooErr, BarErr]
--- >>> myErrs = Proxy @MyErrs
---
--- >>> :{
--- goesBoom :: Int -> Rescue MyErrs String
--- goesBoom x =
---   if x > 50
---     then return (show x)
---     else raiseAs @MyErrs FooErr
--- :}
---
--- >>> :{
---   handler :: OpenUnion MyErrs -> String
---   handler = catchesOpenUnion
---     ( \foo -> "Foo: " <> show foo
---     , \bar -> "Bar: " <> show bar
---     )
--- :}
---
--- >>> rescueM' (goesBoom 42) handler :: Rescue MyErrs String
--- RescueT (Identity (Right "Foo: FooErr"))
--- rescueM' :: forall m a errs .
---   MonadRescue errs m
---   => m a
---   -> (OpenUnion errs -> a)
---   -> m a
--- rescueM' action handler = rescue' action (pure . handler)
+ensureM :: forall outer inner m a .
+  ( ToOpenUnion inner outer
+  , MonadRaise (OpenUnion outer) m
+  )
+  => m (Either inner a)
+  -> m a
+ensureM action = ensure @outer =<< action
 
 finally :: forall errs m a b .
   MonadRescue errs m
@@ -249,13 +171,8 @@ finally :: forall errs m a b .
   -> m a
 finally action finalizer =
   try @errs action >>= \case
-    Right val -> do
-      _ <- finalizer
-      return val
-
-    Left err -> do
-      _ <- finalizer
-      raise err
+    Left  err -> finalizer >> raise err
+    Right val -> finalizer >> pure  val
 
 cleanup :: forall errs m a resource _ignored1 _ignored2 .
   MonadRescue errs m
@@ -267,10 +184,5 @@ cleanup :: forall errs m a resource _ignored1 _ignored2 .
 cleanup acquire onErr onOk action = do
   resource <- acquire
   try (action resource) >>= \case
-    Left err -> do
-      _ <- onErr resource err
-      raise err
-
-    Right output -> do
-      _ <- onOk resource output
-      return output
+    Left  err    -> onErr resource err    >> raise err
+    Right output -> onOk  resource output >> pure output
