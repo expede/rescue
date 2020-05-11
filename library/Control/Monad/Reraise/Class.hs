@@ -13,14 +13,14 @@ import           Data.WorldPeace
 
 -- FIXME tests
 
-class (Monad n, Monad m) => MonadRelaxErrors n m where
+class (Monad n, Monad m) => MonadRelaxErrors n m where -- mayeb: n `RelaxesTo` m, or n `CanRelaxTo` m
   relaxErrors :: n a -> m a -- FIXME perhaps reraise, relaxErrors, or ajust, relaxErrorsErrs, or something?
   -- NOTE / FIXME was recontextualize
 
   -- For docs: movng up in a module herarchy, we tend to relax the erorr cntext to allow more potential errors
 
 instance Monad m => MonadRelaxErrors m m where
-  relaxErrors action = action
+  relaxErrors action = action -- FIXME inline?
 
 instance MonadRelaxErrors Maybe [] where
   relaxErrors Nothing  = []
