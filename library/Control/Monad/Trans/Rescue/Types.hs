@@ -79,7 +79,7 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
       traverseEither g (Right val) = Right <$> g val
       traverseEither _ (Left  err) = pure (Left err)
 
-instance forall err errs m . (IsMember err errs, Monad m) => MonadRaise err (RescueT errs m) where
+instance (IsMember err errs, Monad m) => MonadRaise err (RescueT errs m) where
   raise err = RescueT . pure . Left $ openUnionLift err
 
 instance Monad m => MonadRescue errs (RescueT errs m) where

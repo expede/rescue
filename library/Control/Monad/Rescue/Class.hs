@@ -6,6 +6,12 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
+
+
+
+
+{-# LANGUAGE FunctionalDependencies #-}
+
 -- | The 'MonadRescue' class FIXME expand text
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
@@ -28,6 +34,11 @@ import qualified Control.Monad.State.Strict as Strict
 import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 
+
+
+
+import Control.Monad.Raise.Class
+
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -43,7 +54,7 @@ import qualified Control.Monad.Writer.Strict as Strict
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-class Monad m => MonadRescue errs m where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
+class Monad m => MonadRescue errs m | m -> errs where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
   -- | Attempt some action, exposing the success and error branches
   -- 
   --  The @Proxy@ gives a type hint to the type checker. -- FIXME
@@ -75,7 +86,7 @@ class Monad m => MonadRescue errs m where -- FIXME make a constraint synonym for
   attempt :: m a -> m (Either (OpenUnion errs) a)
 
 instance MonadRescue errs (Either (OpenUnion errs)) where
-    attempt action = Right action
+  attempt action = Right action
 
 instance MonadRescue errs m => MonadRescue errs (MaybeT m) where
   attempt (MaybeT action) = MaybeT . fmap sequence $ attempt action

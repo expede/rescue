@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -7,12 +9,16 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
+
+
+{-# LANGUAGE FunctionalDependencies #-}
+
 -- | FIXME
 
-module Control.Monad.Raise.Class (MonadRaise (..)) where
+module Control.Monad.Raise.Class (MonadRaise (..), ToOpenUnion (..)) where
+
 
 import           Control.Monad.Cont
-
 import           Control.Monad.Catch.Pure
 
 import           Control.Monad.Trans.Except
@@ -29,6 +35,7 @@ import qualified Control.Monad.State.Strict as Strict
 import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 
+import Data.Kind
 import           Data.WorldPeace
 
 -- $setup
@@ -40,8 +47,20 @@ import           Data.WorldPeace
 -- >>> import Data.Proxy
 -- >>> import Data.WorldPeace
 
+class ToOpenUnion err (errs :: [Type]) where -- | errs -> err where
+  consistent :: err -> OpenUnion errs
+
+instance IsMember err errs => ToOpenUnion err errs where
+  consistent = openUnionLift
+
+instance Contains inner outer => ToOpenUnion (OpenUnion inner) outer where
+  consistent = relaxOpenUnion
+
+instance ToOpenUnion (OpenUnion errs) errs where
+  consistent a = a
+
 -- | Raise semantics, like a type-directed @MonadThrow@
-class Monad m => MonadRaise err m where
+class Monad m => MonadRaise err m where -- | m -> err where
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
@@ -75,27 +94,17 @@ instance MonadRaise errs [] where
 instance MonadRaise errs Maybe where
   raise _ = Nothing
 
-instance MonadRaise (OpenUnion errs) (Either (OpenUnion errs)) where
-  raise = Left
+instance ToOpenUnion err errs => MonadRaise err (Either (OpenUnion errs)) where
+  raise = Left . consistent
 
-instance IsMember err errs => MonadRaise err (Either (OpenUnion errs)) where
-  raise = Left . openUnionLift
+instance (Monad m, ToOpenUnion err errs) => MonadRaise err (ExceptT (OpenUnion errs) m) where
+  raise = ExceptT . pure . raise
 
-instance Contains inner outer => MonadRaise (OpenUnion inner) (Either (OpenUnion outer)) where
-  raise = Left . relaxOpenUnion
- 
 instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
   raise = lift . raise
 
 instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
   raise = lift . raise
-
-instance (IsMember err errs, Monad m) => MonadRaise err (ExceptT (OpenUnion errs) m) where
-  raise = ExceptT . pure . Left . openUnionLift
-
-instance (Contains inner outer, Monad m)
-  => MonadRaise (OpenUnion inner) (ExceptT (OpenUnion outer) m) where
-    raise = ExceptT . pure . Left . relaxOpenUnion
 
 instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
   raise = lift . raise
