@@ -15,6 +15,22 @@
 {-# LANGUAGE DataKinds #-}
 -- {-# LANGUAGE FunctionalDependencies #-}
 
+
+
+
+
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+
+
+
+
 -- | FIXME
 
 module Control.Monad.Raise.Class (MonadRaise (..), Convert (..)) where --, ToOpenUnion (..)) where
@@ -40,14 +56,27 @@ import Data.Proxy
 import Data.Kind
 import           Data.WorldPeace
 
+type family (Converty a) :: Bool where
+  Converty (OpenUnion a) = 'True
+  Converty a             = 'False
+
+class Convert' (flag :: Bool) (err :: *) (errs :: [*]) where
+  convert' :: Proxy flag -> err -> OpenUnion errs
+
+instance Contains err errs => Convert' 'True (OpenUnion err) errs where
+  convert' _ = relaxOpenUnion
+
+instance IsMember err errs => Convert' 'False err errs where
+  convert' _ = openUnionLift
+
 class Convert err errs where
   convert :: err -> errs
 
-instance IsMember err errs => Convert err (OpenUnion errs) where
-  convert = openUnionLift
+instance (Converty err ~ flag, Convert' flag err errs) => Convert err (OpenUnion errs) where
+  convert = convert' (Proxy @flag)
 
-instance Contains err errs => Convert (OpenUnion err) (OpenUnion errs) where
-  convert = relaxOpenUnion
+-- instance Contains err errs => Convert (OpenUnion err) (OpenUnion errs) where
+--   convert = relaxOpenUnion
 
 -- $setup
 --

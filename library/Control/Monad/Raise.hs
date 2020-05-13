@@ -55,6 +55,7 @@ import           Control.Monad.Raise.Class
 -- Nothing
 ensure :: forall inner m a .
   ( MonadRaise m
+  , Contains inner (Errors m)
   )
   => Either (OpenUnion inner) a
   -> m a
