@@ -5,7 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 -- {-# LANGUAGE ScopedTypeVariables   #-}
 -- {-# LANGUAGE TypeApplications      #-}
--- {-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 
 
@@ -17,7 +17,7 @@
 
 -- | FIXME
 
-module Control.Monad.Raise.Class (MonadRaise (..)) where --, ToOpenUnion (..)) where
+module Control.Monad.Raise.Class (MonadRaise (..), Convert (..)) where --, ToOpenUnion (..)) where
 
 import           Control.Monad.Cont
 import           Control.Monad.Catch.Pure
@@ -39,6 +39,15 @@ import qualified Control.Monad.Writer.Strict as Strict
 import Data.Proxy
 import Data.Kind
 import           Data.WorldPeace
+
+class Convert err errs where
+  convert :: err -> errs
+
+instance IsMember err errs => Convert err (OpenUnion errs) where
+  convert = openUnionLift
+
+instance Contains err errs => Convert (OpenUnion err) (OpenUnion errs) where
+  convert = relaxOpenUnion
 
 -- $setup
 --
@@ -76,7 +85,7 @@ class Monad m => MonadRaise m where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: IsMember err (Errors m) => err -> m a
+  raise :: Convert err (OpenUnion (Errors m)) => err -> m a
 
 -- instance MonadRaise errs [] where
 --   raise _ = []
@@ -86,7 +95,7 @@ class Monad m => MonadRaise m where
 
 instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
-  raise = Left . openUnionLift
+  raise = Left . convert
 
 instance Monad m => MonadRaise (ExceptT (OpenUnion errs) m) where
   type Errors (ExceptT (OpenUnion errs) m) = errs
