@@ -1,16 +1,19 @@
 -- {-# LANGUAGE AllowAmbiguousTypes   #-}
-{-# LANGUAGE DefaultSignatures     #-}
+-- {-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
+-- {-# LANGUAGE ScopedTypeVariables   #-}
+-- {-# LANGUAGE TypeApplications      #-}
 -- {-# LANGUAGE UndecidableInstances  #-}
 
 
 
 
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE TypeFamilies #-}
+-- {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
+-- {-# LANGUAGE FunctionalDependencies #-}
 
 -- | FIXME
 
@@ -34,6 +37,7 @@ import qualified Control.Monad.Writer.Lazy   as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 
 import Data.Proxy
+import Data.Kind
 import           Data.WorldPeace
 
 -- $setup
@@ -45,7 +49,9 @@ import           Data.WorldPeace
 -- >>> import Data.WorldPeace
 
 -- | Raise semantics, like a type-directed @MonadThrow@
-class Monad m => MonadRaise errs m | m -> errs where
+class Monad m => MonadRaise m where
+  type Errors m :: [Type]
+
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
@@ -70,7 +76,7 @@ class Monad m => MonadRaise errs m | m -> errs where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: IsMember err errs => err -> m a
+  raise :: IsMember err (Errors m) => err -> m a
 
 -- instance MonadRaise errs [] where
 --   raise _ = []
@@ -78,57 +84,63 @@ class Monad m => MonadRaise errs m | m -> errs where
 -- instance MonadRaise errs Maybe where
 --   raise _ = Nothing
 
-instance MonadRaise errs (Either (OpenUnion errs)) where
+instance MonadRaise (Either (OpenUnion errs)) where
+  type Errors (Either (OpenUnion errs)) = errs
   raise = Left . openUnionLift
 
-instance Monad m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
+instance Monad m => MonadRaise (ExceptT (OpenUnion errs) m) where
+  type Errors (ExceptT (OpenUnion errs) m) = errs
   raise err = ExceptT . pure $ raise err -- Left . openUnionLift
 
-instance MonadRaise errs m => MonadRaise errs (IdentityT m) where
+instance MonadRaise m => MonadRaise (IdentityT m) where
+  type Errors (IdentityT m) = Errors m
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (MaybeT m) where
+instance MonadRaise m => MonadRaise (MaybeT m) where
+  type Errors (MaybeT m) = Errors m
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ReaderT cfg m) where
+instance MonadRaise m => MonadRaise (ReaderT cfg m) where
+  type Errors (ReaderT cfg m) = Errors m
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (CatchT m) where
+instance MonadRaise m => MonadRaise (CatchT m) where
+  type Errors (CatchT m) = Errors m
   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (ContT r m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (ContT r m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (Lazy.StateT s m) where
+--   raise = lift . raise
 
-instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
-  raise = lift . raise
+-- instance MonadRaise errs m => MonadRaise errs (Strict.StateT s m) where
+--   raise = lift . raise
 
-instance
-  ( MonadRaise errs m
-  , Monoid w
-  )
-  => MonadRaise errs (Lazy.WriterT w m) where
-    raise = lift . raise
+-- instance
+--   ( MonadRaise errs m
+--   , Monoid w
+--   )
+--   => MonadRaise errs (Lazy.WriterT w m) where
+--     raise = lift . raise
 
-instance
-  ( MonadRaise errs m
-  , Monoid w
-  )
-  => MonadRaise errs (Strict.WriterT w m) where
-    raise = lift . raise
+-- instance
+--   ( MonadRaise errs m
+--   , Monoid w
+--   )
+--   => MonadRaise errs (Strict.WriterT w m) where
+--     raise = lift . raise
 
-instance
-  ( MonadRaise errs m
-  , Monoid w
-  )
-  => MonadRaise errs (Lazy.RWST r w s m) where
-    raise = lift . raise
+-- instance
+--   ( MonadRaise errs m
+--   , Monoid w
+--   )
+--   => MonadRaise errs (Lazy.RWST r w s m) where
+--     raise = lift . raise
 
-instance
-  ( MonadRaise errs m
-  , Monoid w
-  )
-  => MonadRaise errs (Strict.RWST r w s m) where
-    raise = lift . raise
+-- instance
+--   ( MonadRaise errs m
+--   , Monoid w
+--   )
+--   => MonadRaise errs (Strict.RWST r w s m) where
+--     raise = lift . raise
