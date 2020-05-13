@@ -53,11 +53,11 @@ import           Control.Monad.Raise.Class
 -- >>> foo :: Maybe Int
 -- Nothing
 ensure :: forall outer inner m a .
-  ( Contains inner outer
-  , MonadRaise (OpenUnion outer) m
+  ( Convertable inner (OpenUnion outer)
+  , MonadRaise outer m
   )
-  => Either (OpenUnion inner) a
+  => Either inner a
   -> m a
 ensure = \case
-  Left  err -> raise @(OpenUnion outer) (relaxOpenUnion err)
+  Left  err -> raise err
   Right val -> pure val

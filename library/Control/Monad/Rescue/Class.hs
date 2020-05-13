@@ -2,8 +2,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
 
@@ -54,7 +52,7 @@ import Control.Monad.Raise.Class
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-class Monad m => MonadRescue errs m | m -> errs where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
+class MonadRaise errs m => MonadRescue errs m | m -> errs where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
   -- | Attempt some action, exposing the success and error branches
   -- 
   --  The @Proxy@ gives a type hint to the type checker. -- FIXME

@@ -1,11 +1,11 @@
 -- {-# LANGUAGE AllowAmbiguousTypes   #-}
-{-# LANGUAGE DefaultSignatures     #-}
+-- {-# LANGUAGE DefaultSignatures     #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
--- {-# LANGUAGE UndecidableInstances  #-}
+-- {-# LANGUAGE ScopedTypeVariables   #-}
+-- {-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 
 
@@ -14,7 +14,7 @@
 
 -- | FIXME
 
-module Control.Monad.Raise.Class (MonadRaise (..)) where --, ToOpenUnion (..)) where
+module Control.Monad.Raise.Class (MonadRaise (..), Convertable (..)) where --, ToOpenUnion (..)) where
 
 import           Control.Monad.Cont
 import           Control.Monad.Catch.Pure
@@ -44,6 +44,15 @@ import           Data.WorldPeace
 --
 -- >>> import Data.WorldPeace
 
+class Convertable err errs where
+  convert :: err -> errs
+
+instance IsMember err errs => Convertable err (OpenUnion errs) where
+  convert = openUnionLift
+
+instance Contains inner outer => Convertable (OpenUnion inner) (OpenUnion outer) where
+  convert = relaxOpenUnion
+
 -- | Raise semantics, like a type-directed @MonadThrow@
 class Monad m => MonadRaise errs m | m -> errs where
   -- | Raise an error
@@ -70,7 +79,7 @@ class Monad m => MonadRaise errs m | m -> errs where
   --
   -- >>> goesBoom 42 :: Maybe Int
   -- Nothing
-  raise :: IsMember err errs => err -> m a
+  raise :: Convertable err (OpenUnion errs) => err -> m a
 
 -- instance MonadRaise errs [] where
 --   raise _ = []
@@ -79,7 +88,7 @@ class Monad m => MonadRaise errs m | m -> errs where
 --   raise _ = Nothing
 
 instance MonadRaise errs (Either (OpenUnion errs)) where
-  raise = Left . openUnionLift
+  raise = Left . convert
 
 instance Monad m => MonadRaise errs (ExceptT (OpenUnion errs) m) where
   raise err = ExceptT . pure $ raise err -- Left . openUnionLift

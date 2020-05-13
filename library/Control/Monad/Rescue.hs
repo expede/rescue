@@ -88,15 +88,15 @@ rescue action handler = either handler pure =<< attempt action
 -- >>> foo :: Maybe Int
 -- Nothing
 ensureM :: forall outer inner m a .
-  ( Contains inner outer
-  , MonadRaise (OpenUnion outer) m
+  ( Convertable inner (OpenUnion outer)
+  , MonadRaise outer m
   )
-  => m (Either (OpenUnion inner) a)
+  => m (Either inner a)
   -> m a
-ensureM action = ensure @outer =<< action
+ensureM action = ensure =<< action
 
 finally :: forall errs m a b .
-  ( MonadRaise (OpenUnion errs) m -- FIXME probably can be cut
+  ( MonadRaise errs m -- FIXME probably can be cut
   , MonadRescue errs m
   )
   => m a
@@ -108,8 +108,7 @@ finally action finalizer =
     Right val -> finalizer >> pure  val
 
 cleanup ::
-  ( MonadRaise (OpenUnion errs) m -- FIXME probably can be cut
-  , MonadRescue errs m
+  ( MonadRescue errs m
   )
   => m resource
   -> (resource -> OpenUnion errs -> m _ignored1)

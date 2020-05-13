@@ -14,8 +14,8 @@ import           GHC.Base
 import           GHC.ST
 import           GHC.IO
 
-instance MonadRaise errs (ST s) where
-  raise = GHC.IO.unsafeIOToST . raise
+-- instance MonadRaise errs (ST s) where
+--   raise = GHC.IO.unsafeIOToST . raise
 
-instance MonadRaise errs IO where
-  raise = IO . raiseIO#
+-- instance MonadRaise errs IO where
+--   raise = IO . raiseIO#
