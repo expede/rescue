@@ -96,15 +96,14 @@ ensureM :: forall outer inner m a .
 ensureM action = ensure =<< action
 
 finally :: forall errs m a b .
-  ( MonadRaise errs m -- FIXME probably can be cut
-  , MonadRescue errs m
+  ( MonadRescue errs m
   )
   => m a
   -> m b
   -> m a
 finally action finalizer =
-  attempt @errs action >>= \case
-    Left  err -> finalizer >> raise err
+  attempt action >>= \case
+    Left  err -> finalizer >> raise @errs err
     Right val -> finalizer >> pure  val
 
 cleanup ::
