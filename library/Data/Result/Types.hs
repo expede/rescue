@@ -1,6 +1,6 @@
+{-# LANGUAGE DataKinds       #-}
 {-# LANGUAGE KindSignatures  #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE DataKinds       #-}
 
 -- | FIXME docs
 
@@ -10,7 +10,7 @@ module Data.Result.Types
   , pattern Err
   ) where
 
-import Data.Kind
+import           Data.Kind
 import           Data.WorldPeace
 
 -- FIXME docs

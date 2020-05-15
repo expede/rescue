@@ -1,24 +1,16 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE LambdaCase            #-}
--- {-# LANGUAGE MultiParamTypeClasses #-}
--- {-# LANGUAGE ScopedTypeVariables   #-}
--- {-# LANGUAGE TypeApplications      #-}
--- {-# LANGUAGE UndecidableInstances  #-}
-
-
-
-
-
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
--- {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE LambdaCase             #-}
+{-# LANGUAGE TypeFamilies           #-}
 
 -- | The 'MonadRescue' class FIXME expand text
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
 import           Data.WorldPeace
+ 
+import           Control.Monad.Raise.Class
 
 import           Control.Monad.Cont
 
@@ -27,19 +19,14 @@ import           Control.Monad.Trans.Identity
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 
-import qualified Control.Monad.RWS.Lazy   as Lazy
-import qualified Control.Monad.RWS.Strict as Strict
+import qualified Control.Monad.RWS.Lazy       as Lazy
+import qualified Control.Monad.RWS.Strict     as Strict
 
-import qualified Control.Monad.State.Lazy   as Lazy
-import qualified Control.Monad.State.Strict as Strict
+import qualified Control.Monad.State.Lazy     as Lazy
+import qualified Control.Monad.State.Strict   as Strict
 
-import qualified Control.Monad.Writer.Lazy   as Lazy
-import qualified Control.Monad.Writer.Strict as Strict
-
-
-
-
-import Control.Monad.Raise.Class
+import qualified Control.Monad.Writer.Lazy    as Lazy
+import qualified Control.Monad.Writer.Strict  as Strict
 
 -- $setup
 --
@@ -58,11 +45,11 @@ import Control.Monad.Raise.Class
 -- | Pull a potential error out of the surrounding context
 class MonadRaise m => MonadRescue m where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
   -- | Attempt some action, exposing the success and error branches
-  -- 
+  --
   --  The @Proxy@ gives a type hint to the type checker. -- FIXME
   --  If you have a case where it can be inferred, see 'Control.Monad.Rescue.attempt''.
   --
-  --  ==== __Examples__ 
+  --  ==== __Examples__
   --
   --  >>> type MyErrs = '[FooErr, BarErr]
   --  >>> myErrs = Proxy @MyErrs -- FIXME
@@ -119,7 +106,7 @@ instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.RWST r w s m) where
 
 instance (Monoid w, MonadRescue m) => MonadRescue (Strict.RWST r w s m) where
   attempt = Strict.mapRWST runner3
- 
+
 instance MonadRescue m => MonadRescue (ContT r m) where
   attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
 

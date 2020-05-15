@@ -9,10 +9,10 @@ module Data.Result
   , module Data.Result.Types
   ) where
 
-import Data.Result.Types
-import Data.WorldPeace
+import           Data.Result.Types
+import           Data.WorldPeace
 
-import Control.Monad.Raise.Class
+import           Control.Monad.Raise.Class
 
 -- FIXME docs
 fromEither :: Convert err (OpenUnion errs) => Either err val -> Result errs val

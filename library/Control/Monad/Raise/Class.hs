@@ -1,29 +1,11 @@
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
-
-
-
-
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DataKinds #-}
-
-
-
-
-
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE UndecidableInstances #-}
-
-
-
-
 
 -- | FIXME
 
@@ -36,48 +18,28 @@ module Control.Monad.Raise.Class
   , Convert' (..)
   ) where
 
-import           Control.Monad.Cont
 import           Control.Monad.Catch.Pure
+import           Control.Monad.Cont
 
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Identity
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 
-import qualified Control.Monad.RWS.Lazy   as Lazy
-import qualified Control.Monad.RWS.Strict as Strict
+import qualified Control.Monad.RWS.Lazy       as Lazy
+import qualified Control.Monad.RWS.Strict     as Strict
 
-import qualified Control.Monad.State.Lazy   as Lazy
-import qualified Control.Monad.State.Strict as Strict
+import qualified Control.Monad.State.Lazy     as Lazy
+import qualified Control.Monad.State.Strict   as Strict
 
-import qualified Control.Monad.Writer.Lazy   as Lazy
-import qualified Control.Monad.Writer.Strict as Strict
+import qualified Control.Monad.Writer.Lazy    as Lazy
+import qualified Control.Monad.Writer.Strict  as Strict
 
-import Data.Proxy
-import Data.Kind
+import           Data.Kind
+import           Data.Proxy
 import           Data.WorldPeace
 
-type family (Converty a) :: Bool where
-  Converty (OpenUnion a) = 'True
-  Converty a             = 'False
-
--- NOTE flag :: Bool is a hack around the overlapping instances problem
-
--- FIXME rename and move to own module
-class Convert' (flag :: Bool) (err :: Type) (errs :: [Type]) where
-  convert' :: Proxy flag -> err -> OpenUnion errs
-
-instance Contains err errs => Convert' 'True (OpenUnion err) errs where
-  convert' _ = relaxOpenUnion
-
-instance IsMember err errs => Convert' 'False err errs where
-  convert' _ = openUnionLift
-
-class Convert err errs where
-  convert :: err -> errs
-
-instance (Converty err ~ flag, Convert' flag err errs) => Convert err (OpenUnion errs) where
-  convert = convert' (Proxy @flag)
+--
 
 -- $setup
 --
