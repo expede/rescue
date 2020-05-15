@@ -3,7 +3,7 @@
 
 -- | FIXME docs
 
-module Data.WorldPeace.IsOpenUnion.Family where
+module Data.WorldPeace.IsOpenUnion.Family (IsOpenUnion) where
 
 import           Data.WorldPeace
 

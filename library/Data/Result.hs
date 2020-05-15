@@ -12,9 +12,9 @@ module Data.Result
 import           Data.Result.Types
 import           Data.WorldPeace
 
-import           Control.Monad.Raise.Class
+import           Control.Monad.Raise
 
 -- FIXME docs
-fromEither :: Convert err (OpenUnion errs) => Either err val -> Result errs val
+fromEither :: Subset err (OpenUnion errs) => Either err val -> Result errs val
 fromEither (Right val) = Ok val
-fromEither (Left  err) = Err (convert err)
+fromEither (Left  err) = Err (include err)

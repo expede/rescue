@@ -1,22 +1,15 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+-- {-# LANGUAGE MultiParamTypeClasses #-}
+-- {-# LANGUAGE ScopedTypeVariables   #-}
+-- {-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | FIXME
 
-module Control.Monad.Raise.Class
-  ( MonadRaise (..)
-  -- FIXME move to own module
-  , Convert (..)
-  -- Probably cut later
-  , Converty
-  , Convert' (..)
-  ) where
+module Control.Monad.Raise.Class (MonadRaise (..)) where
 
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Cont
@@ -36,10 +29,8 @@ import qualified Control.Monad.Writer.Lazy    as Lazy
 import qualified Control.Monad.Writer.Strict  as Strict
 
 import           Data.Kind
-import           Data.Proxy
 import           Data.WorldPeace
-
---
+import           Data.WorldPeace.Subset.Class
 
 -- $setup
 --
@@ -77,7 +68,7 @@ class Monad m => MonadRaise m where
   --
   -- >>> goesBoom 42
   -- Left (Identity FooErr)
-  raise :: Convert err (OpenUnion (Errors m)) => err -> m a
+  raise :: Subset err (OpenUnion (Errors m)) => err -> m a
 
 -- FIXME move to own module
 
@@ -102,7 +93,7 @@ instance MonadRaise Maybe where
 -- NOTE can be aliased as `MonadRaise (Result errs)`
 instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
-  raise = Left . convert
+  raise = Left . include
 
 instance Monad m => MonadRaise (ExceptT (OpenUnion errs) m) where
   type Errors (ExceptT (OpenUnion errs) m) = errs

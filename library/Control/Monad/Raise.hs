@@ -1,9 +1,9 @@
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 -- | Monadic raise semantics & helpers
 
@@ -11,9 +11,11 @@ module Control.Monad.Raise
   ( ensure
   -- * Reexports
   , module Control.Monad.Raise.Class
+  , module Data.WorldPeace.Subset.Class
   ) where
 
 import           Data.WorldPeace
+import           Data.WorldPeace.Subset.Class
 
 import           Control.Monad.Raise.Class
 
@@ -58,7 +60,7 @@ import           Control.Monad.Raise.Class
 ensure
   :: ( MonadRaise m
      , Errors m ~ outerErrs
-     , Convert inner (OpenUnion outerErrs)
+     , Subset inner (OpenUnion outerErrs)
      )
   => Either inner a
   -> m a
