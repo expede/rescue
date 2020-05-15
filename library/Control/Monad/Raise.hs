@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE LambdaCase          #-}
@@ -7,10 +8,9 @@
 -- | Monadic raise semantics & helpers
 
 module Control.Monad.Raise
-  (
-  -- ( ensure
+  ( ensure
   -- * Reexports
-   module Control.Monad.Raise.Class
+  , module Control.Monad.Raise.Class
   ) where
 
 import           Data.WorldPeace
@@ -26,39 +26,44 @@ import           Control.Monad.Raise.Class
 -- >>> import Data.Proxy
 -- >>> import Data.WorldPeace
 -- >>>
--- >>> data FooErr  = FooErr
--- >>> data BarErr  = BarErr
--- >>> data QuuxErr = QuuxErr
+-- >>> data FooErr  = FooErr  deriving Show
+-- >>> data BarErr  = BarErr  deriving Show
+-- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Lift a pure error (@Either@) into a @MonadRaise@ context
 -- i.e. Turn @Left@s into @raise@s.
 --
 -- ==== __Examples__
 --
+-- FIXME more examples for more cases of the automated behaviour!!
+--
 -- >>> :{
---   mayFail :: Int -> Either (OpenUnion MyErrs) Int
+--   mayFail :: Int -> Either FooErr) Int
 --   mayFail n =
 --     if n > 50
---       then Left (openUnionLift FooErr)
---       else Right n
+--       then raise FooErr
+--       else pure n
 -- :}
 --
 -- >>> :{
 --   foo :: MonadRaise MyErrs m => m Int
 --   foo = do
---     first  <- ensure @MyErrs $ mayFail 100
---     second <- ensure @MyErrs $ mayFail first
---     return (second * 10)
+--     first  <- ensure $ mayFail 100
+--     second <- ensure $ mayFail first
+--     return $ second * 10
 -- :}
 --
 -- >>> foo :: Maybe Int
 -- Nothing
-ensure :: forall inner m a .
-  ( MonadRaise m
-  , Contains inner (Errors m)
-  )
-  => Either (OpenUnion inner) a
+ensure
+  :: ( MonadRaise m
+     , Errors m ~ outerErrs
+     , Convert inner (OpenUnion outerErrs)
+     )
+  => Either inner a
   -> m a
 ensure = \case
   Left  err -> raise err
   Right val -> pure val
+
+-- FIXME add stylish haskell because why not

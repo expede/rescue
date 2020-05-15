@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
@@ -101,35 +102,45 @@ instance Monad m => MonadRescue (ExceptT (OpenUnion errs) m) where
 instance MonadRescue m => MonadRescue (ReaderT cfg m) where
   attempt = mapReaderT attempt
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.WriterT w m) where
---   attempt = Lazy.mapWriterT runner2
+instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.WriterT w m) where
+  attempt = Lazy.mapWriterT runner2
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.WriterT w m) where
---   attempt = Strict.mapWriterT runner2
+instance (Monoid w, MonadRescue m) => MonadRescue (Strict.WriterT w m) where
+  attempt = Strict.mapWriterT runner2
 
--- instance MonadRescue errs m => MonadRescue errs (Lazy.StateT s m) where
---   attempt = Lazy.mapStateT runner2
+instance MonadRescue m => MonadRescue (Lazy.StateT s m) where
+  attempt = Lazy.mapStateT runner2
 
--- instance MonadRescue errs m => MonadRescue errs (Strict.StateT s m) where
---   attempt = Strict.mapStateT runner2
+instance MonadRescue m => MonadRescue (Strict.StateT s m) where
+  attempt = Strict.mapStateT runner2
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Lazy.RWST r w s m) where
---   attempt = Lazy.mapRWST runner3
+instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.RWST r w s m) where
+  attempt = Lazy.mapRWST runner3
 
--- instance (Monoid w, MonadRescue errs m) => MonadRescue errs (Strict.RWST r w s m) where
---   attempt = Strict.mapRWST runner3
+instance (Monoid w, MonadRescue m) => MonadRescue (Strict.RWST r w s m) where
+  attempt = Strict.mapRWST runner3
  
--- instance MonadRescue errs m => MonadRescue errs (ContT r m) where
---   attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
+instance MonadRescue m => MonadRescue (ContT r m) where
+  attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
 
--- runner2 :: MonadRescue errs m => m (a, w) -> m (Either (OpenUnion errs) a, w)
--- runner2 inner = do
---   (a, w)   <- inner
---   errOrVal <- attempt (pure a)
---   return (errOrVal, w)
+runner2
+  :: ( MonadRescue m
+     , Errors m ~ errs
+     )
+  => m (a, w)
+  -> m (Either (OpenUnion errs) a, w)
+runner2 inner = do
+  (a, w)   <- inner
+  errOrVal <- attempt (pure a)
+  return (errOrVal, w)
 
--- runner3 :: MonadRescue errs m => m (a, b, c) -> m (Either (OpenUnion errs) a, b, c)
--- runner3 inner = do
---   (a, s, w) <- inner
---   errOrVal  <- attempt (pure a)
---   return (errOrVal, s, w)
+runner3
+  :: ( MonadRescue m
+     , Errors m ~ errs
+     )
+  => m (a, b, c)
+  -> m (Either (OpenUnion errs) a, b, c)
+runner3 inner = do
+  (a, s, w) <- inner
+  errOrVal  <- attempt (pure a)
+  return (errOrVal, s, w)
