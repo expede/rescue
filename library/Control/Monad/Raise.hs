@@ -9,23 +9,29 @@
 
 module Control.Monad.Raise
   ( ensure
-  -- * Reexports
+  -- * Class Reexports
   , module Control.Monad.Raise.Class
+  , module Control.Monad.Raise.Constraint
+  -- * Data Reexports
   , module Data.WorldPeace.Subset.Class
   ) where
 
-import           Data.WorldPeace
+import           Control.Monad.Raise.Class
+import           Control.Monad.Raise.Constraint
+
 import           Data.WorldPeace.Subset.Class
 
-import           Control.Monad.Raise.Class
+-- FIXME add that monolocalbinds is needed to the docs for the doctest
 
 -- $setup
 --
 -- >>> :set -XDataKinds
 -- >>> :set -XFlexibleContexts
+-- >>> :set -XMonoLocalBinds
 -- >>> :set -XTypeApplications
 -- >>>
 -- >>> import Data.Proxy
+-- >>> import Data.Result
 -- >>> import Data.WorldPeace
 -- >>>
 -- >>> data FooErr  = FooErr  deriving Show
@@ -40,32 +46,30 @@ import           Control.Monad.Raise.Class
 -- FIXME more examples for more cases of the automated behaviour!!
 --
 -- >>> :{
---   mayFail :: Int -> Either FooErr) Int
+--   mayFail :: Int -> Either FooErr Int
 --   mayFail n =
 --     if n > 50
---       then raise FooErr
---       else pure n
+--       then Left FooErr
+--       else Right n
 -- :}
 --
 -- >>> :{
---   foo :: MonadRaise MyErrs m => m Int
---   foo = do
+--   goesBoom :: (MonadRaise m, Raises FooErr m) => m Int
+--   goesBoom = do
 --     first  <- ensure $ mayFail 100
---     second <- ensure $ mayFail first
+--     second <- ensure $ mayFail 42
 --     return $ second * 10
 -- :}
 --
--- >>> foo :: Maybe Int
--- Nothing
-ensure
-  :: ( MonadRaise m
-     , Errors m ~ outerErrs
-     , Subset inner (OpenUnion outerErrs)
-     )
-  => Either inner a
-  -> m a
-ensure = \case
-  Left  err -> raise err
-  Right val -> pure val
+-- >>> goesBoom :: Result '[FooErr, BarErr] Int
+-- Left (Identity FooErr)
+ensure :: (MonadRaise m, Raises inner m) => Either inner a -> m a
+ensure (Right val) = pure val
+ensure (Left err)  = raise err
 
--- FIXME add stylish haskell because why not
+-- FIXME TODO Make a "Forget" function? i.e. ensure FooErr -> ensure ()
+
+-- FIXME a PluckError/RemoveError/HandlesError constraint for Rescue?
+-- Handles err m n = (Raises err m, MonadRaise m, MonadRescue (Remove err (Errs m)) n)
+
+-- FIXME the constraint errros can get hairy. Add some custom errors :wink:

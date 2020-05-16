@@ -1,9 +1,6 @@
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
--- {-# LANGUAGE MultiParamTypeClasses #-}
--- {-# LANGUAGE ScopedTypeVariables   #-}
--- {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -45,6 +42,7 @@ import           Data.WorldPeace.Subset.Class
 class Monad m => MonadRaise m where
   type Errors m :: [Type]
 
+  -- FIXME more examples
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
@@ -70,34 +68,34 @@ class Monad m => MonadRaise m where
   -- Left (Identity FooErr)
   raise :: Subset err (OpenUnion (Errors m)) => err -> m a
 
--- FIXME move to own module
+instance MonadRaise [] where
+  type Errors [] = '[()]
+  raise _ = []
 
---   -- NOTE NOT POSSIBLE
--- instance MonadRaise [] where
---   type Errors [] = '[] -- FIXME maybe this?
---   raise (IndexOutOfBounds str) = []
-
--- data NotFound a
---   = NotFound
-
--- instance MonadRaise Maybe where
---   type Errors Maybe = '[NotFound ()] -- hmmm right does not depend on the `a`
---   raise NotFound = Nothing
-
---
-
+  -- FIXME move to dedicated testsuite so that this actually runs
+  -- >>> :{
+  --  maybeBoom :: Int -> Maybe Int
+  --  maybeBoom x =
+  --    if x > 50
+  --      then return x
+  --      else raise ()
+  -- :}
+  --
+  -- >>> maybeBoom 42
+  -- Nothing
 instance MonadRaise Maybe where
   type Errors Maybe = '[()] -- Seems bad somehow
+
   raise _ = Nothing -- FIXME test this
 
--- NOTE can be aliased as `MonadRaise (Result errs)`
+-- NOTE can be aliased as `MonadRaise (Result errs)`, but written this way for clarity
 instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
   raise = Left . include
 
 instance Monad m => MonadRaise (ExceptT (OpenUnion errs) m) where
   type Errors (ExceptT (OpenUnion errs) m) = errs
-  raise = except . raise -- NOTE replaces/same as `throwE`
+  raise = except . raise
 
 instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m

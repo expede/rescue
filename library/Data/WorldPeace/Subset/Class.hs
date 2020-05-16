@@ -6,7 +6,7 @@
 
 -- | FIXME docs
 
-module Data.WorldPeace.Subset.Class where
+module Data.WorldPeace.Subset.Class (Subset (..)) where
 
 import           Data.Proxy
 import           Data.WorldPeace
