@@ -95,10 +95,19 @@ instance Monad m => MonadRaise (RescueT errs m) where
 instance Monad m => MonadRescue (RescueT errs m) where
   attempt (RescueT action) = RescueT (Right <$> action)
 
-instance (IsMember SomeException errs, Monad m) => MonadThrow (RescueT errs m) where
+instance
+  ( IsMember SomeException errs
+  , Monad m
+  )
+  => MonadThrow (RescueT errs m) where
   throwM = RescueT . pure . Left . openUnionLift . toException
 
-instance (IsMember SomeException errs, Contains errs errs, Monad m) => MonadCatch (RescueT errs m) where
+instance
+  ( IsMember SomeException errs
+  , Contains errs errs -- FIXME here as well?!
+  , Monad m
+  )
+  => MonadCatch (RescueT errs m) where
   catch action handler =
     rescue action $ \errs ->
       case openUnionMatch errs of
