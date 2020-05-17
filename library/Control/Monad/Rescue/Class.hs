@@ -9,7 +9,7 @@
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
 import           Data.WorldPeace
- 
+
 import           Control.Monad.Raise.Class
 
 import           Control.Monad.Cont
@@ -73,6 +73,16 @@ class MonadRaise m => MonadRescue m where -- FIXME make a constraint synonym for
   -- >>> runRescue x
   -- Right "FooErr"
   attempt :: m a -> m (Either (OpenUnion (Errors m)) a)
+
+instance MonadRescue Maybe where
+  attempt = return . \case
+    Nothing -> Left $ openUnionLift ()
+    Just x  -> Right x
+
+instance MonadRescue [] where -- NOTE this is essentially safeHead?
+  attempt = return . \case
+    []      -> Left $ openUnionLift () -- FIXME perhaps add a helper for openunionlift () and other common values?
+    (a : _) -> Right a -- FIXME not sure if makes sense
 
 instance MonadRescue (Either (OpenUnion errs)) where
   attempt action = Right action

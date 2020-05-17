@@ -9,6 +9,7 @@
 
 module Control.Monad.Raise
   ( ensure
+  , ensureM
   -- * Class Reexports
   , module Control.Monad.Raise.Class
   , module Control.Monad.Raise.Constraint
@@ -66,6 +67,38 @@ import           Data.WorldPeace.Subset.Class
 ensure :: (MonadRaise m, Raises inner m) => Either inner a -> m a
 ensure (Right val) = pure val
 ensure (Left err)  = raise err
+
+-- | A version of @ensure@ that takes monadic actions
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)
+--   mayFailM n =
+--     return $ if n > 50
+--       then Left (openUnionLift FooErr)
+--       else Right n
+-- :}
+--
+-- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
+--
+-- >>> :{
+--   foo :: MonadRaise BigErrs m => m Int
+--   foo = do
+--     first  <- ensureM @BigErrs $ mayFailM 100
+--     second <- ensureM @BigErrs $ mayFailM first
+--     return (second * 10)
+-- :}
+--
+-- >>> foo :: Maybe Int
+-- Nothing
+ensureM
+  :: ( MonadRaise   m
+     , Raises inner m
+     )
+  => m (Either inner a)
+  -> m a
+ensureM action = ensure =<< action
 
 -- FIXME TODO Make a "Forget" function? i.e. ensure FooErr -> ensure ()
 

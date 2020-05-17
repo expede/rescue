@@ -6,6 +6,7 @@
 
 module Control.Monad.Raise.Constraint
   ( Raises
+  , RaisesAtLeast
   , RaisesOnly
   ) where
 
@@ -15,10 +16,10 @@ import           Data.WorldPeace
 import           Data.WorldPeace.Subset.Class
 
 -- FIXME docs
-type Raises err m = (Subset err (OpenUnion (Errors m)))
-
--- FIXME No point, since it's covered in Raise, due to the type family!
--- type RaisesAtLeast errs m = (Subset (OpenUnion errs) (OpenUnion (Errors m)))
+type Raises err m = Subset err (OpenUnion (Errors m))
 
 -- FIXME docs
-type RaisesOnly errs m = (errs ~ Errors m)
+type RaisesAtLeast errs m = Subset (OpenUnion errs) (OpenUnion (Errors m))
+
+-- FIXME docs
+type RaisesOnly errs m = errs ~ Errors m

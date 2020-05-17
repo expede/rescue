@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | FIXME
+-- | FIXME docs
 
 module Control.Monad.Raise.Class (MonadRaise (..)) where
 
@@ -42,7 +42,8 @@ import           Data.WorldPeace.Subset.Class
 class Monad m => MonadRaise m where
   type Errors m :: [Type]
 
-  -- FIXME more examples
+  -- FIXME more examples to show how to lift automation works
+
   -- | Raise an error
   --
   -- The @Proxy@ gives a type hint to the type checker.
@@ -84,9 +85,8 @@ instance MonadRaise [] where
   -- >>> maybeBoom 42
   -- Nothing
 instance MonadRaise Maybe where
-  type Errors Maybe = '[()] -- Seems bad somehow
-
-  raise _ = Nothing -- FIXME test this
+  type Errors Maybe = '[()]
+  raise _ = Nothing
 
 -- NOTE can be aliased as `MonadRaise (Result errs)`, but written this way for clarity
 instance MonadRaise (Either (OpenUnion errs)) where
