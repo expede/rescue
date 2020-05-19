@@ -16,7 +16,7 @@ import           Data.WorldPeace.Subset.Class.Internal
 -- FIXME docs
 
 class Subset err errs where
-  include :: err -> errs
+  include :: err -> errs -- FIXME heavily inline
 
 instance (IsOpenUnion err ~ flag, Subset' flag err errs)
   => Subset err (OpenUnion errs) where

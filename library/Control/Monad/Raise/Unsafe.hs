@@ -1,28 +1,21 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 -- |
 
-module Control.Monad.Raise.Unsafe () where
+-- FIXME remove module; all moved to the main class
+module Control.Monad.Raise.Unsafe () where -- FIXME Unsafe or Async or Concurrent?
 
-import           Control.Monad.Raise.Class
+-- import           Control.Exception
+-- import           Control.Monad.Raise.Class
 
+-- import           Control.Monad.ST
+-- import           GHC.Base
+-- -- import           GHC.Conc
+-- import           GHC.IO
 
-import Control.Exception
-
-import           GHC.Base
-import           GHC.ST
-import           GHC.IO
-
-instance MonadRaise (ST s) where
-  type Errors (ST s) = '[IOException]
-  raise = GHC.IO.unsafeIOToST . raise
-
-instance MonadRaise IO where
-  type Errors IO = '[IOException]
-  raise = IO . raiseIO#
+-- -- FIXME separate package for ResourceT

@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -8,8 +9,12 @@
 
 module Control.Monad.Raise.Class (MonadRaise (..)) where
 
+import           Control.Exception
+
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Cont
+
+import           Control.Monad.ST
 
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Identity
@@ -28,6 +33,9 @@ import qualified Control.Monad.Writer.Strict  as Strict
 import           Data.Kind
 import           Data.WorldPeace
 import           Data.WorldPeace.Subset.Class
+
+import           GHC.Base
+import           GHC.IO
 
 -- $setup
 --
@@ -69,9 +77,24 @@ class Monad m => MonadRaise m where
   -- Left (Identity FooErr)
   raise :: Subset err (OpenUnion (Errors m)) => err -> m a
 
+instance MonadRaise (ST s) where
+  type Errors (ST s) = '[IOException]
+  raise = GHC.IO.unsafeIOToST . raise
+
+instance MonadRaise IO where
+  type Errors IO = '[IOException]
+  raise = IO . raiseIO#
+
 instance MonadRaise [] where
   type Errors [] = '[()]
   raise _ = []
+
+-- instance MonadRaise STM where
+--   type Errors STM = '[SomeException] -- FIXME feels like a bad hack
+--   raise err = STM $ raiseIO# err
+
+-- throwSTM :: Exception e => e -> STM a
+-- throwSTM e = STM $ raiseIO# (toException e)
 
   -- FIXME move to dedicated testsuite so that this actually runs
   -- >>> :{
@@ -93,9 +116,15 @@ instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
   raise = Left . include
 
-instance Monad m => MonadRaise (ExceptT (OpenUnion errs) m) where
-  type Errors (ExceptT (OpenUnion errs) m) = errs
-  raise = except . raise
+-- ListT
+
+instance
+  ( MonadRaise m
+  , Contains (Errors m) errs
+  )
+  => MonadRaise (ExceptT (OpenUnion errs) m) where
+  type Errors (ExceptT (OpenUnion errs) m) = Errors m
+  raise = lift . raise
 
 instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m

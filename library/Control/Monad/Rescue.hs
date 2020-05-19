@@ -15,8 +15,7 @@
 
 module Control.Monad.Rescue
   ( rescue
-  , cleanup
-  , finally
+  -- , retry
 
   -- * Reexports
 
@@ -66,38 +65,23 @@ rescue
      , RaisesOnly errs m
      )
   => m a
-  -> (OpenUnion errs -> m a) -> m a
+  -> (OpenUnion errs -> m a)
+  -> m a
 rescue action handler = either handler pure =<< attempt action
 
-finally
-  :: ( Contains (Errors m) (Errors m) -- FIXME WUUUUUUUT why is this needed?
-     , MonadRescue m
-     )
-  => m a
-  -> m b
-  -> m a
-finally action finalizer = do
-  errOrOk <- attempt action
-  _       <- finalizer
-  ensure errOrOk
+-- onException :: MonadCatch m => m a -> m b -> m a
+-- onRaise :: MonadRescue m => m a -> m b -> m a
 
-cleanup
-  :: ( MonadRescue     m
-     , RaisesOnly errs m
-     , Contains (Errors m) (Errors m) -- FIXME this AGAIN?!
-     )
-  => m resource
-  -> (resource -> OpenUnion errs -> m _ignored1)
-  -> (resource -> a              -> m _ignored2)
-  -> (resource -> m a)
-  -> m a
-cleanup acquire onErr onOk action = do
-  resource <- acquire
-  attempt (action resource) >>= \case
-    Left err -> do
-      _ <- onErr resource err
-      raise err
+-- retry :: MonadRescue m => Nat (times) -> m a -> m a
 
-    Right output -> do
-      _ <- onOk resource output
-      return output
+-- finallySync
+--   :: ( Contains (Errors m) (Errors m) -- FIXME WUUUUUUUT why is this needed?
+--      , MonadRescue m
+--      )
+--   => m a
+--   -> m b
+--   -> m a
+-- finallySync action finalizer = do
+--   errOrOk <- attempt action
+--   _       <- finalizer
+--   ensure errOrOk
