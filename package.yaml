@@ -31,6 +31,8 @@ dependencies:
   - ghc # for STM
   - mtl
   - transformers
+  - unliftio # needed?
+  - unliftio-core
   - world-peace
 
 library:
