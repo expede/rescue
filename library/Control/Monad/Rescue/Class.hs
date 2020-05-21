@@ -109,13 +109,19 @@ instance MonadRescue m => MonadRescue (IdentityT m) where
 
 -- ListT
 
-instance
-  ( MonadRescue m
-  , Contains errs errs
-  , errs ~ Errors m
-  )
-  => MonadRescue (ExceptT (OpenUnion errs) m) where
-    attempt (ExceptT action) = ExceptT $ attempt action
+-- attempt (raise err) == pure (Left err)
+
+-- NOTE type constrained because of the method signature
+-- This means that while the Raise doesn't (yet?) require `Contains (Errors m) errs`
+--   to rescue the outer errs, you need to have it as a subset of the Either's `errs`
+-- FIXME may want to add the Contains to `MonadRaise ExceptT`
+instance (MonadRescue m, Contains (Errors m) errs) => MonadRescue (ExceptT (OpenUnion errs) m) where
+  attempt (ExceptT action) =
+    ExceptT $ attempt action <&> \case
+      Left err       -> Left $ include err
+      Right errOrVal -> Right errOrVal
+
+  -- attempt :: m a -> m (Either (OpenUnion (Errors m)) a)
 
 instance MonadRescue m => MonadRescue (ReaderT cfg m) where
   attempt = mapReaderT attempt
