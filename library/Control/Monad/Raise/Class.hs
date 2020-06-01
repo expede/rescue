@@ -35,6 +35,7 @@ import           Data.WorldPeace
 import           Data.WorldPeace.Subset.Class
 
 import           GHC.Base
+import           GHC.Conc
 import           GHC.IO
 
 -- $setup
@@ -77,24 +78,9 @@ class Monad m => MonadRaise m where
   -- Left (Identity FooErr)
   raise :: Subset err (OpenUnion (Errors m)) => err -> m a
 
-instance MonadRaise (ST s) where
-  type Errors (ST s) = '[IOException]
-  raise = GHC.IO.unsafeIOToST . raise
-
-instance MonadRaise IO where
-  type Errors IO = '[IOException]
-  raise = IO . raiseIO#
-
 instance MonadRaise [] where
   type Errors [] = '[()]
   raise _ = []
-
--- instance MonadRaise STM where
---   type Errors STM = '[SomeException] -- FIXME feels like a bad hack
---   raise err = STM $ raiseIO# err
-
--- throwSTM :: Exception e => e -> STM a
--- throwSTM e = STM $ raiseIO# (toException e)
 
   -- FIXME move to dedicated testsuite so that this actually runs
   -- >>> :{
@@ -115,6 +101,18 @@ instance MonadRaise Maybe where
 instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
   raise = Left . include
+
+instance MonadRaise IO where
+  type Errors IO = '[IOException]
+  raise = IO . raiseIO#
+
+instance MonadRaise (ST s) where
+  type Errors (ST s) = '[IOException]
+  raise = GHC.IO.unsafeIOToST . raise
+
+instance MonadRaise STM where
+  type Errors STM = '[IOException]
+  raise = STM . raiseIO#
 
 -- NOTE behaves differently from MonadThrow!
 -- with `lift . raise`, you must have `errs ~ Errors m`

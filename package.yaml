@@ -30,6 +30,7 @@ dependencies:
   - exceptions
   - ghc # for STM
   - mtl
+  - text
   - transformers
   - unliftio # needed?
   - unliftio-core

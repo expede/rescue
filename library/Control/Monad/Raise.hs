@@ -22,6 +22,8 @@ import           Control.Monad.Raise.Constraint
 
 import           Data.WorldPeace.Subset.Class
 
+import           Data.Text
+
 -- FIXME add that monolocalbinds is needed to the docs for the doctest
 
 -- $setup
@@ -99,6 +101,42 @@ ensureM
   => m (Either inner a)
   -> m a
 ensureM action = ensure =<< action
+
+-- ensureM $ action `onError` \err -> log err
+withError  -- onError?
+  :: Monad m
+  => (err -> m ())
+  -> m (Either err a)
+  -> m (Either err a)
+withError errHandler = \case
+  Left err -> do
+    errHandler err
+    return $ Left err
+
+  Right val ->
+    return $ Right val
+
+-- MonadLogger from monad-logger or split into own package?
+
+-- newtype ErrorLogger m = ErrorLogger
+--   { unlogger :: Errors m -> LogLevel -> Text -> m () }
+
+-- ensureLogM
+--   :: ( MonadLogger  m
+--      , MonadRaise   m
+--      , Raises inner m
+--      )
+--   => (inner -> LogLevel -> Text -> m ())
+--   -> m (Either inner a)
+--   -> m a
+-- ensureLogM logger action =
+--   action >>= \case
+--     Left err -> do
+--       logGeneric lvl msg
+--       raise err
+
+--     Right val ->
+--       Right val
 
 -- FIXME TODO Make a "Forget" function? i.e. ensure FooErr -> ensure ()
 

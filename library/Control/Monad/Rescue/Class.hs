@@ -2,12 +2,16 @@
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase             #-}
+{-# LANGUAGE MagicHash              #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE UndecidableInstances   #-}
 
 -- | The 'MonadRescue' class FIXME expand text
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
+
+import           GHC.Conc
+import           GHC.Exts
 
 import           Data.Functor
 
@@ -34,6 +38,8 @@ import qualified Control.Monad.Writer.Lazy    as Lazy
 import qualified Control.Monad.Writer.Strict  as Strict
 
 import           Data.WorldPeace.Subset.Class
+
+-- TODO Make a comment about attempt (raise err) == pure (Left err)
 
 -- $setup
 --
@@ -81,13 +87,6 @@ class MonadRaise m => MonadRescue m where -- FIXME make a constraint synonym for
   -- Right "FooErr"
   attempt :: m a -> m (Either (OpenUnion (Errors m)) a)
 
--- FIXME
-instance MonadRescue IO where
-  attempt action =
-    tryIO action <&> \case
-      Right val  -> Right val
-      Left ioExc -> Left $ include ioExc
-
 instance MonadRescue Maybe where
   attempt = return . \case
     Nothing -> Left $ openUnionLift ()
@@ -101,6 +100,31 @@ instance MonadRescue [] where -- NOTE this is essentially safeHead?
 instance MonadRescue (Either (OpenUnion errs)) where
   attempt action = Right action
 
+-- FIXME
+instance MonadRescue IO where
+  attempt action =
+    tryIO action <&> \case
+      Right val  -> Right val
+      Left ioExc -> Left $ include ioExc
+
+-- instance MonadRescue (ST s) where
+--   attempt action =
+
+-- instance MonadRescue STM where
+--   attempt (STM action) = STM $ catchSTM# undefined handler -- action undefined -- handler
+--     where
+--       handler err state = (state, Left (include err))
+--       unSTM' (STM a) = a
+
+{-
+catchSTM :: Exception e => STM a -> (e -> STM a) -> STM a
+catchSTM (STM m) handler = STM $ catchSTM# m handler'
+    where
+      handler' e = case fromException e of
+                     Just e' -> unSTM (handler e')
+                     Nothing -> raiseIO# e
+-}
+
 instance MonadRescue m => MonadRescue (MaybeT m) where
   attempt (MaybeT action) = MaybeT . fmap sequence $ attempt action
 
@@ -109,19 +133,19 @@ instance MonadRescue m => MonadRescue (IdentityT m) where
 
 -- ListT
 
--- attempt (raise err) == pure (Left err)
-
 -- NOTE type constrained because of the method signature
 -- This means that while the Raise doesn't (yet?) require `Contains (Errors m) errs`
 --   to rescue the outer errs, you need to have it as a subset of the Either's `errs`
 -- FIXME may want to add the Contains to `MonadRaise ExceptT`
-instance (MonadRescue m, Contains (Errors m) errs) => MonadRescue (ExceptT (OpenUnion errs) m) where
+instance
+  ( MonadRescue m
+  , Contains (Errors m) errs
+  )
+  => MonadRescue (ExceptT (OpenUnion errs) m) where
   attempt (ExceptT action) =
     ExceptT $ attempt action <&> \case
       Left err       -> Left $ include err
       Right errOrVal -> Right errOrVal
-
-  -- attempt :: m a -> m (Either (OpenUnion (Errors m)) a)
 
 instance MonadRescue m => MonadRescue (ReaderT cfg m) where
   attempt = mapReaderT attempt
@@ -148,8 +172,6 @@ instance (Monoid w, MonadRescue m) => MonadRescue (Strict.RWST r w s m) where
 
 instance MonadRescue m => MonadRescue (ContT r m) where
   attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
-
--- instamce STM
 
 runner2
   :: ( MonadRescue m
