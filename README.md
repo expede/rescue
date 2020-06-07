@@ -112,3 +112,13 @@ Hmmmm yeah, that's a problem. Any resource needs to be able to contend with this
 
 
 There's use cases for cleanup in totaly pure contexts, too... where the resource is not dangroes... so don't always need to be aware of teh async extpion, ya?  
+
+No, the scenario above can be handled direcly with MonadRescue/attempt.
+MonadCleanup is speciifcally for "in the face of async exceptions". So, 
+
+
+MonadRecover
+
+
+
+MonadCleanup

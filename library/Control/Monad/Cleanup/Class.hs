@@ -1,6 +1,8 @@
+{-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE LambdaCase           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
@@ -12,162 +14,105 @@ module Control.Monad.Cleanup.Class where
 
 import           Data.Functor
 
-import           Control.Monad.IO.Unlift
+import Control.Monad.Catch
+
+import           GHC.Base
 
 import Exception hiding (catch, mask, uninterruptibleMask, uninterruptibleMask_)
 
-import           Control.Exception hiding (catch, mask, uninterruptibleMask, uninterruptibleMask_)
 import           Control.Monad.Rescue
 import           Data.WorldPeace
 
-import           Control.Monad.Raise.Class
-
-import           Control.Monad.Trans.Class
-
-import           Control.Monad.Cont
-
-import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.Identity
-import           Control.Monad.Trans.Maybe
-import           Control.Monad.Trans.Reader
-
-import qualified Control.Monad.RWS.Lazy       as Lazy
-import qualified Control.Monad.RWS.Strict     as Strict
-
-import qualified Control.Monad.State.Lazy     as Lazy
-import qualified Control.Monad.State.Strict   as Strict
-
-import qualified Control.Monad.Writer.Lazy    as Lazy
-import qualified Control.Monad.Writer.Strict  as Strict
-
-import           Data.WorldPeace.Subset.Class
-
-import Control.Monad.Catch
-
-newtype UnthrowT m a = UnthrowT { throwable :: m a }
-
+-- | Safely work with resources when an asynchronous exception may be thrown
 class (Raises SomeException m, MonadRescue m) => MonadCleanup m where
   cleanup
-    :: m resource                                        -- ^ acquire some resource
-    -- -> (resource -> SomeException        -> m _ignired2) -- ^ sync or async exceptions
-    -> (resource -> OpenUnion (Errors m) -> m _ig1)       -- ^ recover -- cleanup, some exception thrown
-    -> (resource ->                         m _ig2)        -- ^ Cleanup normally
-    -> (resource ->                         m a)         -- ^ inner action to perform with the resource
+    :: m resource                                   -- ^ Acquire some resource
+    -> (resource -> OpenUnion (Errors m) -> m _ig1) -- ^ Cleanup and re-raise
+    -> (resource ->                         m _ig2) -- ^ Cleanup normally
+    -> (resource ->                         m a)    -- ^ Inner action to perform with the resource
     -> m a
 
-newtype AsyncAwareT m a = AsyncAwareT { unAware :: m a }
-  deriving (Functor, Applicative, Monad)
+-- Adds SomeException to an Error stack
+newtype AsyncAwareT m a = AsyncAwareT { unAwareT :: m a }
 
-instance MonadRaise m => MonadRaise (AsyncAwareT m) where
+instance Functor m => Functor (AsyncAwareT m) where
+  fmap f (AsyncAwareT action) = AsyncAwareT (fmap f action)
+  {-# INLINE fmap #-}
+
+-- instance Foldable
+-- instance Traversable
+-- instance MonadTrans
+-- instance Alternative
+-- instance Eq, Show, Display
+
+instance Applicative m => Applicative (AsyncAwareT m) where
+  pure = AsyncAwareT . pure
+  {-# INLINE pure #-}
+
+  AsyncAwareT f <*> AsyncAwareT x = AsyncAwareT (f <*> x)
+  {-# INLINE (<*>) #-}
+
+instance Monad m => Monad (AsyncAwareT m) where
+  AsyncAwareT x >>= f = AsyncAwareT (x >>= unAwareT . f)
+  {-# INLINE (>>=) #-}
+
+instance
+  -- ( Subset (OpenUnion (Errors m)) (OpenUnion (Errors (AsyncAwareT m)))
+  ( MonadRaise m
+  )
+  => MonadRaise (AsyncAwareT m) where
   type Errors (AsyncAwareT m) = SomeException ': Errors m
-  -- type Errors (AsyncAwareT m) = SomeAsyncException ': Errors m
-  raise = AsyncAwareT . raise
+  raise = AsyncAwareT . raise -- FIXME brooke, you're working on this bit -- type constraint issue here
 
--- newtype AsyncAwareIO a = AsyncAwareIO { unAwareIO :: IO a }
+type AsyncAwareIO a = AsyncAwareT IO a
 
--- instance MonadRaise AsyncAwareIO where
---   type Errors AsyncAwareIO = '[IOException, SomeAsyncException] -- maybe just someexcpetion?
---   raise = AsyncAwareIO . raise
-
-instance MonadRescue (AsyncAwareT IO) where -- FIXME generalize
+instance MonadRescue (AsyncAwareT IO) where
   attempt (AsyncAwareT action) = AsyncAwareT $
     tryIO action <&> \case
       Right val -> Right val
-      Left err  -> Left $ include err
+      Left  err  -> Left $ include err
 
 instance MonadThrow m => MonadThrow (AsyncAwareT m) where
   throwM = AsyncAwareT . throwM
 
 instance MonadCatch m => MonadCatch (AsyncAwareT m) where
-  catch = undefined -- lift . catch
+  catch (AsyncAwareT action) handler =
+    AsyncAwareT $ catch action (unAwareT . handler)
 
 instance MonadMask m => MonadMask (AsyncAwareT m) where
-  mask = undefined . mask
-  uninterruptibleMask = undefined . uninterruptableMask
+   mask a = AsyncAwareT $ mask $ \u -> unAwareT (a $ q u)
+    where q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
+          q u = AsyncAwareT . u . unAwareT
+
+   uninterruptibleMask a =
+    AsyncAwareT $ uninterruptibleMask $ \u -> unAwareT (a $ q u)
+      where q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
+            q u = AsyncAwareT . u . unAwareT
+
+   generalBracket acquire release use = AsyncAwareT $
+     generalBracket
+       (unAwareT acquire)
+       (\resource exitCase -> unAwareT (release resource exitCase))
+       (\resource -> unAwareT (use resource))
 
 instance MonadCleanup (AsyncAwareT IO) where
   cleanup acquire onErr onOk action =
     mask $ \restore -> do
       resource <- acquire
+ 
+      -- NOTE MonadRescue AsyncIO catches all throwIOs
       attempt (restore $ action resource) >>= \case
         Left errs -> do
-          _ <- uninterruptibleMask_ (onErr resource errs `catch` \_ -> return ())
-          raise errs
+          _ <- uninterruptibleMask_ $
+             fmap (\_ -> ()) (onErr resource errs)
+                `catch` \(_ :: SomeException) -> return ()
+
+          raise errs -- NOTE `raise` *is* throwIO without the `toException`
 
         Right output -> do
-          _ <- onOk resource -- output
+          _ <- onOk resource
           return output
-
--- instance MonadCleanup Maybe where
---   cleanup acquire onErr onOk action = do
---     resource <- acquire
---     attempt (action resource) >>= \case
---       Left err -> do
---         _ <- onErr resource err
---         raise err
-
---       Right output -> do
---         _ <- onOk resource output
---         return output
-
--- instance MonadCleanup [] where
---   cleanup acquire onErr onOk action = do
---     resource <- acquire
---     attempt (action resource) >>= \case
---       Left err -> do
---         _ <- onErr resource err
---         raise err
-
---       Right output -> do
---         _ <- onOk resource output
---         return output
-
--- instance Contains errs errs => MonadCleanup (Either (OpenUnion errs)) where
---   cleanup acquire onErr onOk action = do
---     resource <- acquire
---     attempt (action resource) >>= \case
---       Left err -> do
---         _ <- onErr resource err
---         raise err
-
---       Right output -> do
---         _ <- onOk resource output
---         return output
-
--- unliftedCleanup
---   :: MonadUnliftIO m
---   => m resource                                        -- ^ acquire some resource
---   -> (resource -> OpenUnion (Errors m) -> m _ignored1) -- ^ cleanup, some exception thrown
---   -> (resource -> a                    -> m _ignored2) -- ^ cleanup, no exception thrown. The exception will be rethrown
---   -> (resource ->                         m a)         -- ^ inner action to perform with the resource
---   -> m a
-
--- unliftedCleanup acquire onErr onOk action =
---   withRunInIO $ \runInIO -> do
---     resource <- acquire
---     attempt (action resource) >>= \case
---       Left err -> do
---         _ <- onErr resource err
---         raise err
-
---       Right output -> do
---         _ <- onOk resource output
---         return output
-
--- liftedCleanup
---   :: ( MonadTrans   t
---      , MonadCleanup m
---      , MonadRaise (t m)
---      )
---   => t m resource
---   -> (resource -> OpenUnion (Errors m) -> m _ignored1)
---   -> (resource -> a                    -> m _ignored2)
---   -> (resource ->                         m a)
---   -> t m a
--- liftedCleanup res onErr onOk action = do
---   inner <- res
---   lift $ cleanup (pure inner) onErr onOk action
-
+ 
 -- finally :: MonadCleanup m => m a -> m b -> m a
 
 -- cleanRetry :: MonadCleanup m => Nat -> m a -> m a
