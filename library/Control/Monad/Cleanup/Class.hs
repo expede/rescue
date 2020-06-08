@@ -8,15 +8,14 @@
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
--- | FIXME
+
+-- | FIXME add docs
 
 module Control.Monad.Cleanup.Class where
 
 import           Data.Functor
 
-import Control.Monad.Catch
-
-import           GHC.Base
+import Control.Monad.Catch as Catch
 
 import Exception hiding (catch, mask, uninterruptibleMask, uninterruptibleMask_)
 
@@ -56,24 +55,37 @@ instance Monad m => Monad (AsyncAwareT m) where
   AsyncAwareT x >>= f = AsyncAwareT (x >>= unAwareT . f)
   {-# INLINE (>>=) #-}
 
+instance MonadThrow m => MonadThrow (AsyncAwareT m) where
+  throwM = AsyncAwareT . throwM
+
 instance
-  -- ( Subset (OpenUnion (Errors m)) (OpenUnion (Errors (AsyncAwareT m)))
-  ( MonadRaise m
+  ( Contains (Errors m) (Errors m)
+  , MonadRaise m
+  , MonadThrow m
   )
   => MonadRaise (AsyncAwareT m) where
   type Errors (AsyncAwareT m) = SomeException ': Errors m
-  raise = AsyncAwareT . raise -- FIXME brooke, you're working on this bit -- type constraint issue here
+
+  raise err = openUnion raiser throwM errsUnion
+    where
+      errsUnion :: OpenUnion (SomeException ': Errors m)
+      errsUnion = include err
+
+      raiser :: Contains err (Errors m) => OpenUnion err -> AsyncAwareT m a
+      raiser = AsyncAwareT . raise
+
+instance
+  ( Contains (Errors m) (Errors m)
+  , MonadCatch  m
+  , MonadRescue m
+  )
+  => MonadRescue (AsyncAwareT m) where -- TODO needs testing to check that this works as intended
+  attempt action =
+    Catch.try action >>= \case
+      Left  e@(SomeException _) -> return . Left $ include e
+      Right result              -> attempt $ pure result
 
 type AsyncAwareIO a = AsyncAwareT IO a
-
-instance MonadRescue (AsyncAwareT IO) where
-  attempt (AsyncAwareT action) = AsyncAwareT $
-    tryIO action <&> \case
-      Right val -> Right val
-      Left  err  -> Left $ include err
-
-instance MonadThrow m => MonadThrow (AsyncAwareT m) where
-  throwM = AsyncAwareT . throwM
 
 instance MonadCatch m => MonadCatch (AsyncAwareT m) where
   catch (AsyncAwareT action) handler =
@@ -95,12 +107,17 @@ instance MonadMask m => MonadMask (AsyncAwareT m) where
        (\resource exitCase -> unAwareT (release resource exitCase))
        (\resource -> unAwareT (use resource))
 
-instance MonadCleanup (AsyncAwareT IO) where
+instance
+  ( Contains (Errors m) (Errors m)
+  , Contains (Errors m) (SomeException ': Errors m)
+  , MonadRescue m
+  , MonadMask   m
+  )
+  => MonadCleanup (AsyncAwareT m) where
   cleanup acquire onErr onOk action =
     mask $ \restore -> do
       resource <- acquire
- 
-      -- NOTE MonadRescue AsyncIO catches all throwIOs
+
       attempt (restore $ action resource) >>= \case
         Left errs -> do
           _ <- uninterruptibleMask_ $
