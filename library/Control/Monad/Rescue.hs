@@ -15,7 +15,7 @@
 
 module Control.Monad.Rescue
   ( rescue
-  -- , retry
+  , retry
 
   -- * Reexports
 
@@ -27,6 +27,8 @@ import           Data.WorldPeace
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
+
+import           Numeric.Natural
 
 -- FIXME raiseIn?
 
@@ -72,7 +74,12 @@ rescue action handler = either handler pure =<< attempt action
 -- onException :: MonadCatch m => m a -> m b -> m a
 -- onRaise :: MonadRescue m => m a -> m b -> m a
 
--- retry :: MonadRescue m => Nat (times) -> m a -> m a
+retry :: MonadRescue m => Natural -> m a -> m a
+retry 0     action = action
+retry times action =
+  attempt action >>= \case
+    Left  _   -> retry (times - 1) action
+    Right val -> return val
 
 -- finallySync
 --   :: ( Contains (Errors m) (Errors m) -- FIXME WUUUUUUUT why is this needed?

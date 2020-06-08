@@ -1,26 +1,25 @@
-{-# LANGUAGE MagicHash            #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE DeriveFunctor        #-}
+{-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE LambdaCase           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | FIXME add docs
 
-module Control.Monad.Cleanup.Class where
+module Control.Monad.Cleanup.Class (MonadCleanup (..)) where
 
-import           Data.Functor
-
-import Control.Monad.Catch as Catch
-
-import Exception hiding (catch, mask, uninterruptibleMask, uninterruptibleMask_)
-
+import           Control.Monad.Catch  as Catch
 import           Control.Monad.Rescue
+
 import           Data.WorldPeace
+
+-- FIXME move somewhere better and rename
+
+type AllErrs m = OpenUnion (Errors m)
 
 -- | Safely work with resources when an asynchronous exception may be thrown
 class (Raises SomeException m, MonadRescue m) => MonadCleanup m where
@@ -93,8 +92,9 @@ instance MonadCatch m => MonadCatch (AsyncAwareT m) where
 
 instance MonadMask m => MonadMask (AsyncAwareT m) where
    mask a = AsyncAwareT $ mask $ \u -> unAwareT (a $ q u)
-    where q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
-          q u = AsyncAwareT . u . unAwareT
+    where
+      q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
+      q u = AsyncAwareT . u . unAwareT
 
    uninterruptibleMask a =
     AsyncAwareT $ uninterruptibleMask $ \u -> unAwareT (a $ q u)
@@ -120,16 +120,12 @@ instance
 
       attempt (restore $ action resource) >>= \case
         Left errs -> do
-          _ <- uninterruptibleMask_ $
+          _ <- uninterruptibleMask_$
              fmap (\_ -> ()) (onErr resource errs)
                 `catch` \(_ :: SomeException) -> return ()
 
-          raise errs -- NOTE `raise` *is* throwIO without the `toException`
+          raise errs
 
         Right output -> do
           _ <- onOk resource
           return output
- 
--- finally :: MonadCleanup m => m a -> m b -> m a
-
--- cleanRetry :: MonadCleanup m => Nat -> m a -> m a
