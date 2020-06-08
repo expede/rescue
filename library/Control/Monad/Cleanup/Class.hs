@@ -19,7 +19,7 @@ import           Data.WorldPeace
 
 -- FIXME move somewhere better and rename
 
-type AllErrs m = OpenUnion (Errors m)
+type OpenErrors m = OpenUnion (Errors m)
 
 -- | Safely work with resources when an asynchronous exception may be thrown
 class (Raises SomeException m, MonadRescue m) => MonadCleanup m where
