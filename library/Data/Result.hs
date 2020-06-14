@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies     #-}
 
--- | FIXME docs
+-- | 'Result' is a
 
 module Data.Result
   ( fromEither
@@ -14,7 +14,7 @@ import           Data.WorldPeace
 
 import           Control.Monad.Raise
 
--- FIXME docs
+-- | Upgrade from an 'Either' to a 'Result'
 fromEither :: Subset err (OpenUnion errs) => Either err val -> Result errs val
 fromEither (Right val) = Ok val
 fromEither (Left  err) = Err (include err)

@@ -15,9 +15,9 @@ import           Control.Monad.Rescue
 
 import           Numeric.Natural
 
--- FIXME rename
-finally :: MonadCleanup m => m a -> m b -> m a
-finally action finalizer =
+-- | Equivalent of 'finally'
+lastly :: MonadCleanup m => m a -> m b -> m a
+lastly action finalizer =
   cleanup (pure ())
           (\_ _ -> finalizer)
           (\_   -> finalizer)
