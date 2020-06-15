@@ -105,7 +105,7 @@ ensureM
   -> m a
 ensureM action = ensure =<< action
 
-onError
+handleError
   :: Monad m
   => (err -> m ())
   -> m (Either err a)
