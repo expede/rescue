@@ -11,10 +11,14 @@ module Control.Monad.Raise
   ( ensure
   , ensureM
   , withError
+
   -- * Class Reexports
+
   , module Control.Monad.Raise.Class
   , module Control.Monad.Raise.Constraint
+
   -- * Data Reexports
+
   , module Data.WorldPeace.Subset.Class
   ) where
 
@@ -22,8 +26,6 @@ import           Control.Monad.Raise.Class
 import           Control.Monad.Raise.Constraint
 
 import           Data.WorldPeace.Subset.Class
-
--- import           Data.Text
 
 -- FIXME add that monolocalbinds is needed to the docs for the doctest
 
@@ -103,13 +105,12 @@ ensureM
   -> m a
 ensureM action = ensure =<< action
 
--- ensureM $ action `onError` \err -> log err
-withError  -- onError?
+onError
   :: Monad m
   => (err -> m ())
   -> m (Either err a)
   -> m (Either err a)
-withError errHandler action = action >>= \case
+onError errHandler action = action >>= \case
   Left err -> do
     errHandler err
     return $ Left err
@@ -117,31 +118,6 @@ withError errHandler action = action >>= \case
   Right val ->
     return $ Right val
 
--- MonadLogger from monad-logger or split into own package?
-
--- newtype ErrorLogger m = ErrorLogger
---   { unlogger :: Errors m -> LogLevel -> Text -> m () }
-
--- ensureLogM
---   :: ( MonadLogger  m
---      , MonadRaise   m
---      , Raises inner m
---      )
---   => (inner -> LogLevel -> Text -> m ())
---   -> m (Either inner a)
---   -> m a
--- ensureLogM logger action =
---   action >>= \case
---     Left err -> do
---       logGeneric lvl msg
---       raise err
-
---     Right val ->
---       Right val
-
--- FIXME TODO Make a "Forget" function? i.e. ensure FooErr -> ensure ()
-
+-- FIXME TODO Make a "Forget/ignore" function? i.e. ensure FooErr -> ensure ()
 -- FIXME a PluckError/RemoveError/HandlesError constraint for Rescue?
 -- Handles err m n = (Raises err m, MonadRaise m, MonadRescue (Remove err (Errs m)) n)
-
--- FIXME the constraint errros can get hairy. Add some custom errors :wink:
