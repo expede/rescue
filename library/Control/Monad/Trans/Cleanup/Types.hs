@@ -10,21 +10,25 @@
 
 -- | FIXME docs
 
-module Data.AsyncAwareT.Types
-  ( AsyncAwareT (..)
-  , AsyncAwareIO
+-- FIXME perhaps CleanupT?
+
+module Control.Monad.Trans.Cleanup.Types
+  ( CleanupT (..)
+  , CleanupIO
   ) where
 
+import           Control.Monad.Catch   as Catch
 import           Control.Monad.Cleanup
+
 import           Data.WorldPeace
 
 -- | Adds 'SomeException' to an Error stack
-newtype AsyncAwareT m a = AsyncAwareT { unAwareT :: m a }
- 
-type AsyncAwareIO a = AsyncAwareT IO a
+newtype CleanupT m a = CleanupT { unAwareT :: m a }
 
-instance Functor m => Functor (AsyncAwareT m) where
-  fmap f (AsyncAwareT action) = AsyncAwareT (fmap f action)
+type CleanupIO a = CleanupT IO a
+
+instance Functor m => Functor (CleanupT m) where
+  fmap f (CleanupT action) = CleanupT (fmap f action)
   {-# INLINE fmap #-}
 
 -- instance Foldable
@@ -33,64 +37,65 @@ instance Functor m => Functor (AsyncAwareT m) where
 -- instance Alternative
 -- instance Eq, Show, Display
 
-instance Applicative m => Applicative (AsyncAwareT m) where
-  pure = AsyncAwareT . pure
+instance Applicative m => Applicative (CleanupT m) where
+  pure = CleanupT . pure
   {-# INLINE pure #-}
 
-  AsyncAwareT f <*> AsyncAwareT x = AsyncAwareT (f <*> x)
+  CleanupT f <*> CleanupT x = CleanupT (f <*> x)
   {-# INLINE (<*>) #-}
 
-instance Monad m => Monad (AsyncAwareT m) where
-  AsyncAwareT x >>= f = AsyncAwareT (x >>= unAwareT . f)
+instance Monad m => Monad (CleanupT m) where
+  CleanupT x >>= f = CleanupT (x >>= unAwareT . f)
   {-# INLINE (>>=) #-}
 
-instance MonadThrow m => MonadThrow (AsyncAwareT m) where
-  throwM = AsyncAwareT . throwM
+instance MonadThrow m => MonadThrow (CleanupT m) where
+  throwM = CleanupT . throwM
 
 instance
   ( Contains (Errors m) (Errors m)
   , MonadRaise m
   , MonadThrow m
   )
-  => MonadRaise (AsyncAwareT m) where
-  type Errors (AsyncAwareT m) = SomeException ': Errors m
+  => MonadRaise (CleanupT m) where
+  type Errors (CleanupT m) = SomeException ': Errors m
 
   raise err = openUnion raiser throwM errsUnion
     where
       errsUnion :: OpenUnion (SomeException ': Errors m)
       errsUnion = include err
 
-      raiser :: Contains err (Errors m) => OpenUnion err -> AsyncAwareT m a
-      raiser = AsyncAwareT . raise
+      raiser :: Contains err (Errors m) => OpenUnion err -> CleanupT m a
+      raiser = CleanupT . raise
 
 instance
   ( Contains (Errors m) (Errors m)
   , MonadCatch  m
   , MonadRescue m
   )
-  => MonadRescue (AsyncAwareT m) where -- TODO needs testing to check that this works as intended
+  => MonadRescue (CleanupT m) where -- TODO needs testing to check that this works as intended
   attempt action =
     Catch.try action >>= \case
       Left  e@(SomeException _) -> return . Left $ include e
       Right result              -> attempt $ pure result
 
 
-instance MonadCatch m => MonadCatch (AsyncAwareT m) where
-  catch (AsyncAwareT action) handler =
-    AsyncAwareT $ catch action (unAwareT . handler)
+instance MonadCatch m => MonadCatch (CleanupT m) where
+  catch (CleanupT action) handler =
+    CleanupT $ catch action (unAwareT . handler)
 
-instance MonadMask m => MonadMask (AsyncAwareT m) where
-   mask a = AsyncAwareT $ mask $ \u -> unAwareT (a $ q u)
+instance MonadMask m => MonadMask (CleanupT m) where
+   mask action = CleanupT $ mask (\u -> unAwareT (action $ q u))
     where
-      q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
-      q u = AsyncAwareT . u . unAwareT
+      q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
+      q u = CleanupT . u . unAwareT
 
    uninterruptibleMask a =
-    AsyncAwareT $ uninterruptibleMask $ \u -> unAwareT (a $ q u)
-      where q :: (m a -> m a) -> AsyncAwareT m a -> AsyncAwareT m a
-            q u = AsyncAwareT . u . unAwareT
+    CleanupT $ uninterruptibleMask (\u -> unAwareT (a $ q u))
+      where
+        q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
+        q u = CleanupT . u . unAwareT
 
-   generalBracket acquire release use = AsyncAwareT $
+   generalBracket acquire release use = CleanupT $
      generalBracket
        (unAwareT acquire)
        (\resource exitCase -> unAwareT (release resource exitCase))
@@ -102,7 +107,7 @@ instance
   , MonadRescue m
   , MonadMask   m
   )
-  => MonadCleanup (AsyncAwareT m) where
+  => MonadCleanup (CleanupT m) where
   cleanup acquire onErr onOk action =
     mask $ \restore -> do
       resource <- acquire

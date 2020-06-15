@@ -4,7 +4,7 @@
 
 module Control.Monad.Cleanup
   ( cleanRetry
-  , finally
+  , lastly
   -- * Reexport
   , module Control.Monad.Rescue
   , module Control.Monad.Cleanup.Class

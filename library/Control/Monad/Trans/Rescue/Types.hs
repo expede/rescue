@@ -46,8 +46,6 @@ instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT errs m a) where
 instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT errs m a) where
   show (RescueT inner) = "RescueT (" <> show inner <> ")"
 
- -- TODO instance Display
-
 instance Functor m => Functor (RescueT errs m) where
   fmap f (RescueT inner) = RescueT $ fmap (fmap f) inner
 
@@ -104,7 +102,7 @@ instance
 
 instance
   ( IsMember SomeException errs
-  , Contains errs errs -- FIXME here as well?!
+  , Contains errs errs
   , Monad m
   )
   => MonadCatch (RescueT errs m) where

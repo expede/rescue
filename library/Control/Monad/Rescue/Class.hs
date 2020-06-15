@@ -10,8 +10,8 @@
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
-import           GHC.Conc
-import           GHC.Exts
+-- import           GHC.Conc
+-- import           GHC.Exts
 
 import           Data.Functor
 

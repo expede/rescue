@@ -118,18 +118,18 @@ instance MonadRaise STM where
 -- with `lift . raise`, you must have `errs ~ Errors m`
 -- This implementation ONLY gives you access to the inner Either
 -- FIXME make sure this is sane
-instance MonadRaise m => MonadRaise (ExceptT (OpenUnion errs) m) where
-  type Errors (ExceptT (OpenUnion errs) m) = errs
-  raise = ExceptT . pure . raise
+-- instance MonadRaise m => MonadRaise (ExceptT (OpenUnion errs) m) where
+--   type Errors (ExceptT (OpenUnion errs) m) = errs
+--   raise = ExceptT . pure . raise
 
 -- NOTE the version below doesn't make sense, because `IO (Either (OpenUnion errs) a`
 -- This version ensures that the inner errs contains the type of the outer errs
 -- The main user case is to merge IOException with pure errs
 -- But may cause issues with async vs sync errors
--- instance (MonadRaise m, Contains (Errors m) errs)
---   => MonadRaise (ExceptT (OpenUnion errs) m) where
---     type Errors (ExceptT (OpenUnion errs) m) = errs
---     raise = ExceptT . pure . raise
+instance (MonadRaise m, Contains (Errors m) errs)
+  => MonadRaise (ExceptT (OpenUnion errs) m) where
+    type Errors (ExceptT (OpenUnion errs) m) = errs
+    raise = ExceptT . pure . raise
 
 instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m

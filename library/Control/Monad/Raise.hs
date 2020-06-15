@@ -10,6 +10,7 @@
 module Control.Monad.Raise
   ( ensure
   , ensureM
+  , withError
   -- * Class Reexports
   , module Control.Monad.Raise.Class
   , module Control.Monad.Raise.Constraint
@@ -22,7 +23,7 @@ import           Control.Monad.Raise.Constraint
 
 import           Data.WorldPeace.Subset.Class
 
-import           Data.Text
+-- import           Data.Text
 
 -- FIXME add that monolocalbinds is needed to the docs for the doctest
 
@@ -108,7 +109,7 @@ withError  -- onError?
   => (err -> m ())
   -> m (Either err a)
   -> m (Either err a)
-withError errHandler = \case
+withError errHandler action = action >>= \case
   Left err -> do
     errHandler err
     return $ Left err
