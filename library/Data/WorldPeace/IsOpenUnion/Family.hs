@@ -1,13 +1,12 @@
 {-# LANGUAGE DataKinds    #-}
 {-# LANGUAGE TypeFamilies #-}
 
--- | FIXME docs
-
 module Data.WorldPeace.IsOpenUnion.Family (IsOpenUnion) where
 
 import           Data.WorldPeace
 
--- FIXME docs
+-- | Type-level check that a type is an open union.
+--   For use with the @Subset'@ typeclass.
 type family (IsOpenUnion a) :: Bool where
   IsOpenUnion (OpenUnion a) = 'True
   IsOpenUnion a             = 'False
