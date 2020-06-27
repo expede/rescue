@@ -1,8 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies     #-}
 
--- | 'Result' is a
-
 module Data.Result
   ( fromEither
   -- * Reexports

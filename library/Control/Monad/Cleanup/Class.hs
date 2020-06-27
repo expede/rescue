@@ -1,8 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies     #-}
 
--- | FIXME add docs
-
 module Control.Monad.Cleanup.Class (MonadCleanup (..)) where
 
 import           Control.Exception
