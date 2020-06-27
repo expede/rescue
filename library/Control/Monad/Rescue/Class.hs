@@ -6,12 +6,9 @@
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE UndecidableInstances   #-}
 
--- | The 'MonadRescue' class FIXME expand text
+-- | The 'MonadRescue' class, meant for retrieving the success/failure branches
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
-
--- import           GHC.Conc
--- import           GHC.Exts
 
 import           Data.Functor
 
@@ -39,8 +36,6 @@ import qualified Control.Monad.Writer.Strict  as Strict
 
 import           Data.WorldPeace.Subset.Class
 
--- TODO Make a comment about attempt (raise err) == pure (Left err)
-
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -56,11 +51,8 @@ import           Data.WorldPeace.Subset.Class
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-class MonadRaise m => MonadRescue m where -- FIXME make a constraint synonym for MonadRaise + MonadRescue
+class MonadRaise m => MonadRescue m where
   -- | Attempt some action, exposing the success and error branches
-  --
-  --  The @Proxy@ gives a type hint to the type checker. -- FIXME
-  --  If you have a case where it can be inferred, see 'Control.Monad.Rescue.attempt''.
   --
   --  ==== __Examples__
   --
@@ -89,7 +81,7 @@ instance MonadRescue Maybe where
     Nothing -> Left $ openUnionLift ()
     Just x  -> Right x
 
-instance MonadRescue [] where -- NOTE this is essentially safeHead?
+instance MonadRescue [] where
   attempt = return . \case
     []      -> Left $ include ()
     (a : _) -> Right a
@@ -97,7 +89,6 @@ instance MonadRescue [] where -- NOTE this is essentially safeHead?
 instance MonadRescue (Either (OpenUnion errs)) where
   attempt action = Right action
 
--- FIXME
 instance MonadRescue IO where
   attempt action =
     tryIO action <&> \case
@@ -128,12 +119,9 @@ instance MonadRescue m => MonadRescue (MaybeT m) where
 instance MonadRescue m => MonadRescue (IdentityT m) where
   attempt (IdentityT action) = lift (attempt action)
 
--- ListT
-
 -- NOTE type constrained because of the method signature
 -- This means that while the Raise doesn't (yet?) require `Contains (Errors m) errs`
 --   to rescue the outer errs, you need to have it as a subset of the Either's `errs`
--- FIXME may want to add the Contains to `MonadRaise ExceptT`
 instance
   ( MonadRescue m
   , Contains (Errors m) errs
