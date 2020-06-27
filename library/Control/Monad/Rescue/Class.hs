@@ -1,10 +1,8 @@
-{-# LANGUAGE FlexibleContexts       #-}
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE LambdaCase             #-}
-{-# LANGUAGE MagicHash              #-}
-{-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | The 'MonadRescue' class, meant for retrieving the success/failure branches
 
@@ -94,24 +92,6 @@ instance MonadRescue IO where
     tryIO action <&> \case
       Right val  -> Right val
       Left ioExc -> Left $ include ioExc
-
--- instance MonadRescue (ST s) where
---   attempt action =
-
--- instance MonadRescue STM where
---   attempt (STM action) = STM $ catchSTM# undefined handler -- action undefined -- handler
---     where
---       handler err state = (state, Left (include err))
---       unSTM' (STM a) = a
-
-{-
-catchSTM :: Exception e => STM a -> (e -> STM a) -> STM a
-catchSTM (STM m) handler = STM $ catchSTM# m handler'
-    where
-      handler' e = case fromException e of
-                     Just e' -> unSTM (handler e')
-                     Nothing -> raiseIO# e
--}
 
 instance MonadRescue m => MonadRescue (MaybeT m) where
   attempt (MaybeT action) = MaybeT . fmap sequence $ attempt action
