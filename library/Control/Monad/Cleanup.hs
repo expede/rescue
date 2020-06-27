@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
--- |
+-- | Cleanly release resources and clean up contexts
 
 module Control.Monad.Cleanup
   ( cleanRetry
