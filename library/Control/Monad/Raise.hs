@@ -31,7 +31,6 @@ import           Data.WorldPeace.Subset.Class
 -- >>> :set -XDataKinds
 -- >>> :set -XFlexibleContexts
 -- >>> :set -XMonoLocalBinds
--- >>> :set -XTypeApplications
 -- >>> :set -XTypeFamilies
 -- >>> :set -XTypeOperators
 -- >>>

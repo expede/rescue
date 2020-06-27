@@ -27,6 +27,6 @@ retry :: MonadCleanup m => Natural -> m a -> m a
 retry 0     action = action
 retry times action =
   cleanup (pure ())
-          (\_ _ -> cleanRetry (times - 1) action)
+          (\_ _ -> retry (times - 1) action)
           (\_   -> pure ())
           (\_   -> action)
