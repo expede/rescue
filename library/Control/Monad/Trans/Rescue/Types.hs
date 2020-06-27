@@ -1,21 +1,9 @@
-{-# LANGUAGE ApplicativeDo         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeSynonymInstances  #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ApplicativeDo        #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
 
-
-
----
-{-# LANGUAGE AllowAmbiguousTypes   #-}
----
-
--- | FIXME
-
+-- | The 'RescueT' transformer
 module Control.Monad.Trans.Rescue.Types
   ( RescueT (..)
   , Rescue
@@ -30,11 +18,11 @@ import           Control.Monad.Rescue
 import           Data.Functor.Identity
 import           Data.WorldPeace
 
--- | Add type-directed error handling abilities to a 'Monad'.
+-- | Add type-directed error handling abilities to a 'Monad'
 newtype RescueT errs m a
   = RescueT { runRescueT :: m (Either (OpenUnion errs) a) }
 
--- | A specialized version of 'RescueT'.
+-- | A specialized version of 'RescueT' to be used without a transfromer stack
 type Rescue errs = RescueT errs Identity
 
 runRescue :: Rescue errs a -> Either (OpenUnion errs) a
