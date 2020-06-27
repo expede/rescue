@@ -32,8 +32,6 @@ dependencies:
   - mtl
   - text
   - transformers
-  - unliftio # needed?
-  - unliftio-core
   - world-peace
 
 library:
