@@ -81,13 +81,7 @@ class Monad m => MonadRaise m where
   --
   -- >>> goesBoom 42
   -- Left (Identity FooErr)
-  raise :: Subset err (OpenUnion (Errors m)) => err -> m a
-
-instance MonadRaise [] where
-  type Errors [] = '[()]
-  raise _ = []
-
-  -- FIXME move to dedicated testsuite so that this actually runs
+  --
   -- >>> :{
   --  maybeBoom :: Int -> Maybe Int
   --  maybeBoom x =
@@ -98,11 +92,16 @@ instance MonadRaise [] where
   --
   -- >>> maybeBoom 42
   -- Nothing
+  raise :: Subset err (OpenUnion (Errors m)) => err -> m a
+
+instance MonadRaise [] where
+  type Errors [] = '[()]
+  raise _ = []
+
 instance MonadRaise Maybe where
   type Errors Maybe = '[()]
   raise _ = Nothing
 
--- NOTE can be aliased as `MonadRaise (Result errs)`, but written this way for clarity
 instance MonadRaise (Either (OpenUnion errs)) where
   type Errors (Either (OpenUnion errs)) = errs
   raise = Left . include

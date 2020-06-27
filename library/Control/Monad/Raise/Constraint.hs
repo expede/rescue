@@ -3,7 +3,6 @@
 {-# LANGUAGE TypeFamilies     #-}
 
 -- | Declare which exceptions may be raised/rescued in a given context
-
 module Control.Monad.Raise.Constraint
   ( Raises
   , RaisesAtLeast
