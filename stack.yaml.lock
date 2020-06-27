@@ -20,7 +20,7 @@ packages:
     hackage: happy-1.19.12
 snapshots:
 - completed:
-    size: 496120
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/16.yaml
-    sha256: cf30623a2c147f51eecc8f9d6440f5d1b671af21380505e633faff32b565f3d5
-  original: lts-15.16
+    size: 531674
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/2.yaml
+    sha256: 4b08fb9338ca297de7ade8318f4be1216f14dff8c0426c001fb7886ee88cb84a
+  original: lts-16.2

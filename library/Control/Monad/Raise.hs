@@ -10,7 +10,7 @@
 module Control.Monad.Raise
   ( ensure
   , ensureM
-  , withError
+  , onException
 
   -- * Class Reexports
 
@@ -35,7 +35,10 @@ import           Data.WorldPeace.Subset.Class
 -- >>> :set -XFlexibleContexts
 -- >>> :set -XMonoLocalBinds
 -- >>> :set -XTypeApplications
+-- >>> :set -XTypeFamilies
+-- >>> :set -XTypeOperators
 -- >>>
+-- >>> import Control.Monad.Trans.Rescue
 -- >>> import Data.Proxy
 -- >>> import Data.Result
 -- >>> import Data.WorldPeace
@@ -49,8 +52,6 @@ import           Data.WorldPeace.Subset.Class
 --
 -- ==== __Examples__
 --
--- FIXME more examples for more cases of the automated behaviour!!
---
 -- >>> :{
 --   mayFail :: Int -> Either FooErr Int
 --   mayFail n =
@@ -60,7 +61,7 @@ import           Data.WorldPeace.Subset.Class
 -- :}
 --
 -- >>> :{
---   goesBoom :: (MonadRaise m, Raises FooErr m) => m Int
+--   goesBoom :: (MonadRaise m, m `Raises` FooErr) => m Int
 --   goesBoom = do
 --     first  <- ensure $ mayFail 100
 --     second <- ensure $ mayFail 42
@@ -69,7 +70,7 @@ import           Data.WorldPeace.Subset.Class
 --
 -- >>> goesBoom :: Result '[FooErr, BarErr] Int
 -- Left (Identity FooErr)
-ensure :: (MonadRaise m, Raises inner m) => Either inner a -> m a
+ensure :: (MonadRaise m, Raises m inner) => Either inner a -> m a
 ensure (Right val) = pure val
 ensure (Left err)  = raise err
 
@@ -78,46 +79,41 @@ ensure (Left err)  = raise err
 -- ==== __Examples__
 --
 -- >>> :{
---   mayFailM :: Monad m => Int -> m (Either (OpenUnion MyErrs) Int)
+--   mayFailM :: Monad m => Int -> m (Either (OpenUnion '[FooErr, BarErr]) Int)
 --   mayFailM n =
 --     return $ if n > 50
 --       then Left (openUnionLift FooErr)
 --       else Right n
 -- :}
 --
--- >>> type BigErrs = '[FooErr, BarErr, QuuxErr]
---
 -- >>> :{
---   foo :: MonadRaise BigErrs m => m Int
+--   foo :: (MonadRaise m, RaisesOnly m '[FooErr, BarErr]) => m Int
 --   foo = do
---     first  <- ensureM @BigErrs $ mayFailM 100
---     second <- ensureM @BigErrs $ mayFailM first
+--     first  <- ensureM $ mayFailM 100
+--     second <- ensureM $ mayFailM first
 --     return (second * 10)
 -- :}
 --
--- >>> foo :: Maybe Int
--- Nothing
+-- >>> runRescue (foo :: Rescue '[FooErr, BarErr] Int)
+-- Left (Identity FooErr)
 ensureM
-  :: ( MonadRaise   m
-     , Raises inner m
+  :: ( MonadRaise m
+     , Raises     m inner
      )
   => m (Either inner a)
   -> m a
 ensureM action = ensure =<< action
 
-handleError
+onException
   :: Monad m
   => (err -> m ())
   -> m (Either err a)
   -> m (Either err a)
-onError errHandler action = action >>= \case
-  Left err -> do
-    errHandler err
-    return $ Left err
+onException errHandler action =
+  action >>= \case
+    Left err -> do
+      errHandler err
+      return $ Left err
 
-  Right val ->
-    return $ Right val
-
--- FIXME TODO Make a "Forget/ignore" function? i.e. ensure FooErr -> ensure ()
--- FIXME a PluckError/RemoveError/HandlesError constraint for Rescue?
--- Handles err m n = (Raises err m, MonadRaise m, MonadRescue (Remove err (Errs m)) n)
+    Right val ->
+      return $ Right val

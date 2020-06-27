@@ -46,7 +46,7 @@ import           Numeric.Natural
 -- >>> data BarErr  = BarErr  deriving Show
 -- >>> data QuuxErr = QuuxErr deriving Show
 
--- | FIXME add one-liner
+-- | Handle all exceptions
 --
 -- >>> type MyErrs = '[FooErr, BarErr]
 -- >>> myErrs = Proxy @MyErrs
@@ -56,15 +56,15 @@ import           Numeric.Natural
 -- goesBoom x =
 --   if x > 50
 --     then return (show x)
---     else raiseAs @MyErrs FooErr
+--     else raise FooErr
 -- :}
 --
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
--- >>> rescue myErrs (goesBoom 42) (pure . handler)
+-- >>> rescue (goesBoom 42) (pure . handler)
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescue
   :: ( MonadRescue m
-     , RaisesOnly errs m
+     , RaisesOnly  m errs
      )
   => m a
   -> (OpenUnion errs -> m a)
@@ -72,7 +72,7 @@ rescue
 rescue action handler = either handler pure =<< attempt action
 
 -- onException :: MonadCatch m => m a -> m b -> m a
--- onRaise :: MonadRescue m => m a -> m b -> m a
+-- onRaise     :: MonadRescue m => m a -> m b -> m a
 
 retry :: MonadRescue m => Natural -> m a -> m a
 retry 0     action = action

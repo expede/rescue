@@ -106,7 +106,7 @@ The basic flow for an async execption is then:
 3. Run the normal cleanup
 4. Rethrow the original asynchronous error
 
-This means that any instacne of MonadAsyncCleanup needs a MonadCleanup and `Raises SomeAsyncException m`
+This means that any instacne of MonadAsyncCleanup needs a MonadCleanup and `Raises m SomeAsyncException`
 
 Hmmmm yeah, that's a problem. Any resource needs to be able to contend with this, so now all of them need a SomeAsyncException constraint
 

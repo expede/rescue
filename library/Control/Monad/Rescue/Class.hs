@@ -64,25 +64,22 @@ class MonadRaise m => MonadRescue m where -- FIXME make a constraint synonym for
   --
   --  ==== __Examples__
   --
-  --  >>> type MyErrs = '[FooErr, BarErr]
-  --  >>> myErrs = Proxy @MyErrs -- FIXME
-  --
   --  >>> :{
-  --    goesBoom :: Int -> Rescue MyErrs Int
+  --    goesBoom :: Int -> Rescue '[FooErr, BarErr] Int
   --    goesBoom x =
   --      if x > 50
   --        then return x
-  --        else raise @MyErrs FooErr
+  --        else raise FooErr
   -- :}
   --
-  -- >>> runRescue . attempt myErrs $ goesBoom 42
+  -- >>> runRescue . attempt $ goesBoom 42
   -- Right (Left (Identity FooErr))
   --
   -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
   -- In practice you would handle the 'OpenUnion' like so:
   --
   -- >>> let handleErr = catchesOpenUnion (show, show)
-  -- >>> let x = attempt myErrs (goesBoom 42) >>= pure . either handleErr show
+  -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
   attempt :: m a -> m (Either (OpenUnion (Errors m)) a)
@@ -151,9 +148,7 @@ instance MonadRescue m => MonadRescue (ReaderT cfg m) where
   attempt = mapReaderT attempt
 
 instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.WriterT w m) where
-  attempt = Lazy.mapWriterT runner2 -- FIXME lok at the MonadCatch instance, it can write the err
-
-   -- catch (LazyW.WriterT m) h = LazyW.WriterT $ m `catch ` \e -> LazyW.runWriterT (h e)
+  attempt = Lazy.mapWriterT runner2
 
 instance (Monoid w, MonadRescue m) => MonadRescue (Strict.WriterT w m) where
   attempt = Strict.mapWriterT runner2

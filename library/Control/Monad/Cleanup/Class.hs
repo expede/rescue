@@ -11,7 +11,7 @@ import           Control.Monad.Rescue
 import           Data.WorldPeace
 
 -- | Safely work with resources when an asynchronous exception may be thrown
-class (Raises SomeException m, MonadRescue m) => MonadCleanup m where
+class (Raises m SomeException, MonadRescue m) => MonadCleanup m where
   cleanup
     :: m resource                                   -- ^ Acquire some resource
     -> (resource -> OpenUnion (Errors m) -> m _ig1) -- ^ Cleanup and re-raise

@@ -1,4 +1,4 @@
-module Control.Monad.Trans.AsyncAware
-  (module Control.Monad.Trans.AsyncAware.Types) where
+module Control.Monad.Trans.Cleanup
+  (module Control.Monad.Trans.Cleanup.Types) where
 
-import           Control.Monad.Trans.AsyncAware.Types
+import           Control.Monad.Trans.Cleanup.Types
