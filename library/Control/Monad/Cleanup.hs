@@ -3,7 +3,7 @@
 -- | Cleanly release resources and clean up contexts
 
 module Control.Monad.Cleanup
-  ( cleanRetry
+  ( retry
   , always
   -- * Reexport
   , module Control.Monad.Rescue
@@ -23,9 +23,9 @@ always action finalizer =
           (\_   -> finalizer)
           (\_   -> action)
 
-cleanRetry :: MonadCleanup m => Natural -> m a -> m a
-cleanRetry 0     action = action
-cleanRetry times action =
+retry :: MonadCleanup m => Natural -> m a -> m a
+retry 0     action = action
+retry times action =
   cleanup (pure ())
           (\_ _ -> cleanRetry (times - 1) action)
           (\_   -> pure ())

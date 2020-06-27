@@ -11,7 +11,7 @@
 
 module Control.Monad.Rescue
   ( rescue
-  , retry
+  , reattempt
   , onRaise
   , lastly
 
@@ -84,22 +84,19 @@ onRaise errHandler action =
     Right val ->
       return $ Ok val
 
-retry :: MonadRescue m => Natural -> m a -> m a
-retry 0     action = action
-retry times action =
+-- | 'retry' without asynchoronous exception cleanup.
+--   Useful when not dealing with external resources that may
+--   be dangerous to close suddenly.
+reattempt :: MonadRescue m => Natural -> m a -> m a
+reattempt 0     action = action
+reattempt times action =
   attempt action >>= \case
-    Left  _   -> retry (times - 1) action
+    Left  _   -> reattempt (times - 1) action
     Right val -> return val
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly
-  :: ( Contains (Errors m) (Errors m)
-     , MonadRescue m
-     )
-  => m a
-  -> m b
-  -> m a
+lastly :: (Contains (Errors m) (Errors m), MonadRescue m) => m a -> m b -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
