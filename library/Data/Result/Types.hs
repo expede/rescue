@@ -14,8 +14,8 @@ import           Data.WorldPeace
 -- | 'Result' is a synonym for 'Either (OpenUnion errs) a'
 type Result (errs :: [Type]) = Either (OpenUnion errs)
 
-pattern Ok :: val -> Either err val
+pattern Ok :: val -> Either (OpenUnion err) val
 pattern Ok val = Right val
 
-pattern Err :: a -> Either a b
-pattern Err err = Left err
+pattern Err :: OpenUnion errs -> Either (OpenUnion errs) b
+pattern Err errs = Left errs

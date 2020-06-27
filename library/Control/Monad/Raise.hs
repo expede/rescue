@@ -10,7 +10,6 @@
 module Control.Monad.Raise
   ( ensure
   , ensureM
-  , onException
 
   -- * Class Reexports
 
@@ -26,8 +25,6 @@ import           Control.Monad.Raise.Class
 import           Control.Monad.Raise.Constraint
 
 import           Data.WorldPeace.Subset.Class
-
--- FIXME add that monolocalbinds is needed to the docs for the doctest
 
 -- $setup
 --
@@ -103,17 +100,3 @@ ensureM
   => m (Either inner a)
   -> m a
 ensureM action = ensure =<< action
-
-onException
-  :: Monad m
-  => (err -> m ())
-  -> m (Either err a)
-  -> m (Either err a)
-onException errHandler action =
-  action >>= \case
-    Left err -> do
-      errHandler err
-      return $ Left err
-
-    Right val ->
-      return $ Right val

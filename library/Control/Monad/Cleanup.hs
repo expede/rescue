@@ -4,7 +4,7 @@
 
 module Control.Monad.Cleanup
   ( cleanRetry
-  , lastly
+  , always
   -- * Reexport
   , module Control.Monad.Rescue
   , module Control.Monad.Cleanup.Class
@@ -16,8 +16,8 @@ import           Control.Monad.Rescue
 import           Numeric.Natural
 
 -- | Equivalent of 'finally'
-lastly :: MonadCleanup m => m a -> m b -> m a
-lastly action finalizer =
+always :: MonadCleanup m => m a -> m b -> m a
+always action finalizer =
   cleanup (pure ())
           (\_ _ -> finalizer)
           (\_   -> finalizer)

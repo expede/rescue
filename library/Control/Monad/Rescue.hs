@@ -1,9 +1,5 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE LambdaCase   #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- | Rescue semantics & helpers
 --
@@ -16,6 +12,8 @@
 module Control.Monad.Rescue
   ( rescue
   , retry
+  , onRaise
+  , lastly
 
   -- * Reexports
 
@@ -23,14 +21,13 @@ module Control.Monad.Rescue
   , module Control.Monad.Rescue.Class
   ) where
 
+import           Data.Result.Types
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
 
 import           Numeric.Natural
-
--- FIXME raiseIn?
 
 -- $setup
 --
@@ -71,8 +68,21 @@ rescue
   -> m a
 rescue action handler = either handler pure =<< attempt action
 
--- onException :: MonadCatch m => m a -> m b -> m a
--- onRaise     :: MonadRescue m => m a -> m b -> m a
+onRaise
+  :: ( MonadRescue m
+     , RaisesOnly  m errs
+     )
+  => (OpenUnion errs -> m ())
+  -> m a
+  -> m (Result errs a)
+onRaise errHandler action =
+  attempt action >>= \case
+    Left err -> do
+      errHandler err
+      return $ Err err
+
+    Right val ->
+      return $ Ok val
 
 retry :: MonadRescue m => Natural -> m a -> m a
 retry 0     action = action
@@ -81,14 +91,16 @@ retry times action =
     Left  _   -> retry (times - 1) action
     Right val -> return val
 
--- finallySync
---   :: ( Contains (Errors m) (Errors m) -- FIXME WUUUUUUUT why is this needed?
---      , MonadRescue m
---      )
---   => m a
---   -> m b
---   -> m a
--- finallySync action finalizer = do
---   errOrOk <- attempt action
---   _       <- finalizer
---   ensure errOrOk
+-- | Run an additional step, and throw away the result.
+--   Return the result of the action passed.
+lastly
+  :: ( Contains (Errors m) (Errors m)
+     , MonadRescue m
+     )
+  => m a
+  -> m b
+  -> m a
+lastly action finalizer = do
+  errOrOk <- attempt action
+  _       <- finalizer
+  ensure errOrOk
