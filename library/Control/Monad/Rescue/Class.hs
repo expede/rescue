@@ -15,6 +15,7 @@ import           Data.WorldPeace
 import           Exception
 
 import           Control.Monad.Raise.Class
+import           Control.Monad.Raise.Constraint
 
 import           Control.Monad.Cont
 
@@ -23,14 +24,14 @@ import           Control.Monad.Trans.Identity
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 
-import qualified Control.Monad.RWS.Lazy       as Lazy
-import qualified Control.Monad.RWS.Strict     as Strict
+import qualified Control.Monad.RWS.Lazy         as Lazy
+import qualified Control.Monad.RWS.Strict       as Strict
 
-import qualified Control.Monad.State.Lazy     as Lazy
-import qualified Control.Monad.State.Strict   as Strict
+import qualified Control.Monad.State.Lazy       as Lazy
+import qualified Control.Monad.State.Strict     as Strict
 
-import qualified Control.Monad.Writer.Lazy    as Lazy
-import qualified Control.Monad.Writer.Strict  as Strict
+import qualified Control.Monad.Writer.Lazy      as Lazy
+import qualified Control.Monad.Writer.Strict    as Strict
 
 import           Data.WorldPeace.Subset.Class
 
@@ -138,7 +139,7 @@ instance MonadRescue m => MonadRescue (ContT r m) where
 
 runner2
   :: ( MonadRescue m
-     , errs ~ Errors m
+     , RaisesOnly  m errs
      )
   => m (a, w)
   -> m (Either (OpenUnion errs) a, w)
@@ -149,7 +150,7 @@ runner2 inner = do
 
 runner3
   :: ( MonadRescue m
-     , errs ~ Errors m
+     , RaisesOnly  m errs
      )
   => m (a, b, c)
   -> m (Either (OpenUnion errs) a, b, c)
