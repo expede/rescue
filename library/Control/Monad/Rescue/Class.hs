@@ -100,9 +100,6 @@ instance MonadRescue m => MonadRescue (MaybeT m) where
 instance MonadRescue m => MonadRescue (IdentityT m) where
   attempt (IdentityT action) = lift (attempt action)
 
--- NOTE type constrained because of the method signature
--- This means that while the Raise doesn't (yet?) require `Contains (Errors m) errs`
--- to rescue the outer errs, you need to have it as a subset of the Either's `errs`
 instance
   ( MonadRescue m
   , Contains (Errors m) errs
