@@ -1,5 +1,7 @@
 name: rescue
 version: '0.2.0'
+synopsis: More understandable exceptions
+description: An error handling library focused on clarity and control
 category: Error Handling
 author: Brooklyn Zelenka
 maintainer: hello@brooklynzelenka.com
@@ -24,6 +26,9 @@ ghc-options:
   - -Wredundant-constraints
   # Prettier Development
   - -fhide-source-paths
+
+build-depends: 
+  - base >= 4.15 && < 5
 
 dependencies:
   - base
