@@ -17,11 +17,11 @@ data NotAllowed entity user
   = NotAllowed entity user
   deriving (Show, Eq)
 
-data AlreadyExists entity
+newtype AlreadyExists entity
   = AlreadyExists entity
   deriving (Show, Eq)
 
-data OutOfBounds entity index
+newtype OutOfBounds entity index
   = OutOfBounds index
   deriving (Show, Eq)
 
@@ -29,7 +29,7 @@ data DivideByZero
   = DivideByZero
   deriving (Show, Eq)
 
-data InvalidFormat entity
+newtype InvalidFormat entity
   = InvalidFormat entity
   deriving (Show, Eq)
 

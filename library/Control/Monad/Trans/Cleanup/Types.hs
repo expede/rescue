@@ -123,7 +123,7 @@ instance MonadMask m => MonadMask (CleanupT m) where
      generalBracket
        (runCleanupT acquire)
        (\resource exitCase -> runCleanupT (release resource exitCase))
-       (\resource -> runCleanupT (use resource))
+       (runCleanupT . use)
 
 instance
   ( Contains (Errors m) (Errors m)
