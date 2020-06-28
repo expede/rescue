@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Common exceptions</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Data.Exception.Types</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Data.Exception.Types.html#NotFound"><span class="hs-identifier">NotFound</span></a></span><span>      </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Data.Exception.Types.html#NotAllowed"><span class="hs-identifier">NotAllowed</span></a></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Data.Exception.Types.html#AlreadyExists"><span class="hs-identifier">AlreadyExists</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Data.Exception.Types.html#OutOfBounds"><span class="hs-identifier">OutOfBounds</span></a></span><span>   </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Data.Exception.Types.html#DivideByZero"><span class="hs-identifier">DivideByZero</span></a></span><span>  </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">data</span><span> </span><span id="NotFound"><span class="annot"><a href="Data.Exception.Types.html#NotFound"><span class="hs-identifier hs-var">NotFound</span></a></span></span><span> </span><span id="local-6989586621679121269"><span class="annot"><a href="#local-6989586621679121269"><span class="hs-identifier hs-type">entity</span></a></span></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="NotFound"><span class="annot"><a href="Data.Exception.Types.html#NotFound"><span class="hs-identifier hs-var">NotFound</span></a></span></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121262"><span id="local-6989586621679121264"><span id="local-6989586621679121266"><span class="annot"><span class="annottext">Int -&gt; NotFound entity -&gt; ShowS
+[NotFound entity] -&gt; ShowS
+NotFound entity -&gt; String
+(Int -&gt; NotFound entity -&gt; ShowS)
+-&gt; (NotFound entity -&gt; String)
+-&gt; ([NotFound entity] -&gt; ShowS)
+-&gt; Show (NotFound entity)
+forall entity. Int -&gt; NotFound entity -&gt; ShowS
+forall entity. [NotFound entity] -&gt; ShowS
+forall entity. NotFound entity -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [NotFound entity] -&gt; ShowS
+$cshowList :: forall entity. [NotFound entity] -&gt; ShowS
+show :: NotFound entity -&gt; String
+$cshow :: forall entity. NotFound entity -&gt; String
+showsPrec :: Int -&gt; NotFound entity -&gt; ShowS
+$cshowsPrec :: forall entity. Int -&gt; NotFound entity -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121257"><span id="local-6989586621679121259"><span class="annot"><span class="annottext">NotFound entity -&gt; NotFound entity -&gt; Bool
+(NotFound entity -&gt; NotFound entity -&gt; Bool)
+-&gt; (NotFound entity -&gt; NotFound entity -&gt; Bool)
+-&gt; Eq (NotFound entity)
+forall entity. NotFound entity -&gt; NotFound entity -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: NotFound entity -&gt; NotFound entity -&gt; Bool
+$c/= :: forall entity. NotFound entity -&gt; NotFound entity -&gt; Bool
+== :: NotFound entity -&gt; NotFound entity -&gt; Bool
+$c== :: forall entity. NotFound entity -&gt; NotFound entity -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">data</span><span> </span><span id="NotAllowed"><span class="annot"><a href="Data.Exception.Types.html#NotAllowed"><span class="hs-identifier hs-var">NotAllowed</span></a></span></span><span> </span><span id="local-6989586621679121255"><span class="annot"><a href="#local-6989586621679121255"><span class="hs-identifier hs-type">entity</span></a></span></span><span> </span><span id="local-6989586621679121254"><span class="annot"><a href="#local-6989586621679121254"><span class="hs-identifier hs-type">user</span></a></span></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="NotAllowed"><span class="annot"><a href="Data.Exception.Types.html#NotAllowed"><span class="hs-identifier hs-var">NotAllowed</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679121255"><span class="hs-identifier hs-type">entity</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121254"><span class="hs-identifier hs-type">user</span></a></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121247"><span id="local-6989586621679121249"><span id="local-6989586621679121251"><span class="annot"><span class="annottext">Int -&gt; NotAllowed entity user -&gt; ShowS
+[NotAllowed entity user] -&gt; ShowS
+NotAllowed entity user -&gt; String
+(Int -&gt; NotAllowed entity user -&gt; ShowS)
+-&gt; (NotAllowed entity user -&gt; String)
+-&gt; ([NotAllowed entity user] -&gt; ShowS)
+-&gt; Show (NotAllowed entity user)
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+forall entity user.
+(Show entity, Show user) =&gt;
+Int -&gt; NotAllowed entity user -&gt; ShowS
+forall entity user.
+(Show entity, Show user) =&gt;
+[NotAllowed entity user] -&gt; ShowS
+forall entity user.
+(Show entity, Show user) =&gt;
+NotAllowed entity user -&gt; String
+showList :: [NotAllowed entity user] -&gt; ShowS
+$cshowList :: forall entity user.
+(Show entity, Show user) =&gt;
+[NotAllowed entity user] -&gt; ShowS
+show :: NotAllowed entity user -&gt; String
+$cshow :: forall entity user.
+(Show entity, Show user) =&gt;
+NotAllowed entity user -&gt; String
+showsPrec :: Int -&gt; NotAllowed entity user -&gt; ShowS
+$cshowsPrec :: forall entity user.
+(Show entity, Show user) =&gt;
+Int -&gt; NotAllowed entity user -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121243"><span id="local-6989586621679121245"><span class="annot"><span class="annottext">NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+(NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool)
+-&gt; (NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool)
+-&gt; Eq (NotAllowed entity user)
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+forall entity user.
+(Eq entity, Eq user) =&gt;
+NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+/= :: NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+$c/= :: forall entity user.
+(Eq entity, Eq user) =&gt;
+NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+== :: NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+$c== :: forall entity user.
+(Eq entity, Eq user) =&gt;
+NotAllowed entity user -&gt; NotAllowed entity user -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">newtype</span><span> </span><span id="AlreadyExists"><span class="annot"><a href="Data.Exception.Types.html#AlreadyExists"><span class="hs-identifier hs-var">AlreadyExists</span></a></span></span><span> </span><span id="local-6989586621679121242"><span class="annot"><a href="#local-6989586621679121242"><span class="hs-identifier hs-type">entity</span></a></span></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="AlreadyExists"><span class="annot"><a href="Data.Exception.Types.html#AlreadyExists"><span class="hs-identifier hs-var">AlreadyExists</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679121242"><span class="hs-identifier hs-type">entity</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121235"><span id="local-6989586621679121237"><span id="local-6989586621679121239"><span class="annot"><span class="annottext">Int -&gt; AlreadyExists entity -&gt; ShowS
+[AlreadyExists entity] -&gt; ShowS
+AlreadyExists entity -&gt; String
+(Int -&gt; AlreadyExists entity -&gt; ShowS)
+-&gt; (AlreadyExists entity -&gt; String)
+-&gt; ([AlreadyExists entity] -&gt; ShowS)
+-&gt; Show (AlreadyExists entity)
+forall entity. Show entity =&gt; Int -&gt; AlreadyExists entity -&gt; ShowS
+forall entity. Show entity =&gt; [AlreadyExists entity] -&gt; ShowS
+forall entity. Show entity =&gt; AlreadyExists entity -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [AlreadyExists entity] -&gt; ShowS
+$cshowList :: forall entity. Show entity =&gt; [AlreadyExists entity] -&gt; ShowS
+show :: AlreadyExists entity -&gt; String
+$cshow :: forall entity. Show entity =&gt; AlreadyExists entity -&gt; String
+showsPrec :: Int -&gt; AlreadyExists entity -&gt; ShowS
+$cshowsPrec :: forall entity. Show entity =&gt; Int -&gt; AlreadyExists entity -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121231"><span id="local-6989586621679121233"><span class="annot"><span class="annottext">AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+(AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool)
+-&gt; (AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool)
+-&gt; Eq (AlreadyExists entity)
+forall entity.
+Eq entity =&gt;
+AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+$c/= :: forall entity.
+Eq entity =&gt;
+AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+== :: AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+$c== :: forall entity.
+Eq entity =&gt;
+AlreadyExists entity -&gt; AlreadyExists entity -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">newtype</span><span> </span><span id="OutOfBounds"><span class="annot"><a href="Data.Exception.Types.html#OutOfBounds"><span class="hs-identifier hs-var">OutOfBounds</span></a></span></span><span> </span><span id="local-6989586621679121230"><span class="annot"><a href="#local-6989586621679121230"><span class="hs-identifier hs-type">entity</span></a></span></span><span> </span><span id="local-6989586621679121229"><span class="annot"><a href="#local-6989586621679121229"><span class="hs-identifier hs-type">index</span></a></span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="OutOfBounds"><span class="annot"><a href="Data.Exception.Types.html#OutOfBounds"><span class="hs-identifier hs-var">OutOfBounds</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679121229"><span class="hs-identifier hs-type">index</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121222"><span id="local-6989586621679121224"><span id="local-6989586621679121226"><span class="annot"><span class="annottext">Int -&gt; OutOfBounds entity index -&gt; ShowS
+[OutOfBounds entity index] -&gt; ShowS
+OutOfBounds entity index -&gt; String
+(Int -&gt; OutOfBounds entity index -&gt; ShowS)
+-&gt; (OutOfBounds entity index -&gt; String)
+-&gt; ([OutOfBounds entity index] -&gt; ShowS)
+-&gt; Show (OutOfBounds entity index)
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+forall entity index.
+Show index =&gt;
+Int -&gt; OutOfBounds entity index -&gt; ShowS
+forall entity index.
+Show index =&gt;
+[OutOfBounds entity index] -&gt; ShowS
+forall entity index.
+Show index =&gt;
+OutOfBounds entity index -&gt; String
+showList :: [OutOfBounds entity index] -&gt; ShowS
+$cshowList :: forall entity index.
+Show index =&gt;
+[OutOfBounds entity index] -&gt; ShowS
+show :: OutOfBounds entity index -&gt; String
+$cshow :: forall entity index.
+Show index =&gt;
+OutOfBounds entity index -&gt; String
+showsPrec :: Int -&gt; OutOfBounds entity index -&gt; ShowS
+$cshowsPrec :: forall entity index.
+Show index =&gt;
+Int -&gt; OutOfBounds entity index -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121218"><span id="local-6989586621679121220"><span class="annot"><span class="annottext">OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+(OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool)
+-&gt; (OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool)
+-&gt; Eq (OutOfBounds entity index)
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+forall entity index.
+Eq index =&gt;
+OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+/= :: OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+$c/= :: forall entity index.
+Eq index =&gt;
+OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+== :: OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+$c== :: forall entity index.
+Eq index =&gt;
+OutOfBounds entity index -&gt; OutOfBounds entity index -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">data</span><span> </span><span id="DivideByZero"><span class="annot"><a href="Data.Exception.Types.html#DivideByZero"><span class="hs-identifier hs-var">DivideByZero</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="DivideByZero"><span class="annot"><a href="Data.Exception.Types.html#DivideByZero"><span class="hs-identifier hs-var">DivideByZero</span></a></span></span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121211"><span id="local-6989586621679121213"><span id="local-6989586621679121215"><span class="annot"><span class="annottext">Int -&gt; DivideByZero -&gt; ShowS
+[DivideByZero] -&gt; ShowS
+DivideByZero -&gt; String
+(Int -&gt; DivideByZero -&gt; ShowS)
+-&gt; (DivideByZero -&gt; String)
+-&gt; ([DivideByZero] -&gt; ShowS)
+-&gt; Show DivideByZero
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [DivideByZero] -&gt; ShowS
+$cshowList :: [DivideByZero] -&gt; ShowS
+show :: DivideByZero -&gt; String
+$cshow :: DivideByZero -&gt; String
+showsPrec :: Int -&gt; DivideByZero -&gt; ShowS
+$cshowsPrec :: Int -&gt; DivideByZero -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121207"><span id="local-6989586621679121209"><span class="annot"><span class="annottext">DivideByZero -&gt; DivideByZero -&gt; Bool
+(DivideByZero -&gt; DivideByZero -&gt; Bool)
+-&gt; (DivideByZero -&gt; DivideByZero -&gt; Bool) -&gt; Eq DivideByZero
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: DivideByZero -&gt; DivideByZero -&gt; Bool
+$c/= :: DivideByZero -&gt; DivideByZero -&gt; Bool
+== :: DivideByZero -&gt; DivideByZero -&gt; Bool
+$c== :: DivideByZero -&gt; DivideByZero -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">newtype</span><span> </span><span id="InvalidFormat"><span class="annot"><a href="Data.Exception.Types.html#InvalidFormat"><span class="hs-identifier hs-var">InvalidFormat</span></a></span></span><span> </span><span id="local-6989586621679121206"><span class="annot"><a href="#local-6989586621679121206"><span class="hs-identifier hs-type">entity</span></a></span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="InvalidFormat"><span class="annot"><a href="Data.Exception.Types.html#InvalidFormat"><span class="hs-identifier hs-var">InvalidFormat</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679121206"><span class="hs-identifier hs-type">entity</span></a></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121199"><span id="local-6989586621679121201"><span id="local-6989586621679121203"><span class="annot"><span class="annottext">Int -&gt; InvalidFormat entity -&gt; ShowS
+[InvalidFormat entity] -&gt; ShowS
+InvalidFormat entity -&gt; String
+(Int -&gt; InvalidFormat entity -&gt; ShowS)
+-&gt; (InvalidFormat entity -&gt; String)
+-&gt; ([InvalidFormat entity] -&gt; ShowS)
+-&gt; Show (InvalidFormat entity)
+forall entity. Show entity =&gt; Int -&gt; InvalidFormat entity -&gt; ShowS
+forall entity. Show entity =&gt; [InvalidFormat entity] -&gt; ShowS
+forall entity. Show entity =&gt; InvalidFormat entity -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [InvalidFormat entity] -&gt; ShowS
+$cshowList :: forall entity. Show entity =&gt; [InvalidFormat entity] -&gt; ShowS
+show :: InvalidFormat entity -&gt; String
+$cshow :: forall entity. Show entity =&gt; InvalidFormat entity -&gt; String
+showsPrec :: Int -&gt; InvalidFormat entity -&gt; ShowS
+$cshowsPrec :: forall entity. Show entity =&gt; Int -&gt; InvalidFormat entity -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121195"><span id="local-6989586621679121197"><span class="annot"><span class="annottext">InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+(InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool)
+-&gt; (InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool)
+-&gt; Eq (InvalidFormat entity)
+forall entity.
+Eq entity =&gt;
+InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+$c/= :: forall entity.
+Eq entity =&gt;
+InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+== :: InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+$c== :: forall entity.
+Eq entity =&gt;
+InvalidFormat entity -&gt; InvalidFormat entity -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Attach a message to an exception, typicaly for runtime user feedback</span><span>
+</span><span id="line-37"></span><span class="hs-comment">--</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XOverloadedStrings</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- &gt;&gt;&gt; show $ InvalidFormat &quot;foo&quot; `WithMessage` &quot;Not a valid JSON object&quot;</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- &quot;InvalidFormat \&quot;foo\&quot; `WithMessage` \&quot;Not a valid JSON object\&quot;&quot;</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">data</span><span> </span><span id="WithMessage"><span class="annot"><a href="Data.Exception.Types.html#WithMessage"><span class="hs-identifier hs-var">WithMessage</span></a></span></span><span> </span><span id="local-6989586621679121194"><span class="annot"><a href="#local-6989586621679121194"><span class="hs-identifier hs-type">err</span></a></span></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679121194"><span class="hs-identifier hs-type">err</span></a></span><span> </span><span id="WithMessage"><span class="annot"><a href="Data.Exception.Types.html#WithMessage"><span class="hs-operator hs-var">`WithMessage`</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679121186"><span id="local-6989586621679121188"><span id="local-6989586621679121190"><span class="annot"><span class="annottext">Int -&gt; WithMessage err -&gt; ShowS
+[WithMessage err] -&gt; ShowS
+WithMessage err -&gt; String
+(Int -&gt; WithMessage err -&gt; ShowS)
+-&gt; (WithMessage err -&gt; String)
+-&gt; ([WithMessage err] -&gt; ShowS)
+-&gt; Show (WithMessage err)
+forall err. Show err =&gt; Int -&gt; WithMessage err -&gt; ShowS
+forall err. Show err =&gt; [WithMessage err] -&gt; ShowS
+forall err. Show err =&gt; WithMessage err -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [WithMessage err] -&gt; ShowS
+$cshowList :: forall err. Show err =&gt; [WithMessage err] -&gt; ShowS
+show :: WithMessage err -&gt; String
+$cshow :: forall err. Show err =&gt; WithMessage err -&gt; String
+showsPrec :: Int -&gt; WithMessage err -&gt; ShowS
+$cshowsPrec :: forall err. Show err =&gt; Int -&gt; WithMessage err -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121182"><span id="local-6989586621679121184"><span class="annot"><span class="annottext">WithMessage err -&gt; WithMessage err -&gt; Bool
+(WithMessage err -&gt; WithMessage err -&gt; Bool)
+-&gt; (WithMessage err -&gt; WithMessage err -&gt; Bool)
+-&gt; Eq (WithMessage err)
+forall err. Eq err =&gt; WithMessage err -&gt; WithMessage err -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: WithMessage err -&gt; WithMessage err -&gt; Bool
+$c/= :: forall err. Eq err =&gt; WithMessage err -&gt; WithMessage err -&gt; Bool
+== :: WithMessage err -&gt; WithMessage err -&gt; Bool
+$c== :: forall err. Eq err =&gt; WithMessage err -&gt; WithMessage err -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span></pre></body></html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Cleanly release resources and clean up contexts</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Control.Monad.Cleanup</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Control.Monad.Cleanup.html#retry"><span class="hs-identifier">retry</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Cleanup.html#always"><span class="hs-identifier">always</span></a></span><span>
+</span><span id="line-6"></span><span>  </span><span class="annot"><span class="hs-comment">-- * Reexport</span></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.html"><span class="hs-identifier">Control.Monad.Rescue</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Control.Monad.Cleanup.Class.html"><span class="hs-identifier">Control.Monad.Cleanup.Class</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Control.Monad.Cleanup.Class.html"><span class="hs-identifier">Control.Monad.Cleanup.Class</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Control.Monad.Rescue.html"><span class="hs-identifier">Control.Monad.Rescue</span></a></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Numeric.Natural</span></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Equivalent of 'finally'</span><span>
+</span><span id="line-17"></span><span id="local-6989586621679122459"><span id="local-6989586621679122460"><span id="local-6989586621679122461"><span class="annot"><a href="Control.Monad.Cleanup.html#always"><span class="hs-identifier hs-type">always</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Control.Monad.Cleanup.Class.html#MonadCleanup"><span class="hs-identifier hs-type">MonadCleanup</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122461"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679122461"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122460"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679122461"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122459"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679122461"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122460"><span class="hs-identifier hs-type">a</span></a></span></span></span></span><span>
+</span><span id="line-18"></span><span id="always"><span class="annot"><span class="annottext">always :: m a -&gt; m b -&gt; m a
+</span><a href="Control.Monad.Cleanup.html#always"><span class="hs-identifier hs-var hs-var">always</span></a></span></span><span> </span><span id="local-6989586621679122458"><span class="annot"><span class="annottext">action :: m a
+</span><a href="#local-6989586621679122458"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span id="local-6989586621679122457"><span class="annot"><span class="annottext">finalizer :: m b
+</span><a href="#local-6989586621679122457"><span class="hs-identifier hs-var">finalizer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-19"></span><span>  </span><span class="annot"><span class="annottext">m ()
+-&gt; (() -&gt; OpenUnion (Errors m) -&gt; m b)
+-&gt; (() -&gt; m b)
+-&gt; (() -&gt; m a)
+-&gt; m a
+forall (m :: * -&gt; *) resource _ig1 _ig2 a.
+MonadCleanup m =&gt;
+m resource
+-&gt; (resource -&gt; OpenUnion (Errors m) -&gt; m _ig1)
+-&gt; (resource -&gt; m _ig2)
+-&gt; (resource -&gt; m a)
+-&gt; m a
+</span><a href="Control.Monad.Cleanup.Class.html#cleanup"><span class="hs-identifier hs-var">cleanup</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">() -&gt; m ()
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679122457"><span class="hs-identifier hs-var">finalizer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679122457"><span class="hs-identifier hs-var">finalizer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679122458"><span class="hs-identifier hs-var">action</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span id="local-6989586621679122465"><span id="local-6989586621679122466"><span class="annot"><a href="Control.Monad.Cleanup.html#retry"><span class="hs-identifier hs-type">retry</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Control.Monad.Cleanup.Class.html#MonadCleanup"><span class="hs-identifier hs-type">MonadCleanup</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122466"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679122466"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122465"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679122466"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122465"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-25"></span><span id="retry"><span class="annot"><span class="annottext">retry :: Natural -&gt; m a -&gt; m a
+</span><a href="Control.Monad.Cleanup.html#retry"><span class="hs-identifier hs-var hs-var">retry</span></a></span></span><span> </span><span class="hs-number">0</span><span>     </span><span id="local-6989586621679122455"><span class="annot"><span class="annottext">action :: m a
+</span><a href="#local-6989586621679122455"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679122455"><span class="hs-identifier hs-var">action</span></a></span><span>
+</span><span id="line-26"></span><span class="annot"><a href="Control.Monad.Cleanup.html#retry"><span class="hs-identifier hs-var">retry</span></a></span><span> </span><span id="local-6989586621679122454"><span class="annot"><span class="annottext">times :: Natural
+</span><a href="#local-6989586621679122454"><span class="hs-identifier hs-var">times</span></a></span></span><span> </span><span id="local-6989586621679122453"><span class="annot"><span class="annottext">action :: m a
+</span><a href="#local-6989586621679122453"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-27"></span><span>  </span><span class="annot"><span class="annottext">m ()
+-&gt; (() -&gt; OpenUnion (Errors m) -&gt; m a)
+-&gt; (() -&gt; m ())
+-&gt; (() -&gt; m a)
+-&gt; m a
+forall (m :: * -&gt; *) resource _ig1 _ig2 a.
+MonadCleanup m =&gt;
+m resource
+-&gt; (resource -&gt; OpenUnion (Errors m) -&gt; m _ig1)
+-&gt; (resource -&gt; m _ig2)
+-&gt; (resource -&gt; m a)
+-&gt; m a
+</span><a href="Control.Monad.Cleanup.Class.html#cleanup"><span class="hs-identifier hs-var">cleanup</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">() -&gt; m ()
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; m a -&gt; m a
+forall (m :: * -&gt; *) a. MonadCleanup m =&gt; Natural -&gt; m a -&gt; m a
+</span><a href="Control.Monad.Cleanup.html#retry"><span class="hs-identifier hs-var">retry</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679122454"><span class="hs-identifier hs-var">times</span></a></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Natural -&gt; Natural
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679122453"><span class="hs-identifier hs-var">action</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>          </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679122453"><span class="hs-identifier hs-var">action</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span></pre></body></html>
