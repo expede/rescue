@@ -12,11 +12,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - name: 💽 Install OS Packages
-      uses: mstksg/get-package@v1
-      with:
-        apt-get: libgmp-dev 
-
     - name: 📥 Checkout repository
       uses: actions/checkout@v1
 
