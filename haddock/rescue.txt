@@ -2,6 +2,9 @@
 -- See Hoogle, http://www.haskell.org/hoogle/
 
 
+-- | More understandable exceptions
+--   
+--   An error handling library focused on clarity and control
 @package rescue
 @version 0.2.0
 
