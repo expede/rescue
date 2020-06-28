@@ -92,7 +92,7 @@ instance
   , MonadCatch  m
   , MonadRescue m
   )
-  => MonadRescue (CleanupT m) where -- TODO needs testing to check that this works as intended
+  => MonadRescue (CleanupT m) where
   attempt action =
     Catch.try action >>= \case
       Left  e@(SomeException _) -> return . Left $ include e
