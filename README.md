@@ -1,14 +1,6 @@
-
-FIXME
-
-* `attempt` instead of `try` to not conflict
-* Recontextualize
-* Differences from MonadThrow
-* Differences  from MonadCatch -- https://www.fpcomplete.com/blog/2017/02/monadmask-vs-monadbracket
-* Differences from MonadError
-* Differences from MonadFailure
-* Differences from MonadBracket
-* Differences from MonadMask
+# Rescue
+## More understandable error handling
+### (a more type directed MonadThrow/MonadCatch)
 
 `rescue` is an experimental error handling library for Haskell.
 
@@ -17,13 +9,11 @@ _subclass_ any error as `SomeException`. This is very convenient
 (requires nealy zero set up), and matches what  developers expect coming from 
 other ecosystems.
 
-While subclassing is one way of modelling this problem, we 
-
 A core goal of `rescue` is to give the programmer clarity about which execptions
-are possible at any given point in the code. We achieve this by using variants
-and [...]
-
----
+are possible at any given point in the code. We achieve this by using (open) variants
+for compositon rather than inheritance. We hide the detail as much as posisble,
+and attempt to make this work in a flexible, constraint-driven style as much 
+as possible.
 
 Treating all errors with a common interface may seem natural, but this is 
 possibly overgeneralized. Several other authors have noted that there's a
@@ -71,11 +61,19 @@ Our goals are to have:
 
 # Approach
 
-The closest approach is `MonadError`, except that our 
-implementation uses type-level lists for flexiblity, 
-and hides the exception parameter from the class constraint as a type family. 
-`rescue` also splits `raise` and `attempt` into separate classes to help us
-more granularly express the effects available in the current context. 
+The closest approach is `MonadError`, except that our implementation uses 
+type-level lists for flexiblity,  and hides the exception parameter from the 
+class constraint as a type family.  `rescue` also splits `raise` and `attempt` 
+into separate classes to help us more granularly express the effects available 
+in the current context. 
+
+## Class Heirarchy
+
+1. `MonadRaise` -- roughly `MonadThrow`
+2. `MonadRescue` -- roughly `MonadCatch`
+3. `MonadCleanup` -- roughly `MonadBracket`
+
+`Monad m => MonadRaise m => MonadRescue m => MonadCleanup m`
 
 ## Errors / Asynchronous Exceptions
 
@@ -108,17 +106,38 @@ The basic flow for an async execption is then:
 
 This means that any instacne of MonadAsyncCleanup needs a MonadCleanup and `Raises m SomeAsyncException`
 
-Hmmmm yeah, that's a problem. Any resource needs to be able to contend with this, so now all of them need a SomeAsyncException constraint
+# FAQ
 
+## Why another typeclass?
 
-There's use cases for cleanup in totaly pure contexts, too... where the resource is not dangroes... so don't always need to be aware of teh async extpion, ya?  
+It's true that MonadThrow is totally pervasive. However, not trying to 
 
-No, the scenario above can be handled direcly with MonadRescue/attempt.
-MonadCleanup is speciifcally for "in the face of async exceptions". So, 
+There's also nothing stopping us from writing a function of the type
 
+```haskell
+fromThrow :: (MonadCatch m, MonadRaise n) => m a -> n a
+```
 
-MonadRecover
+...though the conversion from `SomeException` would take a bit of care.
 
+## Why avoid `SomeException`?
 
+`SomeException` is typesafe, but very difficult to track by hand.
+In fact, with async exceptions, you may need to handle an error interrupting
+your execution _even if you don't have a `MonadThrow`_ in your context.
 
-MonadCleanup
+By treating exceptions as something visible and tarckable (though hidden
+when you don't need it), we gain a lot of ability to reason about our program,
+and avoid writing lots of nested `Either`s.
+
+## Does this do async exception handling?
+
+It does! `MonadCleanup` is the typeclass, and it has very few instances.
+It's essentially [`MonadBracket`](https://www.fpcomplete.com/blog/2017/02/monadmask-vs-monadbracket/),
+but with explicit errors.
+
+This separation of the `SomeException` and `OpenUnion` can help determine the
+intention of the exception. `SomeException` (and `SomeAsyncException`) are really
+more like errors -- things that should fail and not be recovered from. In a world
+with async exceptions, the cleanest way to respond to an error is to stop
+our execution, cleanup any resources, and propogate the error.
