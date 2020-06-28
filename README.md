@@ -1,4 +1,4 @@
-# 🚒🚒  Rescue
+# 🚒 Rescue
 ## More Understandable Error Handling
 
 ![Continuous Integration](https://github.com/fission-suite/fission/workflows/Continuous%20Integration/badge.svg)
