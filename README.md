@@ -1,6 +1,9 @@
 # 🚒🚒  Rescue
 ## More Understandable Error Handling
 
+![Continuous Integration](https://github.com/fission-suite/fission/workflows/Continuous%20Integration/badge.svg)
+![License](https://img.shields.io/github/license/expede/rescue)
+
 `rescue` is an experimental error handling library for Haskell.
 
 The standard library approach to error handling is to use an existential type to
