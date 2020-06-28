@@ -18,12 +18,14 @@ import           Control.Monad
 import           Control.Monad.Catch        as Catch
 import           Control.Monad.Cleanup
 import           Control.Monad.Fix
+import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
 
 import           Data.Functor.Contravariant
 import           Data.WorldPeace
 
--- | Adds 'SomeException' to an Error stack
+-- | Adds 'SomeException' to an exception stack,
+--   and thus /aware/ of async exceptions
 newtype CleanupT m a = CleanupT { runCleanupT :: m a }
 
 type CleanupIO a = CleanupT IO a
@@ -60,6 +62,9 @@ instance Monad m => Monad (CleanupT m) where
 
 instance MonadTrans CleanupT where
   lift = CleanupT
+
+instance MonadIO m => MonadIO (CleanupT m) where
+  liftIO = CleanupT . liftIO
 
 instance MonadPlus m => MonadPlus (CleanupT m) where
   mzero = CleanupT mzero
@@ -133,7 +138,7 @@ instance
 
       attempt (restore $ action resource) >>= \case
         Left errs -> do
-          _ <- uninterruptibleMask_$
+          _ <- uninterruptibleMask_ $
                  fmap (\_ -> ()) (onErr resource errs)
                    `catch` \(_ :: SomeException) -> return ()
 
