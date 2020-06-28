@@ -9,7 +9,7 @@ copyright: © 2020 Brooklyn Zelenka
 license: Apache-2.0
 license-file: LICENSE
 github: expede/rescue
-tested-with: GHC==8.6.5
+tested-with: GHC==8.8.3
 extra-source-files:
   - README.md
 
@@ -27,11 +27,8 @@ ghc-options:
   # Prettier Development
   - -fhide-source-paths
 
-build-depends: 
-  - base >= 4.15 && < 5
-
 dependencies:
-  - base
+  - base < 5
   - exceptions
   - ghc # for STM
   - mtl
