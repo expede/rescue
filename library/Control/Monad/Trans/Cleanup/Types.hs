@@ -1,52 +1,72 @@
 {-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE DeriveFunctor        #-}
-{-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE LambdaCase           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | FIXME docs
-
--- FIXME perhaps CleanupT?
+-- | The 'CleanupT' transformer for adding async exceptions to a stack
 
 module Control.Monad.Trans.Cleanup.Types
   ( CleanupT (..)
   , CleanupIO
   ) where
 
-import           Control.Monad.Catch   as Catch
-import           Control.Monad.Cleanup
+import           Control.Applicative
+import           Control.Monad
 
+import           Control.Monad.Catch        as Catch
+import           Control.Monad.Cleanup
+import           Control.Monad.Fix
+import           Control.Monad.Trans.Class
+
+import           Data.Functor.Contravariant
 import           Data.WorldPeace
 
 -- | Adds 'SomeException' to an Error stack
-newtype CleanupT m a = CleanupT { unAwareT :: m a }
+newtype CleanupT m a = CleanupT { runCleanupT :: m a }
 
 type CleanupIO a = CleanupT IO a
 
+instance Eq (m a) => Eq (CleanupT m a) where
+  CleanupT a == CleanupT b = a == b
+
+instance Show (m a) => Show (CleanupT m a) where
+  show (CleanupT x) = "CleanupT (" <> show x <> ")"
+
 instance Functor m => Functor (CleanupT m) where
   fmap f (CleanupT action) = CleanupT (fmap f action)
-  {-# INLINE fmap #-}
 
--- instance Foldable
--- instance Traversable
--- instance MonadTrans
--- instance Alternative
--- instance Eq, Show, Display
+instance Contravariant f => Contravariant (CleanupT f) where
+  contramap f = CleanupT . contramap f . runCleanupT
 
-instance Applicative m => Applicative (CleanupT m) where
+instance Foldable t => Foldable (CleanupT t) where
+  foldMap f (CleanupT a) = foldMap f a
+  foldr f z (CleanupT a) = foldr f z a
+
+instance Traversable t => Traversable (CleanupT t) where
+  traverse f (CleanupT a) = CleanupT <$> traverse f a
+
+instance Applicative f => Applicative (CleanupT f) where
   pure = CleanupT . pure
-  {-# INLINE pure #-}
-
   CleanupT f <*> CleanupT x = CleanupT (f <*> x)
-  {-# INLINE (<*>) #-}
+
+instance Alternative f => Alternative (CleanupT f) where
+  empty = CleanupT empty
+  CleanupT a <|> CleanupT b  = CleanupT (a <|> b)
 
 instance Monad m => Monad (CleanupT m) where
-  CleanupT x >>= f = CleanupT (x >>= unAwareT . f)
-  {-# INLINE (>>=) #-}
+  CleanupT x >>= f = CleanupT (runCleanupT . f =<< x)
+
+instance MonadTrans CleanupT where
+  lift = CleanupT
+
+instance MonadPlus m => MonadPlus (CleanupT m) where
+  mzero = CleanupT mzero
+  mplus (CleanupT a) (CleanupT b) = CleanupT (mplus a b)
+
+instance MonadFix m => MonadFix (CleanupT m) where
+  mfix f = CleanupT (mfix (runCleanupT . f))
 
 instance MonadThrow m => MonadThrow (CleanupT m) where
   throwM = CleanupT . throwM
@@ -78,28 +98,27 @@ instance
       Left  e@(SomeException _) -> return . Left $ include e
       Right result              -> attempt $ pure result
 
-
 instance MonadCatch m => MonadCatch (CleanupT m) where
   catch (CleanupT action) handler =
-    CleanupT $ catch action (unAwareT . handler)
+    CleanupT $ catch action (runCleanupT . handler)
 
 instance MonadMask m => MonadMask (CleanupT m) where
-   mask action = CleanupT $ mask (\u -> unAwareT (action $ q u))
+   mask action = CleanupT $ mask (\u -> runCleanupT (action $ q u))
     where
       q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
-      q u = CleanupT . u . unAwareT
+      q u = CleanupT . u . runCleanupT
 
    uninterruptibleMask a =
-    CleanupT $ uninterruptibleMask (\u -> unAwareT (a $ q u))
+    CleanupT $ uninterruptibleMask (\u -> runCleanupT (a $ q u))
       where
         q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
-        q u = CleanupT . u . unAwareT
+        q u = CleanupT . u . runCleanupT
 
    generalBracket acquire release use = CleanupT $
      generalBracket
-       (unAwareT acquire)
-       (\resource exitCase -> unAwareT (release resource exitCase))
-       (\resource -> unAwareT (use resource))
+       (runCleanupT acquire)
+       (\resource exitCase -> runCleanupT (release resource exitCase))
+       (\resource -> runCleanupT (use resource))
 
 instance
   ( Contains (Errors m) (Errors m)

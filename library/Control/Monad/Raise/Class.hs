@@ -38,11 +38,6 @@ import           GHC.Base
 import           GHC.Conc
 import           GHC.IO
 
--- FIXME consider enforcing no SomeException to help distinguish from throwM
--- Cleanup then still needs SomeException (from throwMs), but we can't raise it
--- with Rescue's mechanisms, which makes it clear what the meaning of
--- SomeException is
-
 -- $setup
 --
 -- >>> :set -XDataKinds
@@ -55,8 +50,6 @@ import           GHC.IO
 --   Not unlike @MonadError@ with an in-built open variant.
 class Monad m => MonadRaise m where
   type Errors m :: [Type]
-
-  -- FIXME more examples to show how to lift automation works
 
   -- | Raise an error
   --

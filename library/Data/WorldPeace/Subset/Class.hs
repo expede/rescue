@@ -22,4 +22,4 @@ class Subset err errs where
 
 instance (IsOpenUnion err ~ flag, Subset' flag err errs) => Subset err (OpenUnion errs) where
   include = include' (Proxy @flag)
-  {- INLINE include -}
+  {-# INLINE include #-}
