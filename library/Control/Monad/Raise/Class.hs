@@ -5,7 +5,8 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | FIXME docs
+-- | The 'MonadRaise' class, which is an effect for
+--   early escape / happy path programming with an exception side channel
 
 module Control.Monad.Raise.Class (MonadRaise (..)) where
 
