@@ -1,5 +1,5 @@
-# Rescue
-## More understandable error handling
+# 🚒 Rescue
+## More Understandable Error Handling
 
 `rescue` is an experimental error handling library for Haskell.
 
