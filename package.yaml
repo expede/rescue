@@ -26,31 +26,12 @@ ghc-options:
   - -fhide-source-paths
 
 dependencies:
-  - aeson
-  - aeson-casing
   - base
-  - base64-bytestring
-  - bytestring
   - exceptions
-  - filepath
-  - flow
-  - Glob
-  - lens
+  - ghc # for STM
   - mtl
-  - QuickCheck
-  - quickcheck-instances
-  - random-bytestring
-  - regex-compat
-  - rio
-  - rio-orphans
-  - scientific
   - text
-  - time
   - transformers
-  - unliftio
-  - uuid
-  - uuid-types
-  - word8
   - world-peace
 
 library:
@@ -70,6 +51,8 @@ tests:
       - doctest
       - Glob
       - lens-aeson
+      - QuickCheck
+      - quickcheck-instances
       - yaml
 
   rescue-test:
