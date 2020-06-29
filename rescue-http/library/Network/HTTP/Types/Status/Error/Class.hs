@@ -9,7 +9,6 @@ module Network.HTTP.Types.Status.Error.Class (ToHttpError (..)) where
 import           Data.Exception.Types
 
 import           Network.HTTP.Types
-import           Network.HTTP.Types.Status
 
 class ToHttpError err where
   toHttpError :: err -> Status
