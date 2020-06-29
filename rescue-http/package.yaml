@@ -1,4 +1,4 @@
-name: rescue
+name: rescue-http
 version: '0.2.0'
 synopsis: More understandable exceptions
 description: An error handling library focused on clarity and control
@@ -28,19 +28,15 @@ ghc-options:
   - -fhide-source-paths
 
 dependencies:
-  - base < 5
-  - exceptions
-  - ghc # for STM
-  - mtl
-  - text
-  - transformers
-  - world-peace
+  - base > 4.13 && < 5
+  - http-types
+  - rescue
 
 library:
   source-dirs: library
 
 tests:
-  rescue-doctest:
+  rescue-http-doctest:
     main: Main.hs
     source-dirs: doctest
     ghc-options:
@@ -57,7 +53,7 @@ tests:
       - quickcheck-instances
       - yaml
 
-  rescue-test:
+  rescue-http-test:
     main: Main.hs
     source-dirs:
       - library
@@ -68,9 +64,9 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - hspec
-      - hspec-core
+      - hspec-http
       - hspec-expectations
-      - rescue
+      - rescue-http
       - QuickCheck
       - quickcheck-instances
       - tasty
@@ -80,7 +76,7 @@ tests:
       - tasty-rerun
       - transformers
 
-  rescue-lint:
+  rescue-http-lint:
     main: Main.hs
     source-dirs: lint
     dependencies:
@@ -89,7 +85,7 @@ tests:
       - rio
 
 benchmarks:
-  rescue-benchmark:
+  rescue-http-benchmark:
     main: Main.hs
     source-dirs: benchmark
     ghc-options:
@@ -99,4 +95,4 @@ benchmarks:
       - -O2
     dependencies:
       - criterion
-      - rescue
+      - rescue-http
