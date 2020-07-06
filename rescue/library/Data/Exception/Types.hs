@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 -- | Common exceptions
 module Data.Exception.Types
@@ -7,11 +8,15 @@ module Data.Exception.Types
   , AlreadyExists (..)
   , OutOfBounds   (..)
   , DivideByZero  (..)
+  -- * Reexports
+  , module Data.Exception.Message.Types
   ) where
 
 import           Control.Exception
-import           Data.Text
 import           Type.Reflection
+
+import           Data.Exception.Message       as Exception
+import           Data.Exception.Message.Types
 
 data NotFound entity
   = NotFound
@@ -44,19 +49,9 @@ data DivideByZero
 
 instance Exception DivideByZero
 
+instance Exception.Message DivideByZero where
+  publicMsg _ = "Division by zero is not meaningful in this context"
+
 newtype InvalidFormat entity
   = InvalidFormat entity
   deriving (Show, Eq, Exception)
-
--- | Attach a message to an exception, typicaly for runtime user feedback
---
--- ==== __Examples__
---
--- >>> :set -XOverloadedStrings
--- >>> show $ InvalidFormat "foo" `WithMessage` "Not a valid JSON object"
--- "InvalidFormat \"foo\" `WithMessage` \"Not a valid JSON object\""
-data WithMessage err
-  = err `WithMessage` Text
-  deriving (Show, Eq)
-
-instance Exception err => Exception (WithMessage err)
