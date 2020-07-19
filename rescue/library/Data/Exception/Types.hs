@@ -8,6 +8,7 @@ module Data.Exception.Types
   , AlreadyExists (..)
   , OutOfBounds   (..)
   , DivideByZero  (..)
+  , InvalidFormat (..)
   -- * Reexports
   , module Data.Exception.Message.Types
   ) where

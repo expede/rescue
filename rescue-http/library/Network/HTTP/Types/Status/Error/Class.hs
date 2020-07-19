@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | FIXME
+-- | Convert to an HTTP error (status code & message)
 
 module Network.HTTP.Types.Status.Error.Class (ToHttpError (..)) where
 
@@ -58,3 +58,16 @@ instance ToHttpError (NotFound entity) where
 
 instance ToHttpError (NotAllowed entity user) where
   toHttpError (NotAllowed _ _) = unauthorized401
+
+instance ToHttpError (AlreadyExists entity) where
+  toHttpError (AlreadyExists _) = conflict409
+
+instance ToHttpError (OutOfBounds entity index) where
+  toHttpError (OutOfBounds _) = notFound404
+
+instance ToHttpError DivideByZero where
+  toHttpError DivideByZero =
+    internalServerError500 {statusMessage = "Illegal divide by zero"}
+
+instance ToHttpError (InvalidFormat entity) where
+  toHttpError (InvalidFormat _) = unprocessableEntity422

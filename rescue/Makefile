@@ -47,6 +47,6 @@ dev:
 	$(stack) exec -- ghcid -c "stack ghci $(package):lib --test"
 
 setup:
-	stack install ghcid && npm install -g http-server
+	stack install ghcid
 
 .PHONY : build dirty run install ghci test test-ghci watch doctest test
