@@ -1,0 +1,100 @@
+name: rescue-servant-server
+version: '0.2.0'
+synopsis: Servant integration for Rescue
+description: Rescue instances and helpers for servant-server
+category: Error Handling
+author: Brooklyn Zelenka
+maintainer: hello@brooklynzelenka.com
+copyright: © 2020 Brooklyn Zelenka
+license: Apache-2.0
+license-file: LICENSE
+github: expede/rescue
+tested-with: GHC==8.8.3
+extra-source-files:
+  - README.md
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  # Warn about too little
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wpartial-fields
+  # Warn about too much
+  - -Wredundant-constraints
+  # Prettier Development
+  - -fhide-source-paths
+
+dependencies:
+  - base < 5
+  - ghc # for STM
+  - rescue
+  - rescue-http
+  - servant-server
+
+library:
+  source-dirs: library
+
+tests:
+  rescue-core-doctest:
+    main: Main.hs
+    source-dirs: doctest
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - directory
+      - directory-tree
+      - doctest
+      - Glob
+      - lens-aeson
+      - QuickCheck
+      - quickcheck-instances
+      - yaml
+
+  rescue-core-test:
+    main: Main.hs
+    source-dirs:
+      - library
+      - test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - hspec
+      - hspec-core
+      - hspec-expectations
+      - rescue-core
+      - QuickCheck
+      - quickcheck-instances
+      - tasty
+      - tasty-hunit
+      - tasty-hspec
+      - tasty-smallcheck
+      - tasty-rerun
+      - transformers
+
+  rescue-core-lint:
+    main: Main.hs
+    source-dirs: lint
+    dependencies:
+      - base
+      - hlint
+      - rio
+
+benchmarks:
+  rescue-core-benchmark:
+    main: Main.hs
+    source-dirs: benchmark
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
+    dependencies:
+      - criterion
+      - rescue-core
