@@ -1,4 +1,4 @@
-name: rescue-core
+name: rescue-log
 version: '0.2.0'
 synopsis: More understandable exceptions
 description: An error handling library focused on clarity and control
@@ -28,13 +28,9 @@ ghc-options:
   - -fhide-source-paths
 
 dependencies:
-  - base < 5
-  - exceptions
-  - ghc # for STM
-  - mtl
-  - text
-  - transformers
-  - world-peace
+  - base (>= 4.8 && < 5)
+  - rescue
+  - monad-logger
 
 library:
   source-dirs: library

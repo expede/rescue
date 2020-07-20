@@ -1,7 +1,7 @@
-name: rescue-core
+name: rescue-servant-server
 version: '0.2.0'
-synopsis: More understandable exceptions
-description: An error handling library focused on clarity and control
+synopsis: Servant integration for Rescue
+description: Rescue instances and helpers for servant-server
 category: Error Handling
 author: Brooklyn Zelenka
 maintainer: hello@brooklynzelenka.com
@@ -29,12 +29,10 @@ ghc-options:
 
 dependencies:
   - base < 5
-  - exceptions
   - ghc # for STM
-  - mtl
-  - text
-  - transformers
-  - world-peace
+  - rescue
+  - rescue-http
+  - servant-server
 
 library:
   source-dirs: library

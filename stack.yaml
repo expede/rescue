@@ -35,9 +35,9 @@ resolver: lts-16.2
 packages:
 - rescue
 - rescue-http
-# - rescue-logged
+# - rescue-log
 # - rescue-rio
-# - rescue-servant-server
+- rescue-servant-server
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.

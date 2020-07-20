@@ -6,7 +6,9 @@
 
 module Network.HTTP.Types.Status.Error.Class (ToHttpError (..)) where
 
+import qualified Data.Text.Encoding as Text
 import           Data.Exception.Types
+import qualified Data.Exception.Message.Class as Exception
 
 import           Network.HTTP.Types
 
@@ -53,21 +55,29 @@ instance Integral n => ToHttpError n where
 
       ok  -> error (show ok <> " is not an error status code")
 
-instance ToHttpError (NotFound entity) where
-  toHttpError NotFound = notFound404
+instance Exception.Message (NotFound entity)
+  => ToHttpError (NotFound entity) where
+    toHttpError err = notFound404 `withMsg` err
 
-instance ToHttpError (NotAllowed entity user) where
-  toHttpError (NotAllowed _ _) = unauthorized401
+instance Exception.Message (NotAllowed entity user)
+  => ToHttpError (NotAllowed entity user) where
+    toHttpError err = unauthorized401 `withMsg` err
 
-instance ToHttpError (AlreadyExists entity) where
-  toHttpError (AlreadyExists _) = conflict409
+instance Exception.Message (AlreadyExists entity)
+  => ToHttpError (AlreadyExists entity) where
+    toHttpError err = conflict409 `withMsg` err
 
-instance ToHttpError (OutOfBounds entity index) where
-  toHttpError (OutOfBounds _) = notFound404
+instance Exception.Message (OutOfBounds entity index)
+  => ToHttpError (OutOfBounds entity index) where
+    toHttpError err = notFound404 `withMsg` err
 
 instance ToHttpError DivideByZero where
-  toHttpError DivideByZero =
-    internalServerError500 {statusMessage = "Illegal divide by zero"}
+  toHttpError err = internalServerError500 `withMsg` err
 
-instance ToHttpError (InvalidFormat entity) where
-  toHttpError (InvalidFormat _) = unprocessableEntity422
+instance Exception.Message (InvalidFormat entity)
+  => ToHttpError (InvalidFormat entity) where
+    toHttpError err = unprocessableEntity422 `withMsg` err
+
+withMsg :: Exception.Message err => Status -> err -> Status
+withMsg status err =
+  status {statusMessage = Text.encodeUtf8 $ Exception.publicMsg err}
