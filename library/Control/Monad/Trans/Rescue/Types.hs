@@ -1,7 +1,9 @@
-{-# LANGUAGE ApplicativeDo        #-}
-{-# LANGUAGE LambdaCase           #-}
-{-# LANGUAGE TypeFamilies         #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ApplicativeDo         #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 -- | The 'RescueT' transformer
 module Control.Monad.Trans.Rescue.Types
@@ -13,6 +15,7 @@ module Control.Monad.Trans.Rescue.Types
 import           Control.Monad.Catch
 import           Control.Monad.Cont
 import           Control.Monad.Fix
+import           Control.Monad.Reader
 import           Control.Monad.Rescue
 
 import           Data.Functor.Identity
@@ -27,6 +30,11 @@ type Rescue errs = RescueT errs Identity
 
 runRescue :: Rescue errs a -> Either (OpenUnion errs) a
 runRescue = runIdentity . runRescueT
+
+mapRescueT
+  :: (m (Either (OpenUnion errs)  a) -> n (Either (OpenUnion errs') b))
+  -> RescueT errs m a -> RescueT errs' n b
+mapRescueT f (RescueT m) = RescueT $ f m
 
 instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT errs m a) where
   RescueT a == RescueT b = a == b
@@ -81,21 +89,13 @@ instance Monad m => MonadRaise (RescueT errs m) where
 instance Monad m => MonadRescue (RescueT errs m) where
   attempt (RescueT action) = RescueT (Right <$> action)
 
-instance
-  ( IsMember SomeException errs
-  , Monad m
-  )
-  => MonadThrow (RescueT errs m) where
-  throwM = RescueT . pure . Left . openUnionLift . toException
+instance MonadThrow m => MonadThrow (RescueT errs m) where
+  throwM = lift . throwM
 
-instance
-  ( IsMember SomeException errs
-  , Contains errs errs
-  , Monad m
-  )
-  => MonadCatch (RescueT errs m) where
-  catch action handler =
-    rescue action $ \errs ->
-      case openUnionMatch errs of
-        Nothing  -> raise errs
-        Just err -> maybe (raise err) handler $ fromException err
+instance MonadCatch m => MonadCatch (RescueT errs m) where
+  catch (RescueT m) f = RescueT $ catch m (runRescueT . f)
+
+instance MonadReader cfg m => MonadReader cfg (RescueT errs m) where
+  ask    = lift ask
+  local  = mapRescueT . local
+  reader = lift . reader
