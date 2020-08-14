@@ -1,5 +1,5 @@
 name: rescue
-version: '0.2.0'
+version: '0.2.1'
 synopsis: More understandable exceptions
 description: An error handling library focused on clarity and control
 category: Error Handling
