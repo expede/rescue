@@ -6,7 +6,7 @@
 --   
 --   An error handling library focused on clarity and control
 @package rescue
-@version 0.2.0
+@version 0.2.1
 
 
 -- | Common exceptions
@@ -358,8 +358,9 @@ instance Data.Foldable.Foldable m => Data.Foldable.Foldable (Control.Monad.Trans
 instance (GHC.Base.Monad m, Data.Traversable.Traversable m) => Data.Traversable.Traversable (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance GHC.Base.Monad m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance GHC.Base.Monad m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Rescue.Types.RescueT errs m)
-instance (Data.WorldPeace.Union.IsMember GHC.Exception.Type.SomeException errs, GHC.Base.Monad m) => Control.Monad.Catch.MonadThrow (Control.Monad.Trans.Rescue.Types.RescueT errs m)
-instance (Data.WorldPeace.Union.IsMember GHC.Exception.Type.SomeException errs, Data.WorldPeace.Union.Contains errs errs, GHC.Base.Monad m) => Control.Monad.Catch.MonadCatch (Control.Monad.Trans.Rescue.Types.RescueT errs m)
+instance Control.Monad.Catch.MonadThrow m => Control.Monad.Catch.MonadThrow (Control.Monad.Trans.Rescue.Types.RescueT errs m)
+instance Control.Monad.Catch.MonadCatch m => Control.Monad.Catch.MonadCatch (Control.Monad.Trans.Rescue.Types.RescueT errs m)
+instance Control.Monad.Reader.Class.MonadReader cfg m => Control.Monad.Reader.Class.MonadReader cfg (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 
 
 -- | This module supplies a "pure" monad transformer that can be used for
