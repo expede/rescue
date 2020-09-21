@@ -1,5 +1,6 @@
-{-# LANGUAGE LambdaCase   #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase       #-}
+{-# LANGUAGE TypeFamilies     #-}
 
 -- | Rescue semantics & helpers
 --
@@ -14,6 +15,12 @@ module Control.Monad.Rescue
   , reattempt
   , onRaise
   , lastly
+
+  -- * TEMP
+
+  , SwapErrorContext (..)
+  , handleOne
+  , handleOne'
 
   -- * Reexports
 
@@ -101,3 +108,34 @@ lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
   ensure errOrOk
+
+handleOne'
+  :: ( MonadRaise  n
+     , MonadRescue m
+     -- , IsMember err (Errors m) -- FIXME but also not in errors n
+     , ElemRemove err (Errors m) -- (Errors n)
+     , Contains (Remove err (Errors m)) (Errors n)
+     )
+  => m a
+  -> (m (Either (OpenUnion (Errors m)) a) -> n (Either (OpenUnion (Errors m)) a))
+  -> (err -> n a)
+  -> n a
+handleOne' action nt handler = do
+  nt (attempt action) >>= \case
+    Right val ->
+      return val
+
+    Left err ->
+      openUnionHandle raise handler err
+
+-- handleOne
+--   :: ( LocalExceptionContext m n
+--      , MonadRaise  n
+--      , MonadRescue m
+--      , ElemRemove err (Errors m)
+--      , Contains (Remove err (Errors m)) (Errors n)
+--      )
+--   => m a
+--   -> (err -> n a)
+--   -> n a
+-- handleOne action handler = handleOne' action localErrorContext handler
