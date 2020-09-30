@@ -19,20 +19,24 @@ module Control.Monad.Rescue
   -- * TEMP
 
   , SwapErrorContext (..)
-  , handleOne
-  , handleOne'
+  , handle
+  -- , handleOne'
 
   -- * Reexports
 
   , module Control.Monad.Raise
+
   , module Control.Monad.Rescue.Class
+  , module Control.Monad.Rescue.Constraint
   ) where
 
 import           Data.Result.Types
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
+
 import           Control.Monad.Rescue.Class
+import           Control.Monad.Rescue.Constraint
 
 import           Numeric.Natural
 
@@ -103,30 +107,41 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly :: (Contains (Errors m) (Errors m), MonadRescue m) => m a -> m b -> m a
+lastly :: (Contains (Errors m) (Errors n), MonadRaise n, MonadRescueTo m n) => m a -> n b -> n a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
   ensure errOrOk
 
-handleOne'
-  :: ( MonadRaise  n
-     , MonadRescue m
-     -- , IsMember err (Errors m) -- FIXME but also not in errors n
-     , ElemRemove err (Errors m) -- (Errors n)
+handle
+  :: ( MonadRaise n
+     , MonadRescueTo m n
+     , ElemRemove err (Errors m)
      , Contains (Remove err (Errors m)) (Errors n)
      )
   => m a
   -> (m (Either (OpenUnion (Errors m)) a) -> n (Either (OpenUnion (Errors m)) a))
   -> (err -> n a)
   -> n a
-handleOne' action nt handler = do
-  nt (attempt action) >>= \case
+handle action handler = do
+  attempt action >>= \case
     Right val ->
       return val
 
     Left err ->
       openUnionHandle raise handler err
+
+handle
+  :: ( MonadRaise n
+     , MonadRescueTo m n
+     , ElemRemove err (Errors m)
+     , Contains (Remove err (Errors m)) (Errors n)
+     )
+  => m a
+  -> (m (Either (OpenUnion (Errors m)) a) -> n (Either (OpenUnion (Errors m)) a))
+  -> (err -> n a)
+  -> n a
+hanldeWith handler action = action handler
 
 -- handleOne
 --   :: ( LocalExceptionContext m n

@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | The 'MonadRaise' class, which is an effect for
@@ -121,9 +122,9 @@ instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m
   raise = lift . raise
 
-instance MonadRaise m => MonadRaise (MaybeT m) where
+instance (IsMember () (Errors m), MonadRaise m) => MonadRaise (MaybeT m) where
   type Errors (MaybeT m) = Errors m
-  raise = lift . raise
+  raise err = MaybeT $ raise err
 
 instance MonadRaise m => MonadRaise (ReaderT cfg m) where
   type Errors (ReaderT cfg m) = Errors m
