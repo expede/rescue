@@ -92,7 +92,7 @@ class Monad m => MonadRaise m where
   -- Nothing
   raise :: Subset err (ErrorCase m) => err -> m a
 
--- FIXME docs
+-- | Type alias representing the concrete union of the monad's errors
 type ErrorCase m = OpenUnion (Errors m)
 
 instance MonadRaise [] where
