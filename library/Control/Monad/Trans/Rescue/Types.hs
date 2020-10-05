@@ -86,8 +86,9 @@ instance Monad m => MonadRaise (RescueT errs m) where
   type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
 
-instance Monad m => MonadRescue (RescueT errs m) where
-  attempt (RescueT action) = RescueT (Right <$> action)
+-- FIXME
+-- instance Monad m => MonadRescue (RescueT errs m) where
+  -- attempt (RescueT action) = RescueT (Right <$> action)
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM

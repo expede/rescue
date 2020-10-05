@@ -92,58 +92,59 @@ instance
       raiser :: Contains err (Errors m) => OpenUnion err -> CleanupT m a
       raiser = CleanupT . raise
 
-instance
-  ( Contains (Errors m) (Errors m)
-  , MonadCatch  m
-  , MonadRescue m
-  )
-  => MonadRescue (CleanupT m) where
-  attempt action =
-    Catch.try action >>= \case
-      Left  e@(SomeException _) -> return . Left $ include e
-      Right result              -> attempt $ pure result
+-- FIXME
+-- instance
+--   ( Contains (Errors m) (Errors m)
+--   , MonadCatch  m
+--   , MonadRescue m
+--   )
+--   => MonadRescue (CleanupT m) where
+--   attempt action =
+--     Catch.try action >>= \case
+--       Left  e@(SomeException _) -> return . Left $ include e
+--       Right result              -> attempt $ pure result
 
-instance MonadCatch m => MonadCatch (CleanupT m) where
-  catch (CleanupT action) handler =
-    CleanupT $ catch action (runCleanupT . handler)
-
-instance MonadMask m => MonadMask (CleanupT m) where
-   mask action = CleanupT $ mask (\u -> runCleanupT (action $ q u))
-    where
-      q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
-      q u = CleanupT . u . runCleanupT
-
-   uninterruptibleMask a =
-    CleanupT $ uninterruptibleMask (\u -> runCleanupT (a $ q u))
-      where
-        q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
-        q u = CleanupT . u . runCleanupT
-
-   generalBracket acquire release use = CleanupT $
-     generalBracket
-       (runCleanupT acquire)
-       (\resource exitCase -> runCleanupT (release resource exitCase))
-       (runCleanupT . use)
-
-instance
-  ( Contains (Errors m) (Errors m)
-  , Contains (Errors m) (SomeException ': Errors m)
-  , MonadRescue m
-  , MonadMask   m
-  )
-  => MonadCleanup (CleanupT m) where
-  cleanup acquire onErr onOk action =
-    mask $ \restore -> do
-      resource <- acquire
-
-      attempt (restore $ action resource) >>= \case
-        Left errs -> do
-          _ <- uninterruptibleMask_ $
-                 fmap (\_ -> ()) (onErr resource errs)
-                   `catch` \(_ :: SomeException) -> return ()
-
-          raise errs
-
-        Right output -> do
-          _ <- onOk resource
-          return output
+-- instance MonadCatch m => MonadCatch (CleanupT m) where
+--   catch (CleanupT action) handler =
+--     CleanupT $ catch action (runCleanupT . handler)
+--
+-- instance MonadMask m => MonadMask (CleanupT m) where
+--    mask action = CleanupT $ mask (\u -> runCleanupT (action $ q u))
+--     where
+--       q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
+--       q u = CleanupT . u . runCleanupT
+--
+--    uninterruptibleMask a =
+--     CleanupT $ uninterruptibleMask (\u -> runCleanupT (a $ q u))
+--       where
+--         q :: (m a -> m a) -> CleanupT m a -> CleanupT m a
+--         q u = CleanupT . u . runCleanupT
+--
+--    generalBracket acquire release use = CleanupT $
+--      generalBracket
+--        (runCleanupT acquire)
+--        (\resource exitCase -> runCleanupT (release resource exitCase))
+--        (runCleanupT . use)
+--
+-- instance
+--   ( Contains (Errors m) (Errors m)
+--   , Contains (Errors m) (SomeException ': Errors m)
+--   , MonadRescue m
+--   , MonadMask   m
+--   )
+--   => MonadCleanup (CleanupT m) where
+--   cleanup acquire onErr onOk action =
+--     mask $ \restore -> do
+--       resource <- acquire
+--
+--       attempt (restore $ action resource) >>= \case
+--         Left errs -> do
+--           _ <- uninterruptibleMask_ $
+--                  fmap (\_ -> ()) (onErr resource errs)
+--                    `catch` \(_ :: SomeException) -> return ()
+--
+--           raise errs
+--
+--         Right output -> do
+--           _ <- onOk resource
+--           return output

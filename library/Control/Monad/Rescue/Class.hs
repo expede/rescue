@@ -1,24 +1,27 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
 -- | The 'MonadRescue' class, meant for retrieving the success/failure branches
 
-module Control.Monad.Rescue.Class (MonadRescueTo (..)) where
+module Control.Monad.Rescue.Class (MonadRescueFrom (..)) where
 
 import           Data.Functor
-
 import           Data.WorldPeace
 
 import           Exception
 
+import           Control.Monad.Base
+import           Control.Monad.Cont
+
 import           Control.Monad.Raise.Class
 import           Control.Monad.Raise.Constraint
-
-import           Control.Monad.Cont
 
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Identity
@@ -53,7 +56,7 @@ import           Data.WorldPeace.Subset.Class
 -- | Pull a potential error out of the surrounding context
   -- FIXME applicative?
   -- NOTE that the target `n` may not even be aware of Raise/Rescue. It's an escape to the "normal" world
-class (Monad n, MonadRaise m) => MonadRescueTo m n where
+class (Monad m, MonadRaise n) => MonadRescueFrom n m where
   -- | Attempt some action, exposing the success and error branches
   --
   --  ==== __Examples__
@@ -76,110 +79,181 @@ class (Monad n, MonadRaise m) => MonadRescueTo m n where
   -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
-  attempt :: m a -> n (Either (OpenUnion (Errors m)) a)
+  attempt :: n a -> m (Either (OpenUnion (Errors n)) a)
 
-instance Monad n => MonadRescueTo Maybe n where
+instance Monad n => MonadRescueFrom Maybe n where
   attempt = return . \case
     Nothing -> Left $ openUnionLift ()
     Just x  -> Right x
 
-instance Monad m => MonadRescueTo [] m where
+instance Monad m => MonadRescueFrom [] m where
   attempt = return . \case
     []      -> Left $ include ()
     (a : _) -> Right a
 
-instance Monad m => MonadRescueTo (Either (OpenUnion errs)) m where
+instance Monad m => MonadRescueFrom (Either (OpenUnion errs)) m where
   attempt action = pure action
 
-instance MonadIO n => MonadRescueTo IO n where
+instance MonadIO m => MonadRescueFrom IO m where
   attempt action =
     liftIO (tryIO action) <&> \case
       Right val  -> Right val
       Left ioExc -> Left $ include ioExc
 
 instance
-  ( IsMember () (Errors m)
-  , Monad n
-  , MonadRescueTo m n
+  ( IsMember () (Errors n) -- FIXME why not automagicly added my MaybeT?
+    -- n `Raises` () -- FIXME think about this again, please
+  , Monad m
+  , MonadRescueFrom n m
   )
-  => MonadRescueTo (MaybeT m) n where
+  => MonadRescueFrom (MaybeT n) m where
     attempt (MaybeT action) =
       attempt action <&> \case
         Right (Just val) -> Right val
         Right Nothing    -> Left $ include ()
         Left errs        -> Left errs
 
-instance MonadRescueTo m n => MonadRescueTo (IdentityT m) n where
+instance MonadRescueFrom n m => MonadRescueFrom (IdentityT n) m where
   attempt (IdentityT action) = attempt action
 
 instance
-  ( MonadRescueTo m n
-  , Contains (Errors m) errs
+  ( MonadRescueFrom n m
+  , Contains (Errors n) errs
   )
-  => MonadRescueTo (ExceptT (OpenUnion errs) m) n where
+  => MonadRescueFrom (ExceptT (OpenUnion errs) n) m where
   attempt (ExceptT action) =
     attempt action <&> \case
       Left err       -> Left $ include err
       Right errOrVal -> errOrVal
 
--- instance (Monad n, MonadRescueTo m n) => MonadRescueTo (ReaderT cfg m) n where
-  -- attempt = mapReaderT attempt
+instance
+  ( Monad               m
+  , MonadBase       n   m
+  , MonadRaise      n
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (ReaderT cfg n) (ReaderT cfg m) where
+    attempt = mapReaderT attempt
 
--- instance (Monoid w, MonadRescueTo m n) => MonadRescueTo (Lazy.WriterT w m) n where
-  -- attempt = Lazy.mapWriterT runner2
+instance
+  ( Monad               m
+  , MonadBase       n   m
+  , MonadRaise      n
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (ReaderT cfg m) where
+    attempt = liftBase . attempt
 
--- instance (Monoid w, MonadRescueTo m n) => MonadRescueTo (Strict.WriterT w m) n where
-  -- attempt = Strict.mapWriterT runner2
+instance
+  ( Monoid w
+  , MonadBase       n m
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (Lazy.WriterT w n) (Lazy.WriterT w m) where
+    attempt = Lazy.mapWriterT runner2
 
--- instance MonadRescueTo m n => MonadRescueTo (Lazy.StateT s m) n where
-  -- attempt = Lazy.mapStateT runner2
+instance
+  ( Monoid w
+  , MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (Lazy.WriterT w m) where
+    attempt = liftBase . attempt
 
--- instance MonadRescueTo m n => MonadRescueTo (Strict.StateT s m) n where
-  -- attempt = Strict.mapStateT runner2
+instance
+  ( Monoid w
+  , MonadBase       n m
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (Strict.WriterT w n) (Strict.WriterT w m) where
+    attempt = Strict.mapWriterT runner2
 
--- instance (Monoid w, MonadRescueTo m n) => MonadRescueTo (Lazy.RWST r w s m) n where
-  -- attempt = Lazy.mapRWST runner3
+instance
+  ( Monoid w
+  , MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (Strict.WriterT w m) where
+    attempt = liftBase . attempt
 
--- instance (Monoid w, MonadRescueTo m n) => MonadRescueTo (Strict.RWST r w s m) n where
-  -- attempt = Strict.mapRWST runner3
+instance
+  ( MonadBase       n m
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (Lazy.StateT s n) (Lazy.StateT s m) where
+    attempt = Lazy.mapStateT runner2
 
--- instance MonadRescueTo m n => MonadRescueTo (ContT r m) n where
-  -- attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
---
--- runner2
---   :: ( Monad           n
---      , MonadRescueTo m n
---      , RaisesOnly    m errs
---      )
---   => m (a, w)
---   -> n (Either (OpenUnion errs) a, w)
--- runner2 inner = do
---   errOrVal <- attempt (pure a)
---   return (errOrVal, w)
---   where
---     foo = do
---       (a, w) <- inner
---       return (a, w)
+instance
+  ( MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (Lazy.StateT s m) where
+    attempt = liftBase . attempt
 
--- runner2
---   :: ( Monad           n
---      , MonadRescueTo m n
---      , RaisesOnly    m errs
---      )
---   => m (a, w)
---   -> n (Either (OpenUnion errs) a, w)
--- runner2 inner = do
---   (a, w)   <- inner
---   errOrVal <- attempt (pure a)
---   return (errOrVal, w)
+instance
+  ( MonadBase       n m
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (Strict.StateT s n) (Strict.StateT s m) where
+    attempt = Strict.mapStateT runner2
 
--- runner3
---   :: ( MonadRescueTo m n
---      , RaisesOnly  m errs
---      )
---   => m (a, b, c)
---   -> n (Either (OpenUnion errs) a, b, c)
--- runner3 inner = do
---   (a, s, w) <- inner
---   errOrVal  <- attempt (pure a)
---   return (errOrVal, s, w)
+instance
+  ( Monoid w
+  , MonadBase n m
+  , MonadRescueFrom n m
+  )
+  => MonadRescueFrom (Lazy.RWST r w s n) (Lazy.RWST r w s m) where
+    attempt = Lazy.mapRWST runner3
+
+instance
+  ( MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (Strict.StateT s m) where
+    attempt = liftBase . attempt
+
+instance
+  ( Monoid w
+  , MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (Strict.RWST r w s m) where
+    attempt = liftBase . attempt
+
+instance
+  ( MonadBase       n m
+  , MonadRescueFrom n n
+  )
+  => MonadRescueFrom n (ContT r m) where
+    attempt = liftBase . attempt
+
+instance forall m r . (MonadRescueFrom (ContT r m) m) => MonadRescueFrom (ContT r m) (ContT r m) where
+  attempt =
+    withContT $ \b_mr (current :: a) ->
+      b_mr =<< attempt (pure current :: ContT r m a)
+
+runner2
+  :: forall m n errs a w .
+     ( MonadBase n m
+     , MonadRescueFrom n m
+     , n `RaisesOnly` errs
+     )
+  => n (a, w)
+  -> m (Either (OpenUnion (Errors n)) a, w)
+runner2 inner = do
+  (val, log')  <- liftBase inner
+  result <- attempt (pure val :: n a)
+  return (result, log')
+
+runner3
+  :: forall m n errs a s w .
+     ( MonadBase       n m
+     , MonadRescueFrom n m
+     , n `RaisesOnly` errs
+     )
+  => n (a, s, w)
+  -> m (Either (OpenUnion errs) a, s, w)
+runner3 inner = do
+  (val, state, log') <- liftBase inner
+  result             <- attempt (pure val :: n a)
+  return (result, state, log')

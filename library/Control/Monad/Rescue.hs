@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase       #-}
 {-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE TypeOperators    #-}
 
 -- | Rescue semantics & helpers
 --
@@ -18,7 +19,7 @@ module Control.Monad.Rescue
 
   -- * TEMP
 
-  , SwapErrorContext (..)
+  -- , SwapErrorContext (..)
   , handle
   -- , handleOne'
 
@@ -107,22 +108,21 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly :: (Contains (Errors m) (Errors n), MonadRaise n, MonadRescueTo m n) => m a -> n b -> n a
+lastly :: (Contains (Errors m) (Errors m), MonadRaise m, MonadRescueFrom m m) => m a -> m b -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
   ensure errOrOk
 
 handle
-  :: ( MonadRaise n
-     , MonadRescueTo m n
-     , ElemRemove err (Errors m)
-     , Contains (Remove err (Errors m)) (Errors n)
+  :: ( MonadRaise m
+     , MonadRescueFrom n m
+     , ElemRemove err (Errors n)
+     , Remove err (Errors n) `Contains` (Errors m)
      )
-  => m a
-  -> (m (Either (OpenUnion (Errors m)) a) -> n (Either (OpenUnion (Errors m)) a))
-  -> (err -> n a)
-  -> n a
+  => n a
+  -> (err -> m a)
+  -> m a
 handle action handler = do
   attempt action >>= \case
     Right val ->
@@ -131,26 +131,5 @@ handle action handler = do
     Left err ->
       openUnionHandle raise handler err
 
-handle
-  :: ( MonadRaise n
-     , MonadRescueTo m n
-     , ElemRemove err (Errors m)
-     , Contains (Remove err (Errors m)) (Errors n)
-     )
-  => m a
-  -> (m (Either (OpenUnion (Errors m)) a) -> n (Either (OpenUnion (Errors m)) a))
-  -> (err -> n a)
-  -> n a
-hanldeWith handler action = action handler
+-- handleAll ::
 
--- handleOne
---   :: ( LocalExceptionContext m n
---      , MonadRaise  n
---      , MonadRescue m
---      , ElemRemove err (Errors m)
---      , Contains (Remove err (Errors m)) (Errors n)
---      )
---   => m a
---   -> (err -> n a)
---   -> n a
--- handleOne action handler = handleOne' action localErrorContext handler
