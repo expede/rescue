@@ -13,15 +13,13 @@
 
 module Control.Monad.Rescue
   ( rescue
+  , handle
+
+  -- * Guaranteed runs
+
   , reattempt
   , onRaise
   , lastly
-
-  -- * TEMP
-
-  -- , SwapErrorContext (..)
-  , handle
-  -- , handleOne'
 
   -- * Reexports
 
@@ -72,13 +70,24 @@ import           Numeric.Natural
 -- >>> rescue (goesBoom 42) (pure . handler)
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescue
-  :: ( MonadRescue m
-     , RaisesOnly  m errs
-     )
-  => m a
-  -> (OpenUnion errs -> m a)
+  :: MonadRescueFrom n m
+  => n a
+  -> (ErrorCase n -> m a)
   -> m a
 rescue action handler = either handler pure =<< attempt action
+
+handle
+  :: ( MonadRaise        m
+     , MonadRescueFrom n m
+     , Handles     err n m
+     )
+  => n a
+  -> (err -> m a)
+  -> m a
+handle action handler =
+  either runHandler pure =<< attempt action
+  where
+    runHandler = openUnionHandle raise handler
 
 onRaise
   :: ( MonadRescue m
@@ -108,28 +117,15 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly :: (Contains (Errors m) (Errors m), MonadRaise m, MonadRescueFrom m m) => m a -> m b -> m a
+lastly
+  :: ( Errors m `Contains` Errors m
+     , MonadRaise m
+     , MonadRescueFrom m m
+     )
+  => m a
+  -> m b
+  -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
   ensure errOrOk
-
-handle
-  :: ( MonadRaise m
-     , MonadRescueFrom n m
-     , ElemRemove err (Errors n)
-     , Remove err (Errors n) `Contains` (Errors m)
-     )
-  => n a
-  -> (err -> m a)
-  -> m a
-handle action handler = do
-  attempt action >>= \case
-    Right val ->
-      return val
-
-    Left err ->
-      openUnionHandle raise handler err
-
--- handleAll ::
-

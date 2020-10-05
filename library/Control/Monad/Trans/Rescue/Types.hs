@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
 -- | The 'RescueT' transformer
@@ -12,11 +13,14 @@ module Control.Monad.Trans.Rescue.Types
   , runRescue
   ) where
 
+import Prelude
+
 import           Control.Monad.Catch
 import           Control.Monad.Cont
 import           Control.Monad.Fix
 import           Control.Monad.Reader
 import           Control.Monad.Rescue
+import           Control.Monad.Base
 
 import           Data.Functor.Identity
 import           Data.WorldPeace
@@ -32,9 +36,12 @@ runRescue :: Rescue errs a -> Either (OpenUnion errs) a
 runRescue = runIdentity . runRescueT
 
 mapRescueT
-  :: (m (Either (OpenUnion errs)  a) -> n (Either (OpenUnion errs') b))
-  -> RescueT errs m a -> RescueT errs' n b
-mapRescueT f (RescueT m) = RescueT $ f m
+  :: (  n (Either (OpenUnion errs)  a)
+     -> m (Either (OpenUnion errs') b)
+     )
+  -> RescueT errs  n a
+  -> RescueT errs' m b
+mapRescueT f (RescueT n) = RescueT $ f n
 
 instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT errs m a) where
   RescueT a == RescueT b = a == b
@@ -59,6 +66,9 @@ instance Monad m => Monad (RescueT errs m) where
 
 instance MonadTrans (RescueT errs) where
   lift action = RescueT (Right <$> action)
+
+instance MonadBase b m => MonadBase b (RescueT errs m) where
+  liftBase = liftBaseDefault
 
 instance MonadIO m => MonadIO (RescueT errs m) where
   liftIO io = RescueT $ do
@@ -85,10 +95,26 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
 instance Monad m => MonadRaise (RescueT errs m) where
   type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
+ 
+instance
+  ( Monad         m
+  , MonadBase   n m
+  , MonadRescue n
+  , n `RaisesOnly` errs'
+  , Contains errs' errs'
+  ) => MonadRescueFrom (RescueT errs' n) (RescueT errs m) where
+  attempt (RescueT action) =
+    attempt action >>= pure . \case
+      Left  err    -> Left $ include err
+      Right result -> result
 
--- FIXME
--- instance Monad m => MonadRescue (RescueT errs m) where
-  -- attempt (RescueT action) = RescueT (Right <$> action)
+instance
+  ( Monad         m
+  , MonadBase   n m
+  , MonadRescue n
+  )
+  => MonadRescueFrom n (RescueT errs m) where
+    attempt = liftBase . attempt
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM

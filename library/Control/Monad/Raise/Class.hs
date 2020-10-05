@@ -9,7 +9,10 @@
 -- | The 'MonadRaise' class, which is an effect for
 --   early escape / happy path programming with an exception side channel
 
-module Control.Monad.Raise.Class (MonadRaise (..)) where
+module Control.Monad.Raise.Class
+  ( MonadRaise (..)
+  , ErrorCase
+  ) where
 
 import           Control.Exception
 
@@ -87,7 +90,10 @@ class Monad m => MonadRaise m where
   --
   -- >>> maybeBoom 42
   -- Nothing
-  raise :: Subset err (OpenUnion (Errors m)) => err -> m a
+  raise :: Subset err (ErrorCase m) => err -> m a
+
+-- FIXME docs
+type ErrorCase m = OpenUnion (Errors m)
 
 instance MonadRaise [] where
   type Errors [] = '[()]
@@ -122,9 +128,13 @@ instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m
   raise = lift . raise
 
-instance (IsMember () (Errors m), MonadRaise m) => MonadRaise (MaybeT m) where
-  type Errors (MaybeT m) = Errors m
-  raise err = MaybeT $ raise err
+instance
+  ( () `IsMember` Errors m
+  , MonadRaise m
+  )
+  => MonadRaise (MaybeT m) where
+    type Errors (MaybeT m) = Errors m
+    raise err = MaybeT $ raise err
 
 instance MonadRaise m => MonadRaise (ReaderT cfg m) where
   type Errors (ReaderT cfg m) = Errors m

@@ -20,24 +20,21 @@ import           Exception
 import           Control.Monad.Base
 import           Control.Monad.Cont
 
-import           Control.Monad.Raise.Class
-import           Control.Monad.Raise.Constraint
+import           Control.Monad.Raise
 
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Identity
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 
-import qualified Control.Monad.RWS.Lazy         as Lazy
-import qualified Control.Monad.RWS.Strict       as Strict
+import qualified Control.Monad.RWS.Lazy       as Lazy
+import qualified Control.Monad.RWS.Strict     as Strict
 
-import qualified Control.Monad.State.Lazy       as Lazy
-import qualified Control.Monad.State.Strict     as Strict
+import qualified Control.Monad.State.Lazy     as Lazy
+import qualified Control.Monad.State.Strict   as Strict
 
-import qualified Control.Monad.Writer.Lazy      as Lazy
-import qualified Control.Monad.Writer.Strict    as Strict
-
-import           Data.WorldPeace.Subset.Class
+import qualified Control.Monad.Writer.Lazy    as Lazy
+import qualified Control.Monad.Writer.Strict  as Strict
 
 -- $setup
 --
@@ -54,7 +51,6 @@ import           Data.WorldPeace.Subset.Class
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-  -- FIXME applicative?
   -- NOTE that the target `n` may not even be aware of Raise/Rescue. It's an escape to the "normal" world
 class (Monad m, MonadRaise n) => MonadRescueFrom n m where
   -- | Attempt some action, exposing the success and error branches
@@ -79,10 +75,10 @@ class (Monad m, MonadRaise n) => MonadRescueFrom n m where
   -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
   -- >>> runRescue x
   -- Right "FooErr"
-  attempt :: n a -> m (Either (OpenUnion (Errors n)) a)
+  attempt :: n a -> m (Either (ErrorCase n) a)
 
 instance Monad n => MonadRescueFrom Maybe n where
-  attempt = return . \case
+  attempt = pure . \case
     Nothing -> Left $ openUnionLift ()
     Just x  -> Right x
 
@@ -101,10 +97,9 @@ instance MonadIO m => MonadRescueFrom IO m where
       Left ioExc -> Left $ include ioExc
 
 instance
-  ( IsMember () (Errors n) -- FIXME why not automagicly added my MaybeT?
-    -- n `Raises` () -- FIXME think about this again, please
-  , Monad m
+  ( Monad m
   , MonadRescueFrom n m
+  , n `RaisesOne` ()
   )
   => MonadRescueFrom (MaybeT n) m where
     attempt (MaybeT action) =
@@ -117,18 +112,16 @@ instance MonadRescueFrom n m => MonadRescueFrom (IdentityT n) m where
   attempt (IdentityT action) = attempt action
 
 instance
-  ( MonadRescueFrom n m
+  ( MonadBase       n m
+  , MonadRescueFrom n n
   , Contains (Errors n) errs
   )
-  => MonadRescueFrom (ExceptT (OpenUnion errs) n) m where
-  attempt (ExceptT action) =
-    attempt action <&> \case
-      Left err       -> Left $ include err
-      Right errOrVal -> errOrVal
+  => MonadRescueFrom n (ExceptT (OpenUnion errs) m) where
+    attempt = liftBase . attempt
 
 instance
-  ( Monad               m
-  , MonadBase       n   m
+  ( Monad             m
+  , MonadBase       n m
   , MonadRaise      n
   , MonadRescueFrom n m
   )
@@ -239,7 +232,7 @@ runner2
      , n `RaisesOnly` errs
      )
   => n (a, w)
-  -> m (Either (OpenUnion (Errors n)) a, w)
+  -> m (Either (ErrorCase n) a, w)
 runner2 inner = do
   (val, log')  <- liftBase inner
   result <- attempt (pure val :: n a)
