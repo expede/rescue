@@ -24,7 +24,9 @@ import           Control.Monad.Fix
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
 
+import           Data.Functor
 import           Data.Functor.Contravariant
+
 import           Data.WorldPeace
 
 -- | Adds 'SomeException' to an exception stack,
@@ -134,7 +136,7 @@ instance forall n m .
   => MonadRescueFrom (CleanupT n) m where
     attempt (CleanupT action) =
       liftBase $
-        inner >>= pure . \case
+        inner <&> \case
           Left err          -> Left $ include err
           Right (Left  err) -> Left $ include err
           Right (Right val) -> Right val
