@@ -1,5 +1,7 @@
-{-# LANGUAGE LambdaCase   #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase       #-}
+{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE TypeOperators    #-}
 
 -- | Rescue semantics & helpers
 --
@@ -11,6 +13,10 @@
 
 module Control.Monad.Rescue
   ( rescue
+  , handle
+
+  -- * Guaranteed runs
+
   , reattempt
   , onRaise
   , lastly
@@ -18,14 +24,18 @@ module Control.Monad.Rescue
   -- * Reexports
 
   , module Control.Monad.Raise
+
   , module Control.Monad.Rescue.Class
+  , module Control.Monad.Rescue.Constraint
   ) where
 
 import           Data.Result.Types
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
+
 import           Control.Monad.Rescue.Class
+import           Control.Monad.Rescue.Constraint
 
 import           Numeric.Natural
 
@@ -57,16 +67,27 @@ import           Numeric.Natural
 -- :}
 --
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
--- >>> rescue (goesBoom 42) (pure . handler)
+-- >>> rescue (goesBoom 42) (pure . handler) :: Rescue MyErrs String
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescue
-  :: ( MonadRescue m
-     , RaisesOnly  m errs
-     )
-  => m a
-  -> (OpenUnion errs -> m a)
+  :: MonadRescueFrom n m
+  => n a
+  -> (ErrorCase n -> m a)
   -> m a
 rescue action handler = either handler pure =<< attempt action
+
+handle
+  :: ( MonadRaise        m
+     , MonadRescueFrom n m
+     , Handles     err n m
+     )
+  => n a
+  -> (err -> m a)
+  -> m a
+handle action handler =
+  either runHandler pure =<< attempt action
+  where
+    runHandler = openUnionHandle raise handler
 
 onRaise
   :: ( MonadRescue m
@@ -96,7 +117,14 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly :: (Contains (Errors m) (Errors m), MonadRescue m) => m a -> m b -> m a
+lastly
+  :: ( Errors m `Contains` Errors m
+     , MonadRaise m
+     , MonadRescueFrom m m
+     )
+  => m a
+  -> m b
+  -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer

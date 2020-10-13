@@ -1,5 +1,5 @@
 name: rescue
-version: '0.2.1'
+version: '0.3.0'
 synopsis: More understandable exceptions
 description: An error handling library focused on clarity and control
 category: Error Handling
@@ -34,6 +34,7 @@ dependencies:
   - mtl
   - text
   - transformers
+  - transformers-base
   - world-peace
 
 library:
