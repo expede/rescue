@@ -67,7 +67,7 @@ import           Numeric.Natural
 -- :}
 --
 -- >>> handler = catchesOpenUnion (\foo -> "Foo: " <> show foo, \bar -> "Bar:" <> show bar)
--- >>> rescue (goesBoom 42) (pure . handler)
+-- >>> rescue (goesBoom 42) (pure . handler) :: Rescue MyErrs String
 -- RescueT (Identity (Right "Foo: FooErr"))
 rescue
   :: MonadRescueFrom n m

@@ -36,6 +36,7 @@ Our goals are to have:
   * e.g. "can raise X, Y, and Z", or "raises exactly X and Y but none others"
 * Extensible
 * Ability to call code that raises some subset of errors
+* Handle (and eliminate) exceptions from the context
 
 # Approach
 

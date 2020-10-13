@@ -95,26 +95,13 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
 instance Monad m => MonadRaise (RescueT errs m) where
   type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
- 
-instance
-  ( Monad         m
-  , MonadBase   n m
-  , MonadRescue n
-  , n `RaisesOnly` errs'
-  , Contains errs' errs'
-  ) => MonadRescueFrom (RescueT errs' n) (RescueT errs m) where
-  attempt (RescueT action) =
-    attempt action >>= pure . \case
-      Left  err    -> Left $ include err
-      Right result -> result
 
 instance
-  ( Monad         m
-  , MonadBase   n m
-  , MonadRescue n
+  ( Monad       m
+  , MonadBase n m
   )
-  => MonadRescueFrom n (RescueT errs m) where
-    attempt = liftBase . attempt
+  => MonadRescueFrom (RescueT errs n) m where
+    attempt (RescueT action) = liftBase action
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM

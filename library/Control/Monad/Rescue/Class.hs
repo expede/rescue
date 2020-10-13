@@ -43,6 +43,7 @@ import qualified Control.Monad.Writer.Strict  as Strict
 -- >>> :set -XTypeApplications
 --
 -- >>> import Control.Monad.Trans.Rescue
+-- >>> import Data.Functor.Identity
 -- >>> import Data.Proxy
 -- >>> import Data.WorldPeace as OpenUnion
 --
@@ -51,7 +52,7 @@ import qualified Control.Monad.Writer.Strict  as Strict
 -- >>> data QuuxErr = QuuxErr deriving Show
 
 -- | Pull a potential error out of the surrounding context
-  -- NOTE that the target `n` may not even be aware of Raise/Rescue. It's an escape to the "normal" world
+-- NOTE that the target `m` may not even be aware of Raise/Rescue. It's an escape to the "normal" world
 class (Monad m, MonadRaise n) => MonadRescueFrom n m where
   -- | Attempt some action, exposing the success and error branches
   --
@@ -65,16 +66,15 @@ class (Monad m, MonadRaise n) => MonadRescueFrom n m where
   --        else raise FooErr
   -- :}
   --
-  -- >>> runRescue . attempt $ goesBoom 42
-  -- Right (Left (Identity FooErr))
+  -- >>> :{
+  --   result :: Identity (Either (OpenUnion '[FooErr, BarErr]) Int)
+  --   result = attempt $ goesBoom 42
+  -- :}
   --
-  -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
-  -- In practice you would handle the 'OpenUnion' like so:
+  -- >>> result
+  -- Identity (Left (Identity FooErr))
   --
-  -- >>> let handleErr = catchesOpenUnion (show, show)
-  -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
-  -- >>> runRescue x
-  -- Right "FooErr"
+  -- Where @Identity FooErr@ is the selection of the 'OpenUnion'.
   attempt :: n a -> m (Either (ErrorCase n) a)
 
 instance Monad n => MonadRescueFrom Maybe n where
