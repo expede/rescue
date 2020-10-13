@@ -6,7 +6,7 @@
 --   
 --   An error handling library focused on clarity and control
 @package rescue
-@version 0.2.1
+@version 0.3.0
 
 
 -- | Common exceptions
@@ -128,7 +128,10 @@ class Monad m => MonadRaise m where {
 --   &gt;&gt;&gt; maybeBoom 42
 --   Nothing
 --   </pre>
-raise :: (MonadRaise m, Subset err (OpenUnion (Errors m))) => err -> m a
+raise :: (MonadRaise m, Subset err (ErrorCase m)) => err -> m a
+
+-- | Type alias representing the concrete union of the monad's errors
+type ErrorCase m = OpenUnion (Errors m)
 instance Control.Monad.Raise.Class.MonadRaise []
 instance Control.Monad.Raise.Class.MonadRaise GHC.Maybe.Maybe
 instance Control.Monad.Raise.Class.MonadRaise (Data.Either.Either (Data.WorldPeace.Union.OpenUnion errs))
@@ -137,7 +140,7 @@ instance Control.Monad.Raise.Class.MonadRaise (GHC.ST.ST s)
 instance Control.Monad.Raise.Class.MonadRaise GHC.Conc.Sync.STM
 instance (Control.Monad.Raise.Class.MonadRaise m, Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) errs) => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Except.ExceptT (Data.WorldPeace.Union.OpenUnion errs) m)
 instance Control.Monad.Raise.Class.MonadRaise m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Identity.IdentityT m)
-instance Control.Monad.Raise.Class.MonadRaise m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Maybe.MaybeT m)
+instance (Data.WorldPeace.Union.IsMember () (Control.Monad.Raise.Class.Errors m), Control.Monad.Raise.Class.MonadRaise m) => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Maybe.MaybeT m)
 instance Control.Monad.Raise.Class.MonadRaise m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Reader.ReaderT cfg m)
 instance Control.Monad.Raise.Class.MonadRaise m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Catch.Pure.CatchT m)
 instance Control.Monad.Raise.Class.MonadRaise m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Cont.ContT r m)
@@ -153,69 +156,16 @@ instance (Control.Monad.Raise.Class.MonadRaise m, GHC.Base.Monoid w) => Control.
 module Control.Monad.Raise.Constraint
 
 -- | Raises this exception, but potentially others
-type Raises m err = Subset err (OpenUnion (Errors m))
+type Raises m err = Subset err (ErrorCase m)
 
 -- | May raise errors, including the provided list
-type RaisesAtLeast m errs = Subset (OpenUnion errs) (OpenUnion (Errors m))
+type RaisesAtLeast m errs = Subset (OpenUnion errs) (ErrorCase m)
 
 -- | Restrict exceptions to exactly this list
 type RaisesOnly m errs = errs ~ Errors m
 
-
--- | The <a>MonadRescue</a> class, meant for retrieving the success/failure
---   branches
-module Control.Monad.Rescue.Class
-
--- | Pull a potential error out of the surrounding context
-class MonadRaise m => MonadRescue m
-
--- | Attempt some action, exposing the success and error branches
---   
---   <h4><b>Examples</b></h4>
---   
---   <pre>
---   &gt;&gt;&gt; :{
---     goesBoom :: Int -&gt; Rescue '[FooErr, BarErr] Int
---     goesBoom x =
---       if x &gt; 50
---         then return x
---         else raise FooErr
---    :}
---   </pre>
---   
---   <pre>
---   &gt;&gt;&gt; runRescue . attempt $ goesBoom 42
---   Right (Left (Identity FooErr))
---   </pre>
---   
---   Where <tt>Identity fooErr</tt> is the selection of the
---   <a>OpenUnion</a>. In practice you would handle the <a>OpenUnion</a>
---   like so:
---   
---   <pre>
---   &gt;&gt;&gt; let handleErr = catchesOpenUnion (show, show)
---   
---   &gt;&gt;&gt; let x = attempt (goesBoom 42) &gt;&gt;= pure . either handleErr show
---   
---   &gt;&gt;&gt; runRescue x
---   Right "FooErr"
---   </pre>
-attempt :: MonadRescue m => m a -> m (Either (OpenUnion (Errors m)) a)
-instance Control.Monad.Rescue.Class.MonadRescue GHC.Maybe.Maybe
-instance Control.Monad.Rescue.Class.MonadRescue []
-instance Control.Monad.Rescue.Class.MonadRescue (Data.Either.Either (Data.WorldPeace.Union.OpenUnion errs))
-instance Control.Monad.Rescue.Class.MonadRescue GHC.Types.IO
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Maybe.MaybeT m)
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Identity.IdentityT m)
-instance (Control.Monad.Rescue.Class.MonadRescue m, Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) errs) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Except.ExceptT (Data.WorldPeace.Union.OpenUnion errs) m)
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Reader.ReaderT cfg m)
-instance (GHC.Base.Monoid w, Control.Monad.Rescue.Class.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Writer.Lazy.WriterT w m)
-instance (GHC.Base.Monoid w, Control.Monad.Rescue.Class.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Writer.Strict.WriterT w m)
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.State.Lazy.StateT s m)
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.State.Strict.StateT s m)
-instance (GHC.Base.Monoid w, Control.Monad.Rescue.Class.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.RWS.Lazy.RWST r w s m)
-instance (GHC.Base.Monoid w, Control.Monad.Rescue.Class.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.RWS.Strict.RWST r w s m)
-instance Control.Monad.Rescue.Class.MonadRescue m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Cont.ContT r m)
+-- | Raises an exception, guaranteed to NOT be the outer union
+type RaisesOne m err = IsMember err (Errors m)
 
 
 -- | Monadic raise semantics &amp; helpers
@@ -288,6 +238,77 @@ module Data.Result
 fromEither :: Subset err (OpenUnion errs) => Either err val -> Result errs val
 
 
+-- | The <tt>MonadRescue</tt> class, meant for retrieving the
+--   success/failure branches
+module Control.Monad.Rescue.Class
+
+-- | Pull a potential error out of the surrounding context NOTE that the
+--   target <tt>m</tt> may not even be aware of Raise/Rescue. It's an
+--   escape to the "normal" world
+class (Monad m, MonadRaise n) => MonadRescueFrom n m
+
+-- | Attempt some action, exposing the success and error branches
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     goesBoom :: Int -&gt; Rescue '[FooErr, BarErr] Int
+--     goesBoom x =
+--       if x &gt; 50
+--         then return x
+--         else raise FooErr
+--    :}
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     result :: Identity (Either (OpenUnion '[FooErr, BarErr]) Int)
+--     result = attempt $ goesBoom 42
+--   :}
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; result
+--   Identity (Left (Identity FooErr))
+--   </pre>
+--   
+--   Where <tt>Identity FooErr</tt> is the selection of the
+--   <a>OpenUnion</a>.
+attempt :: MonadRescueFrom n m => n a -> m (Either (ErrorCase n) a)
+instance GHC.Base.Monad n => Control.Monad.Rescue.Class.MonadRescueFrom GHC.Maybe.Maybe n
+instance GHC.Base.Monad m => Control.Monad.Rescue.Class.MonadRescueFrom [] m
+instance GHC.Base.Monad m => Control.Monad.Rescue.Class.MonadRescueFrom (Data.Either.Either (Data.WorldPeace.Union.OpenUnion errs)) m
+instance Control.Monad.IO.Class.MonadIO m => Control.Monad.Rescue.Class.MonadRescueFrom GHC.Types.IO m
+instance (GHC.Base.Monad m, Control.Monad.Rescue.Class.MonadRescueFrom n m, Control.Monad.Raise.Constraint.RaisesOne n ()) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Maybe.MaybeT n) m
+instance Control.Monad.Rescue.Class.MonadRescueFrom n m => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Identity.IdentityT n) m
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n, Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors n) errs) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.Except.ExceptT (Data.WorldPeace.Union.OpenUnion errs) m)
+instance (GHC.Base.Monad m, Control.Monad.Base.MonadBase n m, Control.Monad.Raise.Class.MonadRaise n, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Reader.ReaderT cfg n) (Control.Monad.Trans.Reader.ReaderT cfg m)
+instance (GHC.Base.Monad m, Control.Monad.Base.MonadBase n m, Control.Monad.Raise.Class.MonadRaise n, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.Reader.ReaderT cfg m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Writer.Lazy.WriterT w n) (Control.Monad.Trans.Writer.Lazy.WriterT w m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.Writer.Lazy.WriterT w m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Writer.Strict.WriterT w n) (Control.Monad.Trans.Writer.Strict.WriterT w m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.Writer.Strict.WriterT w m)
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.State.Lazy.StateT s n) (Control.Monad.Trans.State.Lazy.StateT s m)
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.State.Lazy.StateT s m)
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.State.Strict.StateT s n) (Control.Monad.Trans.State.Strict.StateT s m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.RWS.Lazy.RWST r w s n) (Control.Monad.Trans.RWS.Lazy.RWST r w s m)
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.State.Strict.StateT s m)
+instance (GHC.Base.Monoid w, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.RWS.Strict.RWST r w s m)
+instance (Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Class.MonadRescueFrom n n) => Control.Monad.Rescue.Class.MonadRescueFrom n (Control.Monad.Trans.Cont.ContT r m)
+instance Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Cont.ContT r m) m => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Cont.ContT r m) (Control.Monad.Trans.Cont.ContT r m)
+
+module Control.Monad.Rescue.Constraint
+
+-- | Express the ability to <tt>handle</tt> / eliminate an exception case
+type Handles err n m = (ElemRemove err (Errors n), Contains (Remove err (Errors n)) (Errors m))
+
+-- | Rescue from the existing context only
+--   
+--   Note: cannot <tt>handle</tt> (elimininate) exceptions
+type MonadRescue m = MonadRescueFrom m m
+
+
 -- | Rescue semantics &amp; helpers
 --   
 --   Essentially a type-directed version of <a>Catch</a>.
@@ -318,10 +339,11 @@ module Control.Monad.Rescue
 --   <pre>
 --   &gt;&gt;&gt; handler = catchesOpenUnion (\foo -&gt; "Foo: " &lt;&gt; show foo, \bar -&gt; "Bar:" &lt;&gt; show bar)
 --   
---   &gt;&gt;&gt; rescue (goesBoom 42) (pure . handler)
+--   &gt;&gt;&gt; rescue (goesBoom 42) (pure . handler) :: Rescue MyErrs String
 --   RescueT (Identity (Right "Foo: FooErr"))
 --   </pre>
-rescue :: (MonadRescue m, RaisesOnly m errs) => m a -> (OpenUnion errs -> m a) -> m a
+rescue :: MonadRescueFrom n m => n a -> (ErrorCase n -> m a) -> m a
+handle :: (MonadRaise m, MonadRescueFrom n m, Handles err n m) => n a -> (err -> m a) -> m a
 
 -- | <tt>retry</tt> without asynchoronous exception cleanup. Useful when
 --   not dealing with external resources that may be dangerous to close
@@ -331,7 +353,7 @@ onRaise :: (MonadRescue m, RaisesOnly m errs) => (OpenUnion errs -> m ()) -> m a
 
 -- | Run an additional step, and throw away the result. Return the result
 --   of the action passed.
-lastly :: (Contains (Errors m) (Errors m), MonadRescue m) => m a -> m b -> m a
+lastly :: (Errors m `Contains` Errors m, MonadRaise m, MonadRescueFrom m m) => m a -> m b -> m a
 
 
 -- | The <a>RescueT</a> transformer
@@ -352,12 +374,13 @@ instance GHC.Base.Functor m => GHC.Base.Functor (Control.Monad.Trans.Rescue.Type
 instance GHC.Base.Applicative m => GHC.Base.Applicative (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance GHC.Base.Monad m => GHC.Base.Monad (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Control.Monad.Trans.Class.MonadTrans (Control.Monad.Trans.Rescue.Types.RescueT errs)
+instance Control.Monad.Base.MonadBase b m => Control.Monad.Base.MonadBase b (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Control.Monad.IO.Class.MonadIO m => Control.Monad.IO.Class.MonadIO (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Data.Foldable.Foldable m => Data.Foldable.Foldable (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance (GHC.Base.Monad m, Data.Traversable.Traversable m) => Data.Traversable.Traversable (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance GHC.Base.Monad m => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Rescue.Types.RescueT errs m)
-instance GHC.Base.Monad m => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Rescue.Types.RescueT errs m)
+instance (GHC.Base.Monad m, Control.Monad.Base.MonadBase n m) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Rescue.Types.RescueT errs n) m
 instance Control.Monad.Catch.MonadThrow m => Control.Monad.Catch.MonadThrow (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Control.Monad.Catch.MonadCatch m => Control.Monad.Catch.MonadCatch (Control.Monad.Trans.Rescue.Types.RescueT errs m)
 instance Control.Monad.Reader.Class.MonadReader cfg m => Control.Monad.Reader.Class.MonadReader cfg (Control.Monad.Trans.Rescue.Types.RescueT errs m)
@@ -371,8 +394,8 @@ module Control.Monad.Cleanup.Class
 
 -- | Safely work with resources when an asynchronous exception may be
 --   thrown
-class (Raises m SomeException, MonadRescue m) => MonadCleanup m
-cleanup :: MonadCleanup m => m resource -> (resource -> OpenUnion (Errors m) -> m _ig1) -> (resource -> m _ig2) -> (resource -> m a) -> m a
+class (m `Raises` SomeException, MonadRescueFrom m m) => MonadCleanup m
+cleanup :: MonadCleanup m => m resource -> (resource -> ErrorCase m -> m _ig1) -> (resource -> m _ig2) -> (resource -> m a) -> m a
 
 
 -- | Cleanly release resources and clean up contexts
@@ -406,10 +429,12 @@ instance Control.Monad.IO.Class.MonadIO m => Control.Monad.IO.Class.MonadIO (Con
 instance GHC.Base.MonadPlus m => GHC.Base.MonadPlus (Control.Monad.Trans.Cleanup.Types.CleanupT m)
 instance Control.Monad.Fix.MonadFix m => Control.Monad.Fix.MonadFix (Control.Monad.Trans.Cleanup.Types.CleanupT m)
 instance Control.Monad.Catch.MonadThrow m => Control.Monad.Catch.MonadThrow (Control.Monad.Trans.Cleanup.Types.CleanupT m)
-instance (Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (Control.Monad.Raise.Class.Errors m), Control.Monad.Raise.Class.MonadRaise m, Control.Monad.Catch.MonadThrow m) => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Cleanup.Types.CleanupT m)
-instance (Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (Control.Monad.Raise.Class.Errors m), Control.Monad.Catch.MonadCatch m, Control.Monad.Rescue.Class.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescue (Control.Monad.Trans.Cleanup.Types.CleanupT m)
 instance Control.Monad.Catch.MonadCatch m => Control.Monad.Catch.MonadCatch (Control.Monad.Trans.Cleanup.Types.CleanupT m)
 instance Control.Monad.Catch.MonadMask m => Control.Monad.Catch.MonadMask (Control.Monad.Trans.Cleanup.Types.CleanupT m)
-instance (Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (Control.Monad.Raise.Class.Errors m), Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (GHC.Exception.Type.SomeException : Control.Monad.Raise.Class.Errors m), Control.Monad.Rescue.Class.MonadRescue m, Control.Monad.Catch.MonadMask m) => Control.Monad.Cleanup.Class.MonadCleanup (Control.Monad.Trans.Cleanup.Types.CleanupT m)
+instance (Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (Control.Monad.Raise.Class.Errors m), Control.Monad.Raise.Class.MonadRaise m, Control.Monad.Catch.MonadThrow m) => Control.Monad.Raise.Class.MonadRaise (Control.Monad.Trans.Cleanup.Types.CleanupT m)
+instance Control.Monad.Base.MonadBase m m => Control.Monad.Base.MonadBase m (Control.Monad.Trans.Cleanup.Types.CleanupT m)
+instance (GHC.Base.Monad m, Control.Monad.Rescue.Constraint.MonadRescue m) => Control.Monad.Rescue.Class.MonadRescueFrom m (Control.Monad.Trans.Cleanup.Types.CleanupT m)
+instance (Control.Monad.Rescue.Class.MonadRescueFrom n m, Control.Monad.Base.MonadBase n m, Control.Monad.Rescue.Constraint.MonadRescue n, Control.Monad.Catch.MonadCatch n, Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors n) (Control.Monad.Raise.Class.Errors n), Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors n) (GHC.Exception.Type.SomeException : Control.Monad.Raise.Class.Errors n)) => Control.Monad.Rescue.Class.MonadRescueFrom (Control.Monad.Trans.Cleanup.Types.CleanupT n) m
+instance (Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (Control.Monad.Raise.Class.Errors m), Data.WorldPeace.Union.Contains (Control.Monad.Raise.Class.Errors m) (GHC.Exception.Type.SomeException : Control.Monad.Raise.Class.Errors m), Control.Monad.Base.MonadBase m m, Control.Monad.Rescue.Constraint.MonadRescue m, Control.Monad.Catch.MonadMask m) => Control.Monad.Cleanup.Class.MonadCleanup (Control.Monad.Trans.Cleanup.Types.CleanupT m)
 
 module Control.Monad.Trans.Cleanup

@@ -1,39 +1,39 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE FlexibleContexts     #-}</span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE FlexibleInstances    #-}</span><span>
-</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE LambdaCase           #-}</span><span>
-</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE TypeFamilies         #-}</span><span>
-</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
-</span><span id="line-6"></span><span>
-</span><span id="line-7"></span><span class="hs-comment">-- | The 'MonadRescue' class, meant for retrieving the success/failure branches</span><span>
-</span><span id="line-8"></span><span>
-</span><span id="line-9"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Control.Monad.Rescue.Class</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-10"></span><span>
-</span><span id="line-11"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Data.Functor</span></span><span>
-</span><span id="line-12"></span><span>
-</span><span id="line-13"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Data.WorldPeace</span></span><span>
-</span><span id="line-14"></span><span>
-</span><span id="line-15"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Exception</span></span><span>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE FlexibleContexts      #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE FlexibleInstances     #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE LambdaCase            #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables   #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE TypeFamilies          #-}</span><span>
+</span><span id="line-7"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators         #-}</span><span>
+</span><span id="line-8"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances  #-}</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- | The 'MonadRescue' class, meant for retrieving the success/failure branches</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Control.Monad.Rescue.Class</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Data.Functor</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Data.WorldPeace</span></span><span>
 </span><span id="line-16"></span><span>
-</span><span id="line-17"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Control.Monad.Raise.Class.html"><span class="hs-identifier">Control.Monad.Raise.Class</span></a></span><span>
-</span><span id="line-18"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html"><span class="hs-identifier">Control.Monad.Raise.Constraint</span></a></span><span>
-</span><span id="line-19"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Exception</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Base</span></span><span>
 </span><span id="line-20"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Cont</span></span><span>
 </span><span id="line-21"></span><span>
-</span><span id="line-22"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Except</span></span><span>
-</span><span id="line-23"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Identity</span></span><span>
-</span><span id="line-24"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Maybe</span></span><span>
-</span><span id="line-25"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Reader</span></span><span>
-</span><span id="line-26"></span><span>
-</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.RWS.Lazy</span></span><span>         </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
-</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.RWS.Strict</span></span><span>       </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
-</span><span id="line-29"></span><span>
-</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Lazy</span></span><span>       </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
-</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span>     </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
-</span><span id="line-32"></span><span>
-</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Writer.Lazy</span></span><span>      </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
-</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Writer.Strict</span></span><span>    </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
-</span><span id="line-35"></span><span>
-</span><span id="line-36"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Data.WorldPeace.Subset.Class.html"><span class="hs-identifier">Data.WorldPeace.Subset.Class</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Control.Monad.Raise.html"><span class="hs-identifier">Control.Monad.Raise</span></a></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Except</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Identity</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Maybe</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Reader</span></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.RWS.Lazy</span></span><span>       </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.RWS.Strict</span></span><span>     </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Lazy</span></span><span>     </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span>   </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Writer.Lazy</span></span><span>    </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Lazy</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Writer.Strict</span></span><span>  </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Strict</span></span><span>
 </span><span id="line-37"></span><span>
 </span><span id="line-38"></span><span class="hs-comment">-- $setup</span><span>
 </span><span id="line-39"></span><span class="hs-comment">--</span><span>
@@ -42,50 +42,51 @@
 </span><span id="line-42"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XTypeApplications</span><span>
 </span><span id="line-43"></span><span class="hs-comment">--</span><span>
 </span><span id="line-44"></span><span class="hs-comment">-- &gt;&gt;&gt; import Control.Monad.Trans.Rescue</span><span>
-</span><span id="line-45"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Proxy</span><span>
-</span><span id="line-46"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.WorldPeace as OpenUnion</span><span>
-</span><span id="line-47"></span><span class="hs-comment">--</span><span>
-</span><span id="line-48"></span><span class="hs-comment">-- &gt;&gt;&gt; data FooErr  = FooErr  deriving Show</span><span>
-</span><span id="line-49"></span><span class="hs-comment">-- &gt;&gt;&gt; data BarErr  = BarErr  deriving Show</span><span>
-</span><span id="line-50"></span><span class="hs-comment">-- &gt;&gt;&gt; data QuuxErr = QuuxErr deriving Show</span><span>
-</span><span id="line-51"></span><span>
-</span><span id="line-52"></span><span class="hs-comment">-- | Pull a potential error out of the surrounding context</span><span>
-</span><span id="line-53"></span><span class="hs-keyword">class</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Class.html#MonadRaise"><span class="hs-identifier hs-type">MonadRaise</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121918"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadRescue"><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-var">MonadRescue</span></a></span></span><span> </span><span id="local-6989586621679121918"><span class="annot"><a href="#local-6989586621679121918"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-54"></span><span>  </span><span class="hs-comment">-- | Attempt some action, exposing the success and error branches</span><span>
-</span><span id="line-55"></span><span>  </span><span class="hs-comment">--</span><span>
-</span><span id="line-56"></span><span>  </span><span class="hs-comment">--  ==== __Examples__</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Functor.Identity</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Proxy</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.WorldPeace as OpenUnion</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- &gt;&gt;&gt; data FooErr  = FooErr  deriving Show</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- &gt;&gt;&gt; data BarErr  = BarErr  deriving Show</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- &gt;&gt;&gt; data QuuxErr = QuuxErr deriving Show</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- | Pull a potential error out of the surrounding context</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- NOTE that the target `m` may not even be aware of Raise/Rescue. It's an escape to the &quot;normal&quot; world</span><span>
+</span><span id="line-55"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679124847"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Class.html#MonadRaise"><span class="hs-identifier hs-type">MonadRaise</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124846"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadRescueFrom"><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-var">MonadRescueFrom</span></a></span></span><span> </span><span id="local-6989586621679124846"><span class="annot"><a href="#local-6989586621679124846"><span class="hs-identifier hs-type">n</span></a></span></span><span> </span><span id="local-6989586621679124847"><span class="annot"><a href="#local-6989586621679124847"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-comment">-- | Attempt some action, exposing the success and error branches</span><span>
 </span><span id="line-57"></span><span>  </span><span class="hs-comment">--</span><span>
-</span><span id="line-58"></span><span>  </span><span class="hs-comment">--  &gt;&gt;&gt; :{</span><span>
-</span><span id="line-59"></span><span>  </span><span class="hs-comment">--    goesBoom :: Int -&gt; Rescue '[FooErr, BarErr] Int</span><span>
-</span><span id="line-60"></span><span>  </span><span class="hs-comment">--    goesBoom x =</span><span>
-</span><span id="line-61"></span><span>  </span><span class="hs-comment">--      if x &gt; 50</span><span>
-</span><span id="line-62"></span><span>  </span><span class="hs-comment">--        then return x</span><span>
-</span><span id="line-63"></span><span>  </span><span class="hs-comment">--        else raise FooErr</span><span>
-</span><span id="line-64"></span><span>  </span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-65"></span><span>  </span><span class="hs-comment">--</span><span>
-</span><span id="line-66"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; runRescue . attempt $ goesBoom 42</span><span>
-</span><span id="line-67"></span><span>  </span><span class="hs-comment">-- Right (Left (Identity FooErr))</span><span>
-</span><span id="line-68"></span><span>  </span><span class="hs-comment">--</span><span>
-</span><span id="line-69"></span><span>  </span><span class="hs-comment">-- Where @Identity fooErr@ is the selection of the 'OpenUnion'.</span><span>
-</span><span id="line-70"></span><span>  </span><span class="hs-comment">-- In practice you would handle the 'OpenUnion' like so:</span><span>
-</span><span id="line-71"></span><span>  </span><span class="hs-comment">--</span><span>
-</span><span id="line-72"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; let handleErr = catchesOpenUnion (show, show)</span><span>
-</span><span id="line-73"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; let x = attempt (goesBoom 42) &gt;&gt;= pure . either handleErr show</span><span>
-</span><span id="line-74"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; runRescue x</span><span>
-</span><span id="line-75"></span><span>  </span><span class="hs-comment">-- Right &quot;FooErr&quot;</span><span>
-</span><span id="line-76"></span><span>  </span><span id="local-6989586621679121922"><span id="attempt"><span class="annot"><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-type">attempt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679121918"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121922"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679121918"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Raise.Class.html#Errors"><span class="hs-identifier hs-type">Errors</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121918"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679121922"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
-</span><span id="line-77"></span><span>
-</span><span id="line-78"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-79"></span><span>  </span><span id="local-6989586621679121754"><span class="annot"><span class="annottext">attempt :: Maybe a -&gt; Maybe (Either (OpenUnion (Errors Maybe)) a)
-</span><a href="#local-6989586621679121754"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion '[()]) a -&gt; Maybe (Either (OpenUnion '[()]) a)
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion '[()]) a -&gt; Maybe (Either (OpenUnion '[()]) a))
+</span><span id="line-58"></span><span>  </span><span class="hs-comment">--  ==== __Examples__</span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-comment">--  &gt;&gt;&gt; :{</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-comment">--    goesBoom :: Int -&gt; Rescue '[FooErr, BarErr] Int</span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-comment">--    goesBoom x =</span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-comment">--      if x &gt; 50</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-comment">--        then return x</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-comment">--        else raise FooErr</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-comment">--   result :: Identity (Either (OpenUnion '[FooErr, BarErr]) Int)</span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-comment">--   result = attempt $ goesBoom 42</span><span>
+</span><span id="line-71"></span><span>  </span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-comment">-- &gt;&gt;&gt; result</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-comment">-- Identity (Left (Identity FooErr))</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-comment">-- Where @Identity FooErr@ is the selection of the 'OpenUnion'.</span><span>
+</span><span id="line-77"></span><span>  </span><span id="local-6989586621679124850"><span id="attempt"><span class="annot"><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-type">attempt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679124846"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124850"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679124847"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Raise.Class.html#ErrorCase"><span class="hs-identifier hs-type">ErrorCase</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124846"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124850"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span id="local-6989586621679124654"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679124654"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679124654"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-80"></span><span>  </span><span id="local-6989586621679124649"><span class="annot"><span class="annottext">attempt :: Maybe a -&gt; n (Either (ErrorCase Maybe) a)
+</span><a href="#local-6989586621679124649"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion '[()]) a -&gt; n (Either (OpenUnion '[()]) a)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion '[()]) a -&gt; n (Either (OpenUnion '[()]) a))
 -&gt; (Maybe a -&gt; Either (OpenUnion '[()]) a)
 -&gt; Maybe a
--&gt; Maybe (Either (OpenUnion '[()]) a)
+-&gt; n (Either (OpenUnion '[()]) a)
 forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
-</span><span id="line-80"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
+</span><span id="line-81"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a)
 -&gt; OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
@@ -93,23 +94,23 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">() -&gt; OpenUnion '[()]
 forall a (as :: [*]). IsMember a as =&gt; a -&gt; OpenUnion as
 </span><span class="hs-identifier hs-var">openUnionLift</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
-</span><span id="line-81"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679121751"><span class="annot"><span class="annottext">x :: a
-</span><a href="#local-6989586621679121751"><span class="hs-identifier hs-var">x</span></a></span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[()]) a
+</span><span id="line-82"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679124646"><span class="annot"><span class="annottext">x :: a
+</span><a href="#local-6989586621679124646"><span class="hs-identifier hs-var">x</span></a></span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[()]) a
 forall a b. b -&gt; Either a b
 </span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121751"><span class="hs-identifier hs-var">x</span></a></span><span>
-</span><span id="line-82"></span><span>
-</span><span id="line-83"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-84"></span><span>  </span><span id="local-6989586621679121748"><span class="annot"><span class="annottext">attempt :: [a] -&gt; [Either (OpenUnion (Errors [])) a]
-</span><a href="#local-6989586621679121748"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion '[()]) a -&gt; [Either (OpenUnion '[()]) a]
+</span><a href="#local-6989586621679124646"><span class="hs-identifier hs-var">x</span></a></span></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span id="local-6989586621679124645"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679124645"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><a href="#local-6989586621679124645"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-85"></span><span>  </span><span id="local-6989586621679124641"><span class="annot"><span class="annottext">attempt :: [a] -&gt; m (Either (ErrorCase []) a)
+</span><a href="#local-6989586621679124641"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion '[()]) a -&gt; m (Either (OpenUnion '[()]) a)
 forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion '[()]) a -&gt; [Either (OpenUnion '[()]) a])
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion '[()]) a -&gt; m (Either (OpenUnion '[()]) a))
 -&gt; ([a] -&gt; Either (OpenUnion '[()]) a)
 -&gt; [a]
--&gt; [Either (OpenUnion '[()]) a]
+-&gt; m (Either (OpenUnion '[()]) a)
 forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
-</span><span id="line-85"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">]</span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
+</span><span id="line-86"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">]</span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a)
 -&gt; OpenUnion '[()] -&gt; Either (OpenUnion '[()]) a
@@ -117,43 +118,42 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">() -&gt; OpenUnion '[()]
 forall err errs. Subset err errs =&gt; err -&gt; errs
 </span><a href="Data.WorldPeace.Subset.Class.html#include"><span class="hs-identifier hs-var">include</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
-</span><span id="line-86"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679121746"><span class="annot"><span class="annottext">a :: a
-</span><a href="#local-6989586621679121746"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="hs-identifier">_</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[()]) a
+</span><span id="line-87"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679124639"><span class="annot"><span class="annottext">a :: a
+</span><a href="#local-6989586621679124639"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="hs-identifier">_</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[()]) a
 forall a b. b -&gt; Either a b
 </span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121746"><span class="hs-identifier hs-var">a</span></a></span><span>
-</span><span id="line-87"></span><span>
-</span><span id="line-88"></span><span id="local-6989586621679121745"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679121745"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-89"></span><span>  </span><span id="local-6989586621679121742"><span class="annot"><span class="annottext">attempt :: Either (OpenUnion errs) a
--&gt; Either
-     (OpenUnion errs)
-     (Either (OpenUnion (Errors (Either (OpenUnion errs)))) a)
-</span><a href="#local-6989586621679121742"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span id="local-6989586621679121741"><span class="annot"><span class="annottext">action :: Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121741"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
--&gt; Either (OpenUnion errs) (Either (OpenUnion errs) a)
-forall a b. b -&gt; Either a b
-</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121741"><span class="hs-identifier hs-var">action</span></a></span></span><span>
-</span><span id="line-90"></span><span>
-</span><span id="line-91"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-92"></span><span>  </span><span id="local-6989586621679121738"><span class="annot"><span class="annottext">attempt :: IO a -&gt; IO (Either (OpenUnion (Errors IO)) a)
-</span><a href="#local-6989586621679121738"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span id="local-6989586621679121737"><span class="annot"><span class="annottext">action :: IO a
-</span><a href="#local-6989586621679121737"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">IO a -&gt; IO (Either IOException a)
+</span><a href="#local-6989586621679124639"><span class="hs-identifier hs-var">a</span></a></span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span id="local-6989586621679124637"><span id="local-6989586621679124638"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679124638"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679124637"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124638"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-90"></span><span>  </span><span id="local-6989586621679124633"><span class="annot"><span class="annottext">attempt :: Either (OpenUnion errs) a
+-&gt; m (Either (ErrorCase (Either (OpenUnion errs))) a)
+</span><a href="#local-6989586621679124633"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span id="local-6989586621679124632"><span class="annot"><span class="annottext">action :: Either (OpenUnion errs) a
+</span><a href="#local-6989586621679124632"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion errs) a -&gt; m (Either (OpenUnion errs) a)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
+</span><a href="#local-6989586621679124632"><span class="hs-identifier hs-var">action</span></a></span></span></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span id="local-6989586621679124631"><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679124631"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679124631"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-93"></span><span>  </span><span id="local-6989586621679124627"><span class="annot"><span class="annottext">attempt :: IO a -&gt; m (Either (ErrorCase IO) a)
+</span><a href="#local-6989586621679124627"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span id="local-6989586621679124626"><span class="annot"><span class="annottext">action :: IO a
+</span><a href="#local-6989586621679124626"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="annottext">IO (Either IOException a) -&gt; m (Either IOException a)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO a -&gt; IO (Either IOException a)
 forall a. IO a -&gt; IO (Either IOException a)
 </span><span class="hs-identifier hs-var">tryIO</span></span><span> </span><span class="annot"><span class="annottext">IO a
-</span><a href="#local-6989586621679121737"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">IO (Either IOException a)
+</span><a href="#local-6989586621679124626"><span class="hs-identifier hs-var">action</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Either IOException a)
 -&gt; (Either IOException a -&gt; Either (OpenUnion '[IOException]) a)
--&gt; IO (Either (OpenUnion '[IOException]) a)
+-&gt; m (Either (OpenUnion '[IOException]) a)
 forall (f :: * -&gt; *) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
 </span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
-</span><span id="line-94"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679121734"><span class="annot"><span class="annottext">val :: a
-</span><a href="#local-6989586621679121734"><span class="hs-identifier hs-var">val</span></a></span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[IOException]) a
+</span><span id="line-95"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679124622"><span class="annot"><span class="annottext">val :: a
+</span><a href="#local-6989586621679124622"><span class="hs-identifier hs-var">val</span></a></span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (OpenUnion '[IOException]) a
 forall a b. b -&gt; Either a b
 </span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121734"><span class="hs-identifier hs-var">val</span></a></span><span>
-</span><span id="line-95"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679121733"><span class="annot"><span class="annottext">ioExc :: IOException
-</span><a href="#local-6989586621679121733"><span class="hs-identifier hs-var">ioExc</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[IOException] -&gt; Either (OpenUnion '[IOException]) a
+</span><a href="#local-6989586621679124622"><span class="hs-identifier hs-var">val</span></a></span><span>
+</span><span id="line-96"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679124621"><span class="annot"><span class="annottext">ioExc :: IOException
+</span><a href="#local-6989586621679124621"><span class="hs-identifier hs-var">ioExc</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion '[IOException] -&gt; Either (OpenUnion '[IOException]) a
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(OpenUnion '[IOException] -&gt; Either (OpenUnion '[IOException]) a)
 -&gt; OpenUnion '[IOException] -&gt; Either (OpenUnion '[IOException]) a
@@ -161,296 +161,420 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IOException -&gt; OpenUnion '[IOException]
 forall err errs. Subset err errs =&gt; err -&gt; errs
 </span><a href="Data.WorldPeace.Subset.Class.html#include"><span class="hs-identifier hs-var">include</span></a></span><span> </span><span class="annot"><span class="annottext">IOException
-</span><a href="#local-6989586621679121733"><span class="hs-identifier hs-var">ioExc</span></a></span><span>
-</span><span id="line-96"></span><span>
-</span><span id="line-97"></span><span id="local-6989586621679121732"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121732"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MaybeT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121732"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-98"></span><span>  </span><span id="local-6989586621679121729"><span class="annot"><span class="annottext">attempt :: MaybeT m a -&gt; MaybeT m (Either (OpenUnion (Errors (MaybeT m))) a)
-</span><a href="#local-6989586621679121729"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MaybeT</span></span><span> </span><span id="local-6989586621679121727"><span class="annot"><span class="annottext">action :: m (Maybe a)
-</span><a href="#local-6989586621679121727"><span class="hs-identifier hs-var">action</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m (Maybe (Either (OpenUnion (Errors m)) a))
--&gt; MaybeT m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a. m (Maybe a) -&gt; MaybeT m a
-</span><span class="hs-identifier hs-var">MaybeT</span></span><span> </span><span class="annot"><span class="annottext">(m (Maybe (Either (OpenUnion (Errors m)) a))
- -&gt; MaybeT m (Either (OpenUnion (Errors m)) a))
--&gt; (m (Either (OpenUnion (Errors m)) (Maybe a))
-    -&gt; m (Maybe (Either (OpenUnion (Errors m)) a)))
--&gt; m (Either (OpenUnion (Errors m)) (Maybe a))
--&gt; MaybeT m (Either (OpenUnion (Errors m)) a)
-forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
-</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion (Errors m)) (Maybe a)
- -&gt; Maybe (Either (OpenUnion (Errors m)) a))
--&gt; m (Either (OpenUnion (Errors m)) (Maybe a))
--&gt; m (Maybe (Either (OpenUnion (Errors m)) a))
-forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
-</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion (Errors m)) (Maybe a)
--&gt; Maybe (Either (OpenUnion (Errors m)) a)
-forall (t :: * -&gt; *) (m :: * -&gt; *) a.
-(Traversable t, Monad m) =&gt;
-t (m a) -&gt; m (t a)
-</span><span class="hs-identifier hs-var">sequence</span></span><span> </span><span class="annot"><span class="annottext">(m (Either (OpenUnion (Errors m)) (Maybe a))
- -&gt; MaybeT m (Either (OpenUnion (Errors (MaybeT m))) a))
--&gt; m (Either (OpenUnion (Errors m)) (Maybe a))
--&gt; MaybeT m (Either (OpenUnion (Errors (MaybeT m))) a)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">m (Maybe a) -&gt; m (Either (OpenUnion (Errors m)) (Maybe a))
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="annot"><span class="annottext">m (Maybe a)
-</span><a href="#local-6989586621679121727"><span class="hs-identifier hs-var">action</span></a></span></span><span>
-</span><span id="line-99"></span><span>
-</span><span id="line-100"></span><span id="local-6989586621679121725"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121725"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IdentityT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121725"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-101"></span><span>  </span><span id="local-6989586621679121722"><span class="annot"><span class="annottext">attempt :: IdentityT m a
--&gt; IdentityT m (Either (OpenUnion (Errors (IdentityT m))) a)
-</span><a href="#local-6989586621679121722"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IdentityT</span></span><span> </span><span id="local-6989586621679121720"><span class="annot"><span class="annottext">action :: m a
-</span><a href="#local-6989586621679121720"><span class="hs-identifier hs-var">action</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m (Either (OpenUnion (Errors m)) a)
--&gt; IdentityT m (Either (OpenUnion (Errors m)) a)
-forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
-(MonadTrans t, Monad m) =&gt;
-m a -&gt; t m a
-</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">m a -&gt; m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="annot"><span class="annottext">m a
-</span><a href="#local-6989586621679121720"><span class="hs-identifier hs-var">action</span></a></span><span class="hs-special">)</span></span><span>
-</span><span id="line-102"></span><span>
-</span><span id="line-103"></span><span id="local-6989586621679121717"><span id="local-6989586621679121718"><span class="hs-keyword">instance</span><span>
-</span><span id="line-104"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121718"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-105"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Contains</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Raise.Class.html#Errors"><span class="hs-identifier hs-type">Errors</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121718"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679121717"><span class="hs-identifier hs-type">errs</span></a></span><span>
-</span><span id="line-106"></span><span>  </span><span class="hs-special">)</span><span>
-</span><span id="line-107"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExceptT</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679121717"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679121718"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-108"></span><span>  </span><span id="local-6989586621679121714"><span class="annot"><span class="annottext">attempt :: ExceptT (OpenUnion errs) m a
--&gt; ExceptT
-     (OpenUnion errs)
-     m
-     (Either (OpenUnion (Errors (ExceptT (OpenUnion errs) m))) a)
-</span><a href="#local-6989586621679121714"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExceptT</span></span><span> </span><span id="local-6989586621679121712"><span class="annot"><span class="annottext">action :: m (Either (OpenUnion errs) a)
-</span><a href="#local-6989586621679121712"><span class="hs-identifier hs-var">action</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-109"></span><span>    </span><span class="annot"><span class="annottext">m (Either (OpenUnion errs) a)
--&gt; ExceptT
-     (OpenUnion errs)
-     m
-     (Either (OpenUnion (Errors (ExceptT (OpenUnion errs) m))) a)
-forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
-(MonadTrans t, Monad m) =&gt;
-m a -&gt; t m a
-</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m (Either (OpenUnion errs) a)
- -&gt; ExceptT
-      (OpenUnion errs)
-      m
-      (Either (OpenUnion (Errors (ExceptT (OpenUnion errs) m))) a))
--&gt; m (Either (OpenUnion errs) a)
--&gt; ExceptT
-     (OpenUnion errs)
-     m
-     (Either (OpenUnion (Errors (ExceptT (OpenUnion errs) m))) a)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span>
-</span><span id="line-110"></span><span>      </span><span class="annot"><span class="annottext">m (Either (OpenUnion errs) a)
--&gt; m (Either
-        (Union Identity (Errors m)) (Either (OpenUnion errs) a))
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="annot"><span class="annottext">m (Either (OpenUnion errs) a)
-</span><a href="#local-6989586621679121712"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">m (Either (Union Identity (Errors m)) (Either (OpenUnion errs) a))
--&gt; (Either (Union Identity (Errors m)) (Either (OpenUnion errs) a)
-    -&gt; Either (OpenUnion errs) a)
--&gt; m (Either (OpenUnion errs) a)
+</span><a href="#local-6989586621679124621"><span class="hs-identifier hs-var">ioExc</span></a></span></span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span id="local-6989586621679124619"><span id="local-6989586621679124620"><span class="hs-keyword">instance</span><span>
+</span><span id="line-99"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679124620"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124619"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124620"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124619"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html#RaisesOne"><span class="hs-operator hs-type">`RaisesOne`</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MaybeT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124619"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124620"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-104"></span><span>    </span><span id="local-6989586621679124615"><span class="annot"><span class="annottext">attempt :: MaybeT n a -&gt; m (Either (ErrorCase (MaybeT n)) a)
+</span><a href="#local-6989586621679124615"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MaybeT</span></span><span> </span><span id="local-6989586621679124613"><span class="annot"><span class="annottext">action :: n (Maybe a)
+</span><a href="#local-6989586621679124613"><span class="hs-identifier hs-var">action</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-105"></span><span>      </span><span class="annot"><span class="annottext">n (Maybe a) -&gt; m (Either (Union Identity (Errors n)) (Maybe a))
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="annot"><span class="annottext">n (Maybe a)
+</span><a href="#local-6989586621679124613"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">m (Either (Union Identity (Errors n)) (Maybe a))
+-&gt; (Either (Union Identity (Errors n)) (Maybe a)
+    -&gt; Either (Union Identity (Errors n)) a)
+-&gt; m (Either (Union Identity (Errors n)) a)
 forall (f :: * -&gt; *) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
 </span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
-</span><span id="line-111"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679121711"><span class="annot"><span class="annottext">err :: Union Identity (Errors m)
-</span><a href="#local-6989586621679121711"><span class="hs-identifier hs-var">err</span></a></span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OpenUnion errs -&gt; Either (OpenUnion errs) a
+</span><span id="line-106"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679124612"><span class="annot"><span class="annottext">val :: a
+</span><a href="#local-6989586621679124612"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (Union Identity (Errors n)) a
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124612"><span class="hs-identifier hs-var">val</span></a></span><span>
+</span><span id="line-107"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Union Identity (Errors n) -&gt; Either (Union Identity (Errors n)) a
 forall a b. a -&gt; Either a b
-</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(OpenUnion errs -&gt; Either (OpenUnion errs) a)
--&gt; OpenUnion errs -&gt; Either (OpenUnion errs) a
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(Union Identity (Errors n) -&gt; Either (Union Identity (Errors n)) a)
+-&gt; Union Identity (Errors n)
+-&gt; Either (Union Identity (Errors n)) a
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Union Identity (Errors m) -&gt; OpenUnion errs
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">() -&gt; Union Identity (Errors n)
 forall err errs. Subset err errs =&gt; err -&gt; errs
-</span><a href="Data.WorldPeace.Subset.Class.html#include"><span class="hs-identifier hs-var">include</span></a></span><span> </span><span class="annot"><span class="annottext">Union Identity (Errors m)
-</span><a href="#local-6989586621679121711"><span class="hs-identifier hs-var">err</span></a></span><span>
-</span><span id="line-112"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679121710"><span class="annot"><span class="annottext">errOrVal :: Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121710"><span class="hs-identifier hs-var">errOrVal</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121710"><span class="hs-identifier hs-var">errOrVal</span></a></span></span></span><span>
-</span><span id="line-113"></span><span>
-</span><span id="line-114"></span><span id="local-6989586621679121708"><span id="local-6989586621679121709"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121709"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121708"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121709"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-115"></span><span>  </span><span id="local-6989586621679121705"><span class="annot"><span class="annottext">attempt :: ReaderT cfg m a
--&gt; ReaderT cfg m (Either (OpenUnion (Errors (ReaderT cfg m))) a)
-</span><a href="#local-6989586621679121705"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m a -&gt; m (Either (OpenUnion (Errors m)) a))
--&gt; ReaderT cfg m a
--&gt; ReaderT cfg m (Either (OpenUnion (Errors m)) a)
+</span><a href="Data.WorldPeace.Subset.Class.html#include"><span class="hs-identifier hs-var">include</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679124611"><span class="annot"><span class="annottext">errs :: Union Identity (Errors n)
+</span><a href="#local-6989586621679124611"><span class="hs-identifier hs-var">errs</span></a></span></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Union Identity (Errors n) -&gt; Either (Union Identity (Errors n)) a
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Union Identity (Errors n)
+</span><a href="#local-6989586621679124611"><span class="hs-identifier hs-var">errs</span></a></span></span></span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span id="local-6989586621679124609"><span id="local-6989586621679124610"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124610"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124609"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IdentityT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124610"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124609"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-111"></span><span>  </span><span id="local-6989586621679124605"><span class="annot"><span class="annottext">attempt :: IdentityT n a -&gt; m (Either (ErrorCase (IdentityT n)) a)
+</span><a href="#local-6989586621679124605"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IdentityT</span></span><span> </span><span id="local-6989586621679124603"><span class="annot"><span class="annottext">action :: n a
+</span><a href="#local-6989586621679124603"><span class="hs-identifier hs-var">action</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n a -&gt; m (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="annot"><span class="annottext">n a
+</span><a href="#local-6989586621679124603"><span class="hs-identifier hs-var">action</span></a></span></span></span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span id="local-6989586621679124600"><span id="local-6989586621679124601"><span id="local-6989586621679124602"><span class="hs-keyword">instance</span><span>
+</span><span id="line-114"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124602"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124601"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124602"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124602"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-116"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Contains</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Raise.Class.html#Errors"><span class="hs-identifier hs-type">Errors</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124602"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124600"><span class="hs-identifier hs-type">errs</span></a></span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124602"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExceptT</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679124600"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124601"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-119"></span><span>    </span><span id="local-6989586621679124596"><span class="annot"><span class="annottext">attempt :: n a -&gt; ExceptT (OpenUnion errs) m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124596"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a)
+-&gt; ExceptT (OpenUnion errs) m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a)
+ -&gt; ExceptT (OpenUnion errs) m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; ExceptT (OpenUnion errs) m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span id="local-6989586621679124592"><span id="local-6989586621679124593"><span id="local-6989586621679124594"><span class="hs-keyword">instance</span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span>             </span><span class="annot"><a href="#local-6989586621679124594"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-123"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124593"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124594"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-124"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Class.html#MonadRaise"><span class="hs-identifier hs-type">MonadRaise</span></a></span><span>      </span><span class="annot"><a href="#local-6989586621679124593"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124593"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124594"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-126"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124592"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124593"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124592"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124594"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-128"></span><span>    </span><span id="local-6989586621679124588"><span class="annot"><span class="annottext">attempt :: ReaderT cfg n a
+-&gt; ReaderT cfg m (Either (ErrorCase (ReaderT cfg n)) a)
+</span><a href="#local-6989586621679124588"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n a -&gt; m (Either (OpenUnion (Errors n)) a))
+-&gt; ReaderT cfg n a
+-&gt; ReaderT cfg m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a (n :: * -&gt; *) b r.
 (m a -&gt; n b) -&gt; ReaderT r m a -&gt; ReaderT r n b
-</span><span class="hs-identifier hs-var">mapReaderT</span></span><span> </span><span class="annot"><span class="annottext">m a -&gt; m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span><span>
-</span><span id="line-116"></span><span>
-</span><span id="line-117"></span><span id="local-6989586621679121702"><span id="local-6989586621679121703"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679121703"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121702"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121703"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121702"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-118"></span><span>  </span><span id="local-6989586621679121699"><span class="annot"><span class="annottext">attempt :: WriterT w m a
--&gt; WriterT w m (Either (OpenUnion (Errors (WriterT w m))) a)
-</span><a href="#local-6989586621679121699"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, w) -&gt; m (Either (OpenUnion (Errors m)) a, w))
--&gt; WriterT w m a -&gt; WriterT w m (Either (OpenUnion (Errors m)) a)
+</span><span class="hs-identifier hs-var">mapReaderT</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; m (Either (OpenUnion (Errors n)) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-129"></span><span>
+</span><span id="line-130"></span><span id="local-6989586621679124584"><span id="local-6989586621679124585"><span id="local-6989586621679124586"><span class="hs-keyword">instance</span><span>
+</span><span id="line-131"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span>               </span><span class="annot"><a href="#local-6989586621679124586"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-132"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124585"><span class="hs-identifier hs-type">n</span></a></span><span>   </span><span class="annot"><a href="#local-6989586621679124586"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-133"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Class.html#MonadRaise"><span class="hs-identifier hs-type">MonadRaise</span></a></span><span>      </span><span class="annot"><a href="#local-6989586621679124585"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-134"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124585"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124585"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124585"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124584"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124586"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-137"></span><span>    </span><span id="local-6989586621679124580"><span class="annot"><span class="annottext">attempt :: n a -&gt; ReaderT cfg m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124580"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a)
+-&gt; ReaderT cfg m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a)
+ -&gt; ReaderT cfg m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; ReaderT cfg m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span id="local-6989586621679124577"><span id="local-6989586621679124578"><span id="local-6989586621679124579"><span class="hs-keyword">instance</span><span>
+</span><span id="line-140"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124579"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-141"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124578"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124577"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-142"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124578"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124577"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-143"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124579"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124578"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124579"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124577"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-145"></span><span>    </span><span id="local-6989586621679124573"><span class="annot"><span class="annottext">attempt :: WriterT w n a -&gt; WriterT w m (Either (ErrorCase (WriterT w n)) a)
+</span><a href="#local-6989586621679124573"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n (a, w) -&gt; m (Either (OpenUnion (Errors n)) a, w))
+-&gt; WriterT w n a -&gt; WriterT w m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a w (n :: * -&gt; *) b w'.
 (m (a, w) -&gt; n (b, w')) -&gt; WriterT w m a -&gt; WriterT w' n b
-</span><span class="hs-identifier hs-var">Lazy.mapWriterT</span></span><span> </span><span class="annot"><span class="annottext">m (a, w) -&gt; m (Either (OpenUnion (Errors m)) a, w)
-forall (m :: * -&gt; *) (errs :: [*]) a w.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, w) -&gt; m (Either (OpenUnion errs) a, w)
-</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span><span>
-</span><span id="line-119"></span><span>
-</span><span id="line-120"></span><span id="local-6989586621679121695"><span id="local-6989586621679121696"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679121696"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121695"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121696"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121695"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-121"></span><span>  </span><span id="local-6989586621679121692"><span class="annot"><span class="annottext">attempt :: WriterT w m a
--&gt; WriterT w m (Either (OpenUnion (Errors (WriterT w m))) a)
-</span><a href="#local-6989586621679121692"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, w) -&gt; m (Either (OpenUnion (Errors m)) a, w))
--&gt; WriterT w m a -&gt; WriterT w m (Either (OpenUnion (Errors m)) a)
+</span><span class="hs-identifier hs-var">Lazy.mapWriterT</span></span><span> </span><span class="annot"><span class="annottext">n (a, w) -&gt; m (Either (OpenUnion (Errors n)) a, w)
+forall (m :: * -&gt; *) (n :: * -&gt; *) (errs :: [*]) a w.
+(MonadBase n m, MonadRescueFrom n m, RaisesOnly n errs) =&gt;
+n (a, w) -&gt; m (Either (ErrorCase n) a, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span></span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span id="local-6989586621679124568"><span id="local-6989586621679124569"><span id="local-6989586621679124570"><span class="hs-keyword">instance</span><span>
+</span><span id="line-148"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124570"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-149"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124569"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124568"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-150"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124569"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124569"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-151"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-152"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124569"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124570"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124568"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-153"></span><span>    </span><span id="local-6989586621679124564"><span class="annot"><span class="annottext">attempt :: n a -&gt; WriterT w m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124564"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; WriterT w m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a)
+ -&gt; WriterT w m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; WriterT w m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span id="local-6989586621679124561"><span id="local-6989586621679124562"><span id="local-6989586621679124563"><span class="hs-keyword">instance</span><span>
+</span><span id="line-156"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124563"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-157"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124562"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124561"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-158"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124562"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124561"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-159"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-160"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124563"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124562"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124563"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124561"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-161"></span><span>    </span><span id="local-6989586621679124557"><span class="annot"><span class="annottext">attempt :: WriterT w n a -&gt; WriterT w m (Either (ErrorCase (WriterT w n)) a)
+</span><a href="#local-6989586621679124557"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n (a, w) -&gt; m (Either (OpenUnion (Errors n)) a, w))
+-&gt; WriterT w n a -&gt; WriterT w m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a w (n :: * -&gt; *) b w'.
 (m (a, w) -&gt; n (b, w')) -&gt; WriterT w m a -&gt; WriterT w' n b
-</span><span class="hs-identifier hs-var">Strict.mapWriterT</span></span><span> </span><span class="annot"><span class="annottext">m (a, w) -&gt; m (Either (OpenUnion (Errors m)) a, w)
-forall (m :: * -&gt; *) (errs :: [*]) a w.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, w) -&gt; m (Either (OpenUnion errs) a, w)
-</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span><span>
-</span><span id="line-122"></span><span>
-</span><span id="line-123"></span><span id="local-6989586621679121689"><span id="local-6989586621679121690"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121690"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121689"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121690"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-124"></span><span>  </span><span id="local-6989586621679121686"><span class="annot"><span class="annottext">attempt :: StateT s m a
--&gt; StateT s m (Either (OpenUnion (Errors (StateT s m))) a)
-</span><a href="#local-6989586621679121686"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, s) -&gt; m (Either (OpenUnion (Errors m)) a, s))
--&gt; StateT s m a -&gt; StateT s m (Either (OpenUnion (Errors m)) a)
+</span><span class="hs-identifier hs-var">Strict.mapWriterT</span></span><span> </span><span class="annot"><span class="annottext">n (a, w) -&gt; m (Either (OpenUnion (Errors n)) a, w)
+forall (m :: * -&gt; *) (n :: * -&gt; *) (errs :: [*]) a w.
+(MonadBase n m, MonadRescueFrom n m, RaisesOnly n errs) =&gt;
+n (a, w) -&gt; m (Either (ErrorCase n) a, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span></span><span>
+</span><span id="line-162"></span><span>
+</span><span id="line-163"></span><span id="local-6989586621679124553"><span id="local-6989586621679124554"><span id="local-6989586621679124555"><span class="hs-keyword">instance</span><span>
+</span><span id="line-164"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124555"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-165"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124554"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124553"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-166"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124554"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124554"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-167"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-168"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124554"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.WriterT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124555"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124553"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-169"></span><span>    </span><span id="local-6989586621679124549"><span class="annot"><span class="annottext">attempt :: n a -&gt; WriterT w m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124549"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; WriterT w m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a)
+ -&gt; WriterT w m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; WriterT w m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span id="local-6989586621679124546"><span id="local-6989586621679124547"><span id="local-6989586621679124548"><span class="hs-keyword">instance</span><span>
+</span><span id="line-172"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124548"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124547"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-173"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124548"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124547"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-174"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-175"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124546"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124548"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124546"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124547"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-176"></span><span>    </span><span id="local-6989586621679124542"><span class="annot"><span class="annottext">attempt :: StateT s n a -&gt; StateT s m (Either (ErrorCase (StateT s n)) a)
+</span><a href="#local-6989586621679124542"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n (a, s) -&gt; m (Either (OpenUnion (Errors n)) a, s))
+-&gt; StateT s n a -&gt; StateT s m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a s (n :: * -&gt; *) b.
 (m (a, s) -&gt; n (b, s)) -&gt; StateT s m a -&gt; StateT s n b
-</span><span class="hs-identifier hs-var">Lazy.mapStateT</span></span><span> </span><span class="annot"><span class="annottext">m (a, s) -&gt; m (Either (OpenUnion (Errors m)) a, s)
-forall (m :: * -&gt; *) (errs :: [*]) a w.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, w) -&gt; m (Either (OpenUnion errs) a, w)
-</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span><span>
-</span><span id="line-125"></span><span>
-</span><span id="line-126"></span><span id="local-6989586621679121683"><span id="local-6989586621679121684"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121684"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121683"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121684"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-127"></span><span>  </span><span id="local-6989586621679121680"><span class="annot"><span class="annottext">attempt :: StateT s m a
--&gt; StateT s m (Either (OpenUnion (Errors (StateT s m))) a)
-</span><a href="#local-6989586621679121680"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, s) -&gt; m (Either (OpenUnion (Errors m)) a, s))
--&gt; StateT s m a -&gt; StateT s m (Either (OpenUnion (Errors m)) a)
+</span><span class="hs-identifier hs-var">Lazy.mapStateT</span></span><span> </span><span class="annot"><span class="annottext">n (a, s) -&gt; m (Either (OpenUnion (Errors n)) a, s)
+forall (m :: * -&gt; *) (n :: * -&gt; *) (errs :: [*]) a w.
+(MonadBase n m, MonadRescueFrom n m, RaisesOnly n errs) =&gt;
+n (a, w) -&gt; m (Either (ErrorCase n) a, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span id="local-6989586621679124538"><span id="local-6989586621679124539"><span id="local-6989586621679124540"><span class="hs-keyword">instance</span><span>
+</span><span id="line-179"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124540"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124539"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-180"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124540"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124540"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-181"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-182"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124540"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124538"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124539"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-183"></span><span>    </span><span id="local-6989586621679124534"><span class="annot"><span class="annottext">attempt :: n a -&gt; StateT s m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124534"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; StateT s m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a) -&gt; StateT s m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; StateT s m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-184"></span><span>
+</span><span id="line-185"></span><span id="local-6989586621679124531"><span id="local-6989586621679124532"><span id="local-6989586621679124533"><span class="hs-keyword">instance</span><span>
+</span><span id="line-186"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124533"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124532"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-187"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124533"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124532"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-188"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-189"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124531"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124533"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124531"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124532"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-190"></span><span>    </span><span id="local-6989586621679124527"><span class="annot"><span class="annottext">attempt :: StateT s n a -&gt; StateT s m (Either (ErrorCase (StateT s n)) a)
+</span><a href="#local-6989586621679124527"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n (a, s) -&gt; m (Either (OpenUnion (Errors n)) a, s))
+-&gt; StateT s n a -&gt; StateT s m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a s (n :: * -&gt; *) b.
 (m (a, s) -&gt; n (b, s)) -&gt; StateT s m a -&gt; StateT s n b
-</span><span class="hs-identifier hs-var">Strict.mapStateT</span></span><span> </span><span class="annot"><span class="annottext">m (a, s) -&gt; m (Either (OpenUnion (Errors m)) a, s)
-forall (m :: * -&gt; *) (errs :: [*]) a w.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, w) -&gt; m (Either (OpenUnion errs) a, w)
-</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span><span>
-</span><span id="line-128"></span><span>
-</span><span id="line-129"></span><span id="local-6989586621679121675"><span id="local-6989586621679121676"><span id="local-6989586621679121677"><span id="local-6989586621679121678"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679121678"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121677"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.RWST</span></span><span> </span><span class="annot"><a href="#local-6989586621679121676"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121678"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121675"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121677"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-130"></span><span>  </span><span id="local-6989586621679121672"><span class="annot"><span class="annottext">attempt :: RWST r w s m a
--&gt; RWST r w s m (Either (OpenUnion (Errors (RWST r w s m))) a)
-</span><a href="#local-6989586621679121672"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, s, w) -&gt; m (Either (OpenUnion (Errors m)) a, s, w))
--&gt; RWST r w s m a -&gt; RWST r w s m (Either (OpenUnion (Errors m)) a)
+</span><span class="hs-identifier hs-var">Strict.mapStateT</span></span><span> </span><span class="annot"><span class="annottext">n (a, s) -&gt; m (Either (OpenUnion (Errors n)) a, s)
+forall (m :: * -&gt; *) (n :: * -&gt; *) (errs :: [*]) a w.
+(MonadBase n m, MonadRescueFrom n m, RaisesOnly n errs) =&gt;
+n (a, w) -&gt; m (Either (ErrorCase n) a, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var">runner2</span></a></span></span></span></span><span>
+</span><span id="line-191"></span><span>
+</span><span id="line-192"></span><span id="local-6989586621679124521"><span id="local-6989586621679124522"><span id="local-6989586621679124523"><span id="local-6989586621679124524"><span id="local-6989586621679124525"><span class="hs-keyword">instance</span><span>
+</span><span id="line-193"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124525"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-194"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span> </span><span class="annot"><a href="#local-6989586621679124524"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124523"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-195"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124524"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124523"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-196"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-197"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.RWST</span></span><span> </span><span class="annot"><a href="#local-6989586621679124522"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124525"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124521"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124524"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lazy.RWST</span></span><span> </span><span class="annot"><a href="#local-6989586621679124522"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124525"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124521"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124523"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-198"></span><span>    </span><span id="local-6989586621679124517"><span class="annot"><span class="annottext">attempt :: RWST r w s n a
+-&gt; RWST r w s m (Either (ErrorCase (RWST r w s n)) a)
+</span><a href="#local-6989586621679124517"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(n (a, s, w) -&gt; m (Either (OpenUnion (Errors n)) a, s, w))
+-&gt; RWST r w s n a -&gt; RWST r w s m (Either (OpenUnion (Errors n)) a)
 forall (m :: * -&gt; *) a s w (n :: * -&gt; *) b w' r.
 (m (a, s, w) -&gt; n (b, s, w')) -&gt; RWST r w s m a -&gt; RWST r w' s n b
-</span><span class="hs-identifier hs-var">Lazy.mapRWST</span></span><span> </span><span class="annot"><span class="annottext">m (a, s, w) -&gt; m (Either (OpenUnion (Errors m)) a, s, w)
-forall (m :: * -&gt; *) (errs :: [*]) a b c.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, b, c) -&gt; m (Either (OpenUnion errs) a, b, c)
-</span><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-var">runner3</span></a></span></span></span></span></span><span>
-</span><span id="line-131"></span><span>
-</span><span id="line-132"></span><span id="local-6989586621679121666"><span id="local-6989586621679121667"><span id="local-6989586621679121668"><span id="local-6989586621679121669"><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679121669"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121668"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.RWST</span></span><span> </span><span class="annot"><a href="#local-6989586621679121667"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121669"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121666"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121668"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-133"></span><span>  </span><span id="local-6989586621679121663"><span class="annot"><span class="annottext">attempt :: RWST r w s m a
--&gt; RWST r w s m (Either (OpenUnion (Errors (RWST r w s m))) a)
-</span><a href="#local-6989586621679121663"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(m (a, s, w) -&gt; m (Either (OpenUnion (Errors m)) a, s, w))
--&gt; RWST r w s m a -&gt; RWST r w s m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a s w (n :: * -&gt; *) b w' r.
-(m (a, s, w) -&gt; n (b, s, w')) -&gt; RWST r w s m a -&gt; RWST r w' s n b
-</span><span class="hs-identifier hs-var">Strict.mapRWST</span></span><span> </span><span class="annot"><span class="annottext">m (a, s, w) -&gt; m (Either (OpenUnion (Errors m)) a, s, w)
-forall (m :: * -&gt; *) (errs :: [*]) a b c.
-(MonadRescue m, RaisesOnly m errs) =&gt;
-m (a, b, c) -&gt; m (Either (OpenUnion errs) a, b, c)
-</span><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-var">runner3</span></a></span></span></span></span></span><span>
-</span><span id="line-134"></span><span>
-</span><span id="line-135"></span><span id="local-6989586621679121660"><span id="local-6989586621679121661"><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121661"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679121660"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121661"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-136"></span><span>  </span><span id="local-6989586621679121657"><span class="annot"><span class="annottext">attempt :: ContT r m a
--&gt; ContT r m (Either (OpenUnion (Errors (ContT r m))) a)
-</span><a href="#local-6989586621679121657"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((Either (OpenUnion (Errors m)) a -&gt; m r) -&gt; a -&gt; m r)
--&gt; ContT r m a
--&gt; ContT r m (Either (OpenUnion (Errors (ContT r m))) a)
+</span><span class="hs-identifier hs-var">Lazy.mapRWST</span></span><span> </span><span class="annot"><span class="annottext">n (a, s, w) -&gt; m (Either (OpenUnion (Errors n)) a, s, w)
+forall (m :: * -&gt; *) (n :: * -&gt; *) (errs :: [*]) a s w.
+(MonadBase n m, MonadRescueFrom n m, RaisesOnly n errs) =&gt;
+n (a, s, w) -&gt; m (Either (OpenUnion errs) a, s, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-var">runner3</span></a></span></span></span></span></span></span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span id="local-6989586621679124512"><span id="local-6989586621679124513"><span id="local-6989586621679124514"><span class="hs-keyword">instance</span><span>
+</span><span id="line-201"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124514"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124513"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-202"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124514"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124514"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-203"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-204"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124514"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.StateT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124512"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124513"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-205"></span><span>    </span><span id="local-6989586621679124508"><span class="annot"><span class="annottext">attempt :: n a -&gt; StateT s m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124508"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; StateT s m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a) -&gt; StateT s m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; StateT s m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-206"></span><span>
+</span><span id="line-207"></span><span id="local-6989586621679124503"><span id="local-6989586621679124504"><span id="local-6989586621679124505"><span id="local-6989586621679124506"><span id="local-6989586621679124507"><span class="hs-keyword">instance</span><span>
+</span><span id="line-208"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679124507"><span class="hs-identifier hs-type">w</span></a></span><span>
+</span><span id="line-209"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124506"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124505"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-210"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124506"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124506"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-211"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-212"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124506"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Strict.RWST</span></span><span> </span><span class="annot"><a href="#local-6989586621679124504"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124507"><span class="hs-identifier hs-type">w</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124503"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124505"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-213"></span><span>    </span><span id="local-6989586621679124499"><span class="annot"><span class="annottext">attempt :: n a -&gt; RWST r w s m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124499"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; RWST r w s m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a)
+ -&gt; RWST r w s m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; RWST r w s m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span></span></span><span>
+</span><span id="line-214"></span><span>
+</span><span id="line-215"></span><span id="local-6989586621679124496"><span id="local-6989586621679124497"><span id="local-6989586621679124498"><span class="hs-keyword">instance</span><span>
+</span><span id="line-216"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124498"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124497"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-217"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124498"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124498"><span class="hs-identifier hs-type">n</span></a></span><span>
+</span><span id="line-218"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-219"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124498"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124496"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124497"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-220"></span><span>    </span><span id="local-6989586621679124492"><span class="annot"><span class="annottext">attempt :: n a -&gt; ContT r m (Either (ErrorCase n) a)
+</span><a href="#local-6989586621679124492"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">n (Either (ErrorCase n) a) -&gt; ContT r m (Either (ErrorCase n) a)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">(n (Either (ErrorCase n) a) -&gt; ContT r m (Either (ErrorCase n) a))
+-&gt; (n a -&gt; n (Either (ErrorCase n) a))
+-&gt; n a
+-&gt; ContT r m (Either (ErrorCase n) a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">n a -&gt; n (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span></span></span></span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span><span class="hs-keyword">instance</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679124488"><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679124487"><span class="annot"><a href="#local-6989586621679124487"><span class="hs-identifier hs-type">r</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124487"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124487"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124487"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-223"></span><span>  </span><span id="local-6989586621679124486"><span class="annot"><span class="annottext">attempt :: ContT r m a -&gt; ContT r m (Either (ErrorCase (ContT r m)) a)
+</span><a href="#local-6989586621679124486"><span class="hs-identifier hs-var hs-var hs-var hs-var">attempt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-224"></span><span>    </span><span class="annot"><span class="annottext">((Either (OpenUnion (Errors m)) a -&gt; m r) -&gt; a -&gt; m r)
+-&gt; ContT r m a -&gt; ContT r m (Either (ErrorCase (ContT r m)) a)
 forall k b (m :: k -&gt; *) (r :: k) a.
 ((b -&gt; m r) -&gt; a -&gt; m r) -&gt; ContT r m a -&gt; ContT r m b
 </span><span class="hs-identifier hs-var">withContT</span></span><span> </span><span class="annot"><span class="annottext">(((Either (OpenUnion (Errors m)) a -&gt; m r) -&gt; a -&gt; m r)
- -&gt; ContT r m a
- -&gt; ContT r m (Either (OpenUnion (Errors (ContT r m))) a))
+ -&gt; ContT r m a -&gt; ContT r m (Either (ErrorCase (ContT r m)) a))
 -&gt; ((Either (OpenUnion (Errors m)) a -&gt; m r) -&gt; a -&gt; m r)
 -&gt; ContT r m a
--&gt; ContT r m (Either (OpenUnion (Errors (ContT r m))) a)
+-&gt; ContT r m (Either (ErrorCase (ContT r m)) a)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121655"><span class="annot"><span class="annottext">b_mr :: Either (OpenUnion (Errors m)) a -&gt; m r
-</span><a href="#local-6989586621679121655"><span class="hs-identifier hs-var">b_mr</span></a></span></span><span> </span><span id="local-6989586621679121654"><span class="annot"><span class="annottext">current :: a
-</span><a href="#local-6989586621679121654"><span class="hs-identifier hs-var">current</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either (OpenUnion (Errors m)) a -&gt; m r
-</span><a href="#local-6989586621679121655"><span class="hs-identifier hs-var">b_mr</span></a></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion (Errors m)) a -&gt; m r)
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679124484"><span class="annot"><span class="annottext">b_mr :: Either (OpenUnion (Errors m)) a -&gt; m r
+</span><a href="#local-6989586621679124484"><span class="hs-identifier hs-var">b_mr</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679124483"><span id="local-6989586621679124482"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679124482"><span class="hs-identifier hs-var">current</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679124483"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-225"></span><span>      </span><span class="annot"><span class="annottext">Either (OpenUnion (Errors m)) a -&gt; m r
+</span><a href="#local-6989586621679124484"><span class="hs-identifier hs-var">b_mr</span></a></span><span> </span><span class="annot"><span class="annottext">(Either (OpenUnion (Errors m)) a -&gt; m r)
 -&gt; m (Either (OpenUnion (Errors m)) a) -&gt; m r
 forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; m a -&gt; m b
-</span><span class="hs-operator hs-var">=&lt;&lt;</span></span><span> </span><span class="annot"><span class="annottext">m a -&gt; m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; m a
+</span><span class="hs-operator hs-var">=&lt;&lt;</span></span><span> </span><span class="annot"><span class="annottext">ContT r m a -&gt; m (Either (ErrorCase (ContT r m)) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; ContT r m a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121654"><span class="hs-identifier hs-var">current</span></a></span><span class="hs-special">)</span></span></span><span>
-</span><span id="line-137"></span><span>
-</span><span id="line-138"></span><span id="local-6989586621679121843"><span id="local-6989586621679121844"><span id="local-6989586621679121846"><span id="local-6989586621679121847"><span class="annot"><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-type">runner2</span></a></span><span>
-</span><span id="line-139"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121847"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-140"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html#RaisesOnly"><span class="hs-identifier hs-type">RaisesOnly</span></a></span><span>  </span><span class="annot"><a href="#local-6989586621679121847"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121846"><span class="hs-identifier hs-type">errs</span></a></span><span>
-</span><span id="line-141"></span><span>     </span><span class="hs-special">)</span><span>
-</span><span id="line-142"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679121847"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121844"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121843"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-143"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679121847"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679121846"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679121844"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121843"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span></span></span></span></span><span>
-</span><span id="line-144"></span><span id="runner2"><span class="annot"><span class="annottext">runner2 :: m (a, w) -&gt; m (Either (OpenUnion errs) a, w)
-</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var hs-var">runner2</span></a></span></span><span> </span><span id="local-6989586621679121652"><span class="annot"><span class="annottext">inner :: m (a, w)
-</span><a href="#local-6989586621679121652"><span class="hs-identifier hs-var">inner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-145"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679121651"><span class="annot"><span class="annottext">a :: a
-</span><a href="#local-6989586621679121651"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121650"><span class="annot"><span class="annottext">w :: w
-</span><a href="#local-6989586621679121650"><span class="hs-identifier hs-var">w</span></a></span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m (a, w)
-</span><a href="#local-6989586621679121652"><span class="hs-identifier hs-var">inner</span></a></span><span>
-</span><span id="line-146"></span><span>  </span><span id="local-6989586621679121649"><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121649"><span class="hs-identifier hs-var">errOrVal</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m a -&gt; m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; m a
+</span><a href="#local-6989586621679124482"><span class="hs-identifier hs-var">current</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="annot"><a href="#local-6989586621679124487"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124488"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124483"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-226"></span><span>
+</span><span id="line-227"></span><span class="annot"><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-type">runner2</span></a></span><span>
+</span><span id="line-228"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679124762"><span class="annot"><a href="#local-6989586621679124762"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679124763"><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span></span><span> </span><span id="local-6989586621679124761"><span class="annot"><a href="#local-6989586621679124761"><span class="hs-identifier hs-type">errs</span></a></span></span><span> </span><span id="local-6989586621679124759"><span class="annot"><a href="#local-6989586621679124759"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span id="local-6989586621679124758"><span class="annot"><a href="#local-6989586621679124758"><span class="hs-identifier hs-type">w</span></a></span></span><span> </span><span class="hs-operator">.</span><span>
+</span><span id="line-229"></span><span>     </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124762"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-230"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124762"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-231"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html#RaisesOnly"><span class="hs-operator hs-type">`RaisesOnly`</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124761"><span class="hs-identifier hs-type">errs</span></a></span><span>
+</span><span id="line-232"></span><span>     </span><span class="hs-special">)</span><span>
+</span><span id="line-233"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679124759"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124758"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-234"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679124762"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Control.Monad.Raise.Class.html#ErrorCase"><span class="hs-identifier hs-type">ErrorCase</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124759"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124758"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-235"></span><span id="runner2"><span class="annot"><span class="annottext">runner2 :: n (a, w) -&gt; m (Either (ErrorCase n) a, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner2"><span class="hs-identifier hs-var hs-var">runner2</span></a></span></span><span> </span><span id="local-6989586621679124480"><span class="annot"><span class="annottext">inner :: n (a, w)
+</span><a href="#local-6989586621679124480"><span class="hs-identifier hs-var">inner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-236"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679124479"><span class="annot"><span class="annottext">val :: a
+</span><a href="#local-6989586621679124479"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679124478"><span class="annot"><span class="annottext">log' :: w
+</span><a href="#local-6989586621679124478"><span class="hs-identifier hs-var">log'</span></a></span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">n (a, w) -&gt; m (a, w)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">n (a, w)
+</span><a href="#local-6989586621679124480"><span class="hs-identifier hs-var">inner</span></a></span><span>
+</span><span id="line-237"></span><span>  </span><span id="local-6989586621679124477"><span class="annot"><span class="annottext">Either (OpenUnion errs) a
+</span><a href="#local-6989586621679124477"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">n a -&gt; m (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; n a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121651"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-147"></span><span>  </span><span class="annot"><span class="annottext">(Either (OpenUnion errs) a, w) -&gt; m (Either (OpenUnion errs) a, w)
+</span><a href="#local-6989586621679124479"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679124763"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124759"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-238"></span><span>  </span><span class="annot"><span class="annottext">(Either (OpenUnion errs) a, w) -&gt; m (Either (OpenUnion errs) a, w)
 forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
 </span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121649"><span class="hs-identifier hs-var">errOrVal</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">w
-</span><a href="#local-6989586621679121650"><span class="hs-identifier hs-var">w</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-148"></span><span>
-</span><span id="line-149"></span><span id="local-6989586621679121796"><span id="local-6989586621679121797"><span id="local-6989586621679121798"><span id="local-6989586621679121799"><span id="local-6989586621679121800"><span class="annot"><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-type">runner3</span></a></span><span>
-</span><span id="line-150"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescue"><span class="hs-identifier hs-type">MonadRescue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121800"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-151"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html#RaisesOnly"><span class="hs-identifier hs-type">RaisesOnly</span></a></span><span>  </span><span class="annot"><a href="#local-6989586621679121800"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121799"><span class="hs-identifier hs-type">errs</span></a></span><span>
-</span><span id="line-152"></span><span>     </span><span class="hs-special">)</span><span>
-</span><span id="line-153"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679121800"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121798"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121797"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121796"><span class="hs-identifier hs-type">c</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-154"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679121800"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679121799"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679121798"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121797"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121796"><span class="hs-identifier hs-type">c</span></a></span><span class="hs-special">)</span></span></span></span></span></span><span>
-</span><span id="line-155"></span><span id="runner3"><span class="annot"><span class="annottext">runner3 :: m (a, b, c) -&gt; m (Either (OpenUnion errs) a, b, c)
-</span><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-var hs-var">runner3</span></a></span></span><span> </span><span id="local-6989586621679121648"><span class="annot"><span class="annottext">inner :: m (a, b, c)
-</span><a href="#local-6989586621679121648"><span class="hs-identifier hs-var">inner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-156"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679121647"><span class="annot"><span class="annottext">a :: a
-</span><a href="#local-6989586621679121647"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121646"><span class="annot"><span class="annottext">s :: b
-</span><a href="#local-6989586621679121646"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679121645"><span class="annot"><span class="annottext">w :: c
-</span><a href="#local-6989586621679121645"><span class="hs-identifier hs-var">w</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m (a, b, c)
-</span><a href="#local-6989586621679121648"><span class="hs-identifier hs-var">inner</span></a></span><span>
-</span><span id="line-157"></span><span>  </span><span id="local-6989586621679121644"><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121644"><span class="hs-identifier hs-var">errOrVal</span></a></span></span><span>  </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m a -&gt; m (Either (OpenUnion (Errors m)) a)
-forall (m :: * -&gt; *) a.
-MonadRescue m =&gt;
-m a -&gt; m (Either (OpenUnion (Errors m)) a)
-</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; m a
+</span><a href="#local-6989586621679124477"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">w
+</span><a href="#local-6989586621679124478"><span class="hs-identifier hs-var">log'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-239"></span><span>
+</span><span id="line-240"></span><span class="annot"><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-type">runner3</span></a></span><span>
+</span><span id="line-241"></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679124698"><span class="annot"><a href="#local-6989586621679124698"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679124699"><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span></span><span> </span><span id="local-6989586621679124697"><span class="annot"><a href="#local-6989586621679124697"><span class="hs-identifier hs-type">errs</span></a></span></span><span> </span><span id="local-6989586621679124696"><span class="annot"><a href="#local-6989586621679124696"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span id="local-6989586621679124695"><span class="annot"><a href="#local-6989586621679124695"><span class="hs-identifier hs-type">s</span></a></span></span><span> </span><span id="local-6989586621679124694"><span class="annot"><a href="#local-6989586621679124694"><span class="hs-identifier hs-type">w</span></a></span></span><span> </span><span class="hs-operator">.</span><span>
+</span><span id="line-242"></span><span>     </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadBase</span></span><span>       </span><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124698"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-243"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Control.Monad.Rescue.Class.html#MonadRescueFrom"><span class="hs-identifier hs-type">MonadRescueFrom</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124698"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-244"></span><span>     </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="Control.Monad.Raise.Constraint.html#RaisesOnly"><span class="hs-operator hs-type">`RaisesOnly`</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124697"><span class="hs-identifier hs-type">errs</span></a></span><span>
+</span><span id="line-245"></span><span>     </span><span class="hs-special">)</span><span>
+</span><span id="line-246"></span><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679124696"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124695"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124694"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-247"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679124698"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OpenUnion</span></span><span> </span><span class="annot"><a href="#local-6989586621679124697"><span class="hs-identifier hs-type">errs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679124696"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124695"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679124694"><span class="hs-identifier hs-type">w</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-248"></span><span id="runner3"><span class="annot"><span class="annottext">runner3 :: n (a, s, w) -&gt; m (Either (OpenUnion errs) a, s, w)
+</span><a href="Control.Monad.Rescue.Class.html#runner3"><span class="hs-identifier hs-var hs-var">runner3</span></a></span></span><span> </span><span id="local-6989586621679124476"><span class="annot"><span class="annottext">inner :: n (a, s, w)
+</span><a href="#local-6989586621679124476"><span class="hs-identifier hs-var">inner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-249"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679124475"><span class="annot"><span class="annottext">val :: a
+</span><a href="#local-6989586621679124475"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679124474"><span class="annot"><span class="annottext">state :: s
+</span><a href="#local-6989586621679124474"><span class="hs-identifier hs-var">state</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679124473"><span class="annot"><span class="annottext">log' :: w
+</span><a href="#local-6989586621679124473"><span class="hs-identifier hs-var">log'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">n (a, s, w) -&gt; m (a, s, w)
+forall (b :: * -&gt; *) (m :: * -&gt; *) &#945;. MonadBase b m =&gt; b &#945; -&gt; m &#945;
+</span><span class="hs-identifier hs-var">liftBase</span></span><span> </span><span class="annot"><span class="annottext">n (a, s, w)
+</span><a href="#local-6989586621679124476"><span class="hs-identifier hs-var">inner</span></a></span><span>
+</span><span id="line-250"></span><span>  </span><span id="local-6989586621679124472"><span class="annot"><span class="annottext">Either (OpenUnion errs) a
+</span><a href="#local-6989586621679124472"><span class="hs-identifier hs-var">result</span></a></span></span><span>             </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">n a -&gt; m (Either (ErrorCase n) a)
+forall (n :: * -&gt; *) (m :: * -&gt; *) a.
+MonadRescueFrom n m =&gt;
+n a -&gt; m (Either (ErrorCase n) a)
+</span><a href="Control.Monad.Rescue.Class.html#attempt"><span class="hs-identifier hs-var">attempt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; n a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679121647"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-158"></span><span>  </span><span class="annot"><span class="annottext">(Either (OpenUnion errs) a, b, c)
--&gt; m (Either (OpenUnion errs) a, b, c)
+</span><a href="#local-6989586621679124475"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679124699"><span class="hs-identifier hs-type">n</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679124696"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-251"></span><span>  </span><span class="annot"><span class="annottext">(Either (OpenUnion errs) a, s, w)
+-&gt; m (Either (OpenUnion errs) a, s, w)
 forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
 </span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Either (OpenUnion errs) a
-</span><a href="#local-6989586621679121644"><span class="hs-identifier hs-var">errOrVal</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">b
-</span><a href="#local-6989586621679121646"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">c
-</span><a href="#local-6989586621679121645"><span class="hs-identifier hs-var">w</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-159"></span></pre></body></html>
+</span><a href="#local-6989586621679124472"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">s
+</span><a href="#local-6989586621679124474"><span class="hs-identifier hs-var">state</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">w
+</span><a href="#local-6989586621679124473"><span class="hs-identifier hs-var">log'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-252"></span></pre></body></html>
