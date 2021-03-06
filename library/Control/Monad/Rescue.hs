@@ -173,4 +173,4 @@ asNotFound :: forall n m a .
   )
   => n a
   -> m a
-asNotFound action = replaceError (NotFound @a) action
+asNotFound = replaceError (NotFound @a)
