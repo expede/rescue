@@ -1,7 +1,9 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase       #-}
-{-# LANGUAGE TypeFamilies     #-}
-{-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 -- | Rescue semantics & helpers
 --
@@ -23,8 +25,9 @@ module Control.Monad.Rescue
 
   -- * Error access
 
-  , replaceError
   , mapError
+  , replaceError
+  , asNotFound
 
   -- * Reexports
 
@@ -34,6 +37,7 @@ module Control.Monad.Rescue
   , module Control.Monad.Rescue.Constraint
   ) where
 
+import           Data.Exception.Types
 import           Data.Result.Types
 import           Data.WorldPeace
 
@@ -135,19 +139,6 @@ lastly action finalizer = do
   _       <- finalizer
   ensure errOrOk
 
-replaceError ::
-  ( n `MonadRescueFrom` m
-  , MonadRaise m
-  , m `Raises` err
-  )
-  => err
-  -> n a
-  -> m a
-replaceError err action =
-  attempt action >>= \case
-    Left  _     -> raise err
-    Right value -> return value
-
 -- AKA reinterpret
 mapError ::
   ( n `MonadRescueFrom` m
@@ -161,3 +152,26 @@ mapError mapper action =
   attempt action >>= \case
     Left  errCaseN -> raise $ mapper errCaseN
     Right value    -> return value
+
+replaceError ::
+  ( n `MonadRescueFrom` m
+  , MonadRaise m
+  , m `Raises` err
+  )
+  => err
+  -> n a
+  -> m a
+replaceError err action =
+  attempt action >>= \case
+    Left  _     -> raise err
+    Right value -> return value
+
+asNotFound :: forall n m a .
+  ( n `MonadRescueFrom` m
+  , n `RaisesOne` ()
+  , m `Raises` NotFound a
+  , MonadRaise m
+  )
+  => n a
+  -> m a
+asNotFound action = replaceError (NotFound @a) action
