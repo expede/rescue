@@ -14,9 +14,10 @@ module Control.Monad.Rescue.Class (MonadRescueFrom (..)) where
 import           Data.Functor
 import           Data.WorldPeace
 
-import           Exception
+import           Control.Exception
 
 import           Control.Monad.Base
+import qualified Control.Monad.Catch          as Catch
 import           Control.Monad.Cont
 
 import           Control.Monad.Raise
@@ -91,9 +92,9 @@ instance Monad m => MonadRescueFrom (Either (OpenUnion errs)) m where
 
 instance MonadIO m => MonadRescueFrom IO m where
   attempt action =
-    liftIO (tryIO action) <&> \case
-      Right val  -> Right val
-      Left ioExc -> Left $ include ioExc
+    liftIO (Catch.try action) <&> \case
+      Right val                   -> Right val
+      Left (ioExc :: IOException) -> Left $ include ioExc
 
 instance
   ( Monad m

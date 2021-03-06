@@ -6,8 +6,3 @@ packages:
 extra-deps:
 - alex-3.2.6
 - happy-1.20.0
-
-nix:
-  enable:     true
-  pure:       true
-  shell-file: shell.nix

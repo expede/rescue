@@ -21,6 +21,11 @@ module Control.Monad.Rescue
   , onRaise
   , lastly
 
+  -- * Error access
+
+  , replaceError
+  , mapError
+
   -- * Reexports
 
   , module Control.Monad.Raise
@@ -85,9 +90,9 @@ handle
   -> (err -> m a)
   -> m a
 handle action handler =
-  either runHandler pure =<< attempt action
-  where
-    runHandler = openUnionHandle raise handler
+  attempt action >>= \case
+    Left err    -> openUnionHandle raise handler err
+    Right value -> return value
 
 onRaise
   :: ( MonadRescue m
@@ -129,3 +134,30 @@ lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
   ensure errOrOk
+
+replaceError ::
+  ( n `MonadRescueFrom` m
+  , MonadRaise m
+  , m `Raises` err
+  )
+  => err
+  -> n a
+  -> m a
+replaceError err action =
+  attempt action >>= \case
+    Left  _     -> raise err
+    Right value -> return value
+
+-- AKA reinterpret
+mapError ::
+  ( n `MonadRescueFrom` m
+  , MonadRaise m
+  , Errors m `Contains` Errors m
+  )
+  => (ErrorCase n -> ErrorCase m)
+  -> n a
+  -> m a
+mapError mapper action =
+  attempt action >>= \case
+    Left  errCaseN -> raise $ mapper errCaseN
+    Right value    -> return value

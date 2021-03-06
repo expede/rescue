@@ -12,8 +12,6 @@ let
     inherit unstable;
   };
 
-  ghc = unstable.ghc;
-
   deps = {
     common = [
       unstable.niv
@@ -34,22 +32,18 @@ let
       pkgs.lolcat
     ];
   };
+
 in
+  unstable.haskell.lib.buildStackProject {
+    name = "rescue";
+    nativeBuildInputs = builtins.concatLists [
+      deps.common
+      deps.haskell
+      deps.fun
+      tasks
+    ];
 
-unstable.haskell.lib.buildStackProject {
-  inherit ghc;
-  name = "Fisson";
-  nativeBuildInputs = builtins.concatLists [
-    deps.common
-    deps.haskell
-    deps.fun
-    tasks
-  ];
-
-  shellHook = ''
-    export LANG=C.UTF8
-
-    echo "🌈✨ Welcome to the glorious... "
-    ${pkgs.figlet}/bin/figlet "Fission Build Env" | lolcat -a -s 50
-  '';
-}
+    shellHook = ''
+      export LANG=C.UTF8
+    '';
+  }

@@ -82,9 +82,9 @@
 
   in
     commands {
-      build       = cmd "Build entire project"    "${stack} build";
+      build = cmd "Build entire project"        "${stack} build";
+      watch = cmd "Autobuild with file watcher" "${stack} build --file-watch";
 
       runtests = cmd "Run the complete test suite" "${stack} test";
       repl     = cmd "Enter the project REPL"      "${stack} repl  --no-nix-pure";
-      watch    = cmd "Autobuild with file watcher" "${stack} build --file-watch";
     }
