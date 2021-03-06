@@ -19,14 +19,14 @@ data NotFound entity
 -- | Action not allowed by user
 data NotAllowed user entity =
   NotAllowed
-    { user   :: user
-    , entity :: entity
+    { user   :: !user
+    , entity :: !entity
     }
   deriving (Show, Eq)
 
 -- | Requested entity already exists; a conflict
 newtype AlreadyExists entity
-  = AlreadyExists entity
+  = AlreadyExists !entity
   deriving (Show, Eq)
 
 instance Functor AlreadyExists where
@@ -34,7 +34,7 @@ instance Functor AlreadyExists where
 
 -- | Requested index is out of bounds
 newtype OutOfBounds entity index
-  = OutOfBounds index
+  = OutOfBounds !index
   deriving (Show, Eq)
 
 instance Functor (OutOfBounds entity) where
@@ -47,7 +47,7 @@ data DivideByZero
 
 -- | Invalid format for entity (e.g. bad JSON)
 newtype InvalidFormat entity
-  = InvalidFormat entity
+  = InvalidFormat !entity
   deriving (Show, Eq)
 
 instance Functor InvalidFormat where
@@ -61,7 +61,7 @@ instance Functor InvalidFormat where
 -- >>> show $ InvalidFormat "foo" `WithMessage` "Not a valid JSON object"
 -- "InvalidFormat \"foo\" `WithMessage` \"Not a valid JSON object\""
 data WithMessage err
-  = err `WithMessage` Text
+  = !err `WithMessage` !Text
   deriving (Show, Eq)
 
 instance Functor WithMessage where

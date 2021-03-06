@@ -168,7 +168,6 @@ replaceError err action =
 
 asNotFound :: forall n m a .
   ( n `MonadRescueFrom` m
-  , n `RaisesOne` ()
   , m `Raises` NotFound a
   , MonadRaise m
   )
