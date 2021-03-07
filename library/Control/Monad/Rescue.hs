@@ -18,16 +18,20 @@ module Control.Monad.Rescue
   -- * Recover from exceptions
 
   , rescue
-  , rescueBase
+  , rescueT
   , rescueM
+  , rescueBase
+
   , rescueEach
   , rescueEachM
+  , rescueEachT
+
   , rescueAll
 
   -- * Guaranteed runs
 
   , reattempt
-  , onRaise
+  , report
   , lastly
 
   -- * Error access
@@ -43,16 +47,15 @@ module Control.Monad.Rescue
   ) where
 
 import           Data.Exception.Types
-import           Data.Result.Types
 import           Numeric.Natural
 
 import           Control.Monad.Base
-import           Data.Bifunctor                  as Bifunctor
+import           Data.Bifunctor             as Bifunctor
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
-import           Control.Monad.Trans.Error.Class
+import           Control.Monad.Trans.Error
 
 -- $setup
 --
@@ -98,6 +101,18 @@ rescue
   -> m (OpenUnion (Remove err errs)) a
 rescue handler action = Bifunctor.first (openUnionHandle id handler) action
 
+rescueT ::
+  ( MonadTransError t errs m
+  , MonadRaise  (t (Remove err errs) m)
+  , CheckErrors (t (Remove err errs) m)
+  , ElemRemove err (Errors (t errs m))
+  , Remove err (Errors (t errs m)) ~ Errors (t (Remove err errs) m)
+  )
+  => (err -> (t (Remove err errs)) m a)
+  -> t             errs  m a
+  -> t (Remove err errs) m a
+rescueT handler = onRaise (openUnionHandle raise handler)
+
 -- | The more generic (MonadBase-ified) version of handle
 rescueBase
   :: ( MonadRescue wide
@@ -140,26 +155,36 @@ rescueM handler action =
 
 rescueEach
   :: ( Bifunctor m
-     , ToOpenProduct handlerTuple (ReturnX (OpenUnion narrowErrs) errs)
+     , ToOpenProduct handlerTuple (ReturnX (OpenUnion targetErrs) errs)
      )
   => handlerTuple
   -> m (OpenUnion errs)       a
-  -> m (OpenUnion narrowErrs) a
+  -> m (OpenUnion targetErrs) a
 rescueEach handleCases action = Bifunctor.first (catchesOpenUnion handleCases) action
 
 rescueEachM
-  :: ( errs ~ Errors (m (OpenUnion errs))
-     , MonadRescue   (m (OpenUnion errs))
-     , MonadBase     (m (OpenUnion errs))  (m (OpenUnion narrowErrs))
-     , ToOpenProduct handlerTuple (ReturnX (m (OpenUnion narrowErrs) a) errs)
+  :: ( sourceErrs ~ Errors (m (OpenUnion sourceErrs))
+     , MonadRescue         (m (OpenUnion sourceErrs))
+     , MonadBase           (m (OpenUnion sourceErrs)) (m (OpenUnion targetErrs))
+     , ToOpenProduct handlerTuple            (ReturnX (m (OpenUnion targetErrs) a) sourceErrs)
      )
   => handlerTuple
-  -> m (OpenUnion errs) a
-  -> m (OpenUnion narrowErrs) a
+  -> m (OpenUnion sourceErrs) a
+  -> m (OpenUnion targetErrs) a
 rescueEachM handleCases action =
   liftBase (attempt action) >>= \case
     Left errs -> catchesOpenUnion handleCases errs
     Right val -> return val
+
+rescueEachT
+  :: ( sourceErrs ~ Errors (t sourceErrs m)
+     , MonadTransError      t sourceErrs m
+     , ToOpenProduct handlerTuple (ReturnX (t targetErrs m a) sourceErrs)
+     )
+  => handlerTuple
+  -> t sourceErrs m a
+  -> t targetErrs m a
+rescueEachT handleCases action = onRaise (catchesOpenUnion handleCases) action
 
 rescueAll
   :: ( MonadRescue   (m (OpenUnion errs))
@@ -174,21 +199,22 @@ rescueAll handler action =
     Left errs -> handler errs
     Right val -> return val
 
-onRaise
+report
   :: ( MonadRescue m
      , RaisesOnly  m errs
+     , CheckErrors m
      )
-  => (OpenUnion errs -> m ())
+  => (ErrorCase m -> m ())
   -> m a
-  -> m (Result errs a)
-onRaise errHandler action =
+  -> m a
+report withErr action =
   attempt action >>= \case
     Left err -> do
-      errHandler err
-      return $ Err err
+      withErr err
+      raise err
 
     Right val ->
-      return $ Ok val
+      return val
 
 -- | 'retry' without asynchoronous exception cleanup.
 --   Useful when not dealing with external resources that may

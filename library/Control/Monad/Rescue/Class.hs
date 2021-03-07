@@ -108,142 +108,59 @@ instance
 instance MonadRescue m => MonadRescue (IdentityT m) where
   attempt (IdentityT action) = IdentityT $ attempt action
 
--- instance
---   ( MonadBase       n m
---   , MonadRescue n n
---   , Contains (Errors n) errs
---   )
---   => MonadRescue n (ExceptT (OpenUnion errs) m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( Monad             m
---   , MonadBase       n m
---   , MonadRaise      n
---   , MonadRescue n m
---   )
---   => MonadRescue (ReaderT cfg n) (ReaderT cfg m) where
---     attempt = mapReaderT attempt
---
--- instance
---   ( Monad               m
---   , MonadBase       n   m
---   , MonadRaise      n
---   , MonadRescue n n
---   )
---   => MonadRescue n (ReaderT cfg m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( Monoid w
---   , MonadBase       n m
---   , MonadRescue n m
---   )
---   => MonadRescue (Lazy.WriterT w n) (Lazy.WriterT w m) where
---     attempt = Lazy.mapWriterT runner2
---
--- instance
---   ( Monoid w
---   , MonadBase       n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (Lazy.WriterT w m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( Monoid w
---   , MonadBase       n m
---   , MonadRescue n m
---   )
---   => MonadRescue (Strict.WriterT w n) (Strict.WriterT w m) where
---     attempt = Strict.mapWriterT runner2
---
--- instance
---   ( Monoid w
---   , MonadBase       n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (Strict.WriterT w m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( MonadBase       n m
---   , MonadRescue n m
---   )
---   => MonadRescue (Lazy.StateT s n) (Lazy.StateT s m) where
---     attempt = Lazy.mapStateT runner2
---
--- instance
---   ( MonadBase       n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (Lazy.StateT s m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( MonadBase       n m
---   , MonadRescue n m
---   )
---   => MonadRescue (Strict.StateT s n) (Strict.StateT s m) where
---     attempt = Strict.mapStateT runner2
---
--- instance
---   ( Monoid w
---   , MonadBase n m
---   , MonadRescue n m
---   )
---   => MonadRescue (Lazy.RWST r w s n) (Lazy.RWST r w s m) where
---     attempt = Lazy.mapRWST runner3
---
--- instance
---   ( MonadBase       n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (Strict.StateT s m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( Monoid w
---   , MonadBase   n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (Strict.RWST r w s m) where
---     attempt = liftBase . attempt
---
--- instance
---   ( MonadBase       n m
---   , MonadRescue n n
---   )
---   => MonadRescue n (ContT r m) where
---     attempt = liftBase . attempt
---
--- instance forall m r . (MonadRescue (ContT r m) m) => MonadRescueFrom (ContT r m) (ContT r m) where
---   attempt =
---     withContT $ \b_mr (current :: a) ->
---       b_mr =<< attempt (pure current :: ContT r m a)
---
--- runner2
---   :: forall m n errs a w .
---      ( MonadBase n m
---      , MonadRescue n m
---      , n `RaisesOnly` errs
---      )
---   => n (a, w)
---   -> m (Either (ErrorCase n) a, w)
--- runner2 inner = do
---   (val, log')  <- liftBase inner
---   result <- attempt (pure val :: n a)
---   return (result, log')
---
--- runner3
---   :: forall m n errs a s w .
---      ( MonadBase       n m
---      , MonadRescue n m
---      , n `RaisesOnly` errs
---      )
---   => n (a, s, w)
---   -> m (Either (OpenUnion errs) a, s, w)
--- runner3 inner = do
---   (val, state, log') <- liftBase inner
---   result             <- attempt (pure val :: n a)
---   return (result, state, log')
+instance
+  ( MonadRescue m
+  , Contains (Errors m) errs
+  )
+  => MonadRescue (ExceptT (OpenUnion errs) m) where
+  attempt (ExceptT action) =
+    lift $
+      attempt action >>= \case
+        Left err       -> return . Left $ include err
+        Right errOrVal -> return errOrVal
+
+instance MonadRescue m => MonadRescue (ReaderT cfg m) where
+  attempt = mapReaderT attempt
+
+instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.WriterT w m) where
+  attempt = Lazy.mapWriterT runner2
+
+instance (Monoid w, MonadRescue m) => MonadRescue (Strict.WriterT w m) where
+  attempt = Strict.mapWriterT runner2
+
+instance MonadRescue m => MonadRescue (Lazy.StateT s m) where
+  attempt = Lazy.mapStateT runner2
+
+instance MonadRescue m => MonadRescue (Strict.StateT s m) where
+  attempt = Strict.mapStateT runner2
+
+instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.RWST r w s m) where
+  attempt = Lazy.mapRWST runner3
+
+instance (Monoid w, MonadRescue m) => MonadRescue (Strict.RWST r w s m) where
+  attempt = Strict.mapRWST runner3
+
+instance MonadRescue m => MonadRescue (ContT r m) where
+  attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
+
+runner2
+  :: ( MonadRescue m
+     , RaisesOnly  m errs
+     )
+  => m (a, w)
+  -> m (Either (OpenUnion errs) a, w)
+runner2 inner = do
+  (a, w)   <- inner
+  errOrVal <- attempt (pure a)
+  return (errOrVal, w)
+
+runner3
+  :: ( MonadRescue m
+     , RaisesOnly  m errs
+     )
+  => m (a, b, c)
+  -> m (Either (OpenUnion errs) a, b, c)
+runner3 inner = do
+  (a, s, w) <- inner
+  errOrVal  <- attempt (pure a)
+  return (errOrVal, s, w)

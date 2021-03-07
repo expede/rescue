@@ -50,13 +50,6 @@ instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT errs m a) where
 instance Functor m => Functor (RescueT errs m) where
   fmap f (RescueT inner) = RescueT $ fmap (fmap f) inner
 
-instance Monad m => MonadTransError RescueT m where
-  mappy' f (RescueT inner) =
-    RescueT $
-      inner >>= \case
-        Left  errs -> return . Left $ f errs
-        Right val  -> return $ Right val
-
 instance Applicative m => Applicative (RescueT errs m) where
   pure = RescueT . pure . pure
   (RescueT fs) <*> (RescueT xs) = RescueT $ do
@@ -71,6 +64,13 @@ instance Monad m => Monad (RescueT errs m) where
 
 instance MonadTrans (RescueT errs) where
   lift action = RescueT (Right <$> action)
+
+instance Monad m => MonadTransError RescueT errs m where
+  onRaise f (RescueT inner) =
+    RescueT $
+      inner >>= \case
+        Left  err -> runRescueT $ f err
+        Right val -> return $ Right val
 
 instance MonadBase b m => MonadBase b (RescueT errs m) where
   liftBase = liftBaseDefault
@@ -101,8 +101,12 @@ instance Monad m => MonadRaise (RescueT errs m) where
   type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
 
-instance MonadRescue m => MonadRescue (RescueT errs m) where
-  attempt (RescueT action) = RescueT $ Right <$> action
+instance Monad m => MonadRescue (RescueT errs m) where
+  attempt (RescueT inner) =
+    RescueT $
+      inner >>= \case
+        Left err  -> return . Right $ Left err
+        Right val -> return . Right $ Right val
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM
