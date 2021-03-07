@@ -39,6 +39,7 @@ import qualified Control.Monad.Writer.Strict  as Strict
 -- >>> :set -XDataKinds
 -- >>> :set -XFlexibleContexts
 -- >>> :set -XTypeApplications
+-- >>> :set -XLambdaCase
 --
 -- >>> import Control.Monad.Trans.Rescue
 -- >>> import Data.Functor.Identity
@@ -64,13 +65,16 @@ class MonadRaise m => MonadRescue m where
   --        else raise FooErr
   -- :}
   --
-  -- >>> :{
-  --   result :: Identity (Either (OpenUnion '[FooErr, BarErr]) Int)
-  --   result = attempt $ goesBoom 42
-  -- :}
+  -- >>> runRescue . attempt $ goesBoom 42
+  -- Right (Left (Identity FooErr))
   --
-  -- >>> result
-  -- Identity (Left (Identity FooErr))
+  -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
+  -- In practice you would handle the 'OpenUnion' like so:
+  --
+  -- >>> let handleErr = catchesOpenUnion (show, show)
+  -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
+  -- >>> runRescue x
+  -- Right "FooErr"
   --
   -- Where @Identity FooErr@ is the selection of the 'OpenUnion'.
   attempt :: m a -> m (Either (ErrorCase m) a)

@@ -62,6 +62,7 @@ import           Control.Monad.Trans.Error
 -- >>> :set -XDataKinds
 -- >>> :set -XFlexibleContexts
 -- >>> :set -XTypeApplications
+-- >>> :set -XLambdaCase
 --
 -- >>> import Control.Monad.Trans.Rescue
 -- >>> import Data.Proxy
@@ -74,21 +75,25 @@ import           Control.Monad.Trans.Error
 -- | Simpler helper to eliminate the bind operator from an attempt flow
 --
 -- >>> type MyErrs = '[FooErr, BarErr]
--- >>> boom = Left FooErr
 --
 -- >>> :{
--- handled :: Rescue MyErrs String
--- handled =
---   attempt boom >>= \case
---     Left  err -> handle err
---     Right val -> return val
+-- boom :: Rescue MyErrs String
+-- boom = raise FooErr
 -- :}
 --
 -- >>> :{
---  attemptM boom \case
---   Left  err -> handle err
+-- attempt boom >>= \case
+--   Left  err -> return ("err: " ++ show err)
 --   Right val -> return val
 -- :}
+-- RescueT (Identity (Right "err: Identity FooErr"))
+--
+-- >>> :{
+-- attemptM boom $ \case
+--   Left  err -> return ("err: " ++ show err)
+--   Right val -> return val
+-- :}
+-- RescueT (Identity (Right "err: Identity FooErr"))
 attemptM :: MonadRescue m => m a -> (Either (ErrorCase m) a -> m b) -> m b
 attemptM action handler = attempt action >>= handler
 
@@ -99,7 +104,7 @@ rescue
   => (err -> OpenUnion (Remove err errs))
   -> m (OpenUnion             errs)  a
   -> m (OpenUnion (Remove err errs)) a
-rescue handler action = Bifunctor.first (openUnionHandle id handler) action
+rescue handler = Bifunctor.first (openUnionHandle id handler)
 
 rescueT ::
   ( MonadTransError t errs m
@@ -160,7 +165,7 @@ rescueEach
   => handlerTuple
   -> m (OpenUnion errs)       a
   -> m (OpenUnion targetErrs) a
-rescueEach handleCases action = Bifunctor.first (catchesOpenUnion handleCases) action
+rescueEach handleCases = Bifunctor.first (catchesOpenUnion handleCases)
 
 rescueEachM
   :: ( sourceErrs ~ Errors (m (OpenUnion sourceErrs))
@@ -184,7 +189,7 @@ rescueEachT
   => handlerTuple
   -> t sourceErrs m a
   -> t targetErrs m a
-rescueEachT handleCases action = onRaise (catchesOpenUnion handleCases) action
+rescueEachT handleCases = onRaise (catchesOpenUnion handleCases)
 
 rescueAll
   :: ( MonadRescue   (m (OpenUnion errs))
