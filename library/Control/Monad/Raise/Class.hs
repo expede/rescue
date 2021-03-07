@@ -1,3 +1,5 @@
+-- FIXME Constraint kinds & Type Operators for CheckErrors
+{-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
@@ -12,6 +14,7 @@
 module Control.Monad.Raise.Class
   ( MonadRaise (..)
   , ErrorCase
+  , CheckErrors
   ) where
 
 import           Control.Exception
@@ -42,6 +45,9 @@ import           Data.WorldPeace.Subset.Class
 import           GHC.Base
 import           GHC.Conc
 import           GHC.IO
+
+-- FIXME move to own place
+type CheckErrors m = Errors m `Contains` Errors m
 
 -- $setup
 --
@@ -128,13 +134,9 @@ instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m
   raise = lift . raise
 
-instance
-  ( () `IsMember` Errors m
-  , MonadRaise m
-  )
-  => MonadRaise (MaybeT m) where
-    type Errors (MaybeT m) = Errors m
-    raise err = MaybeT $ raise err
+instance (MonadRaise m, () `IsMember` Errors m) => MonadRaise (MaybeT m) where
+  type Errors (MaybeT m) = Errors m
+  raise err = MaybeT $ raise err
 
 instance MonadRaise m => MonadRaise (ReaderT cfg m) where
   type Errors (ReaderT cfg m) = Errors m

@@ -8,7 +8,7 @@ import           Control.Exception
 import           Control.Monad.Rescue
 
 -- | Safely work with resources when an asynchronous exception may be thrown
-class (m `Raises` SomeException, MonadRescueFrom m m) => MonadCleanup m where
+class (m `Raises` SomeException, MonadRescue m) => MonadCleanup m where
   cleanup
     :: m resource                          -- ^ Acquire some resource
     -> (resource -> ErrorCase m -> m _ig1) -- ^ Cleanup and re-raise
