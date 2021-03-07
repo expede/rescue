@@ -106,12 +106,13 @@ rescue
   -> m (OpenUnion (Remove err errs)) a
 rescue handler = Bifunctor.first (openUnionHandle id handler)
 
+-- | Handle and eliminate a single error
 rescueT ::
   ( MonadTransError t errs m
   , MonadRaise  (t (Remove err errs) m)
   , CheckErrors (t (Remove err errs) m)
   , ElemRemove err (Errors (t errs m))
-  , Remove err (Errors (t errs m)) ~ Errors (t (Remove err errs) m)
+  , Remove     err (Errors (t errs m)) ~ Errors (t (Remove err errs) m)
   )
   => (err -> (t (Remove err errs)) m a)
   -> t             errs  m a
@@ -124,7 +125,7 @@ rescueBase
      , MonadBase   wide narrow
      , MonadRaise       narrow
      , CheckErrors      narrow
-     , Errors narrow ~ Remove err (Errors wide)
+     , Remove     err (Errors wide) ~ Errors narrow
      , ElemRemove err (Errors wide)
      )
   => (err -> narrow a)
