@@ -11,12 +11,10 @@
 
 module Control.Monad.Rescue.Class (MonadRescue (..)) where
 
-import           Data.Functor
 import           Data.WorldPeace
 
 import           Control.Exception
 
-import           Control.Monad.Base
 import qualified Control.Monad.Catch          as Catch
 import           Control.Monad.Cont
 
@@ -107,8 +105,8 @@ instance
         Right Nothing    -> return . Just . Left $ include ()
         Right (Just val) -> return . Just $ Right val
 
--- instance MonadRescue m => MonadRescue (IdentityT m) where
-  -- attempt (IdentityT action) = attempt action
+instance MonadRescue m => MonadRescue (IdentityT m) where
+  attempt (IdentityT action) = IdentityT $ attempt action
 
 -- instance
 --   ( MonadBase       n m

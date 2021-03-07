@@ -14,12 +14,15 @@
 -- and either handles or exposes it.
 module Control.Monad.Rescue
   ( attemptM
-  , handle
-  , handleBase
-  , handleM
-  , handleEach
-  , handleEachM
-  , handleAll
+
+  -- * Recover from exceptions
+
+  , rescue
+  , rescueBase
+  , rescueM
+  , rescueEach
+  , rescueEachM
+  , rescueAll
 
   -- * Guaranteed runs
 
@@ -44,11 +47,12 @@ import           Data.Result.Types
 import           Numeric.Natural
 
 import           Control.Monad.Base
-import           Data.Bifunctor             as Bifunctor
+import           Data.Bifunctor                  as Bifunctor
 import           Data.WorldPeace
 
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
+import           Control.Monad.Trans.Error.Class
 
 -- $setup
 --
@@ -85,17 +89,17 @@ import           Control.Monad.Rescue.Class
 attemptM :: MonadRescue m => m a -> (Either (ErrorCase m) a -> m b) -> m b
 attemptM action handler = attempt action >>= handler
 
-handle
+rescue
   :: ( Bifunctor m
      , ElemRemove err errs
      )
   => (err -> OpenUnion (Remove err errs))
   -> m (OpenUnion             errs)  a
   -> m (OpenUnion (Remove err errs)) a
-handle handler action = Bifunctor.first (openUnionHandle id handler) action
+rescue handler action = Bifunctor.first (openUnionHandle id handler) action
 
 -- | The more generic (MonadBase-ified) version of handle
-handleBase
+rescueBase
   :: ( MonadRescue wide
      , MonadBase   wide narrow
      , MonadRaise       narrow
@@ -106,12 +110,12 @@ handleBase
   => (err -> narrow a)
   -> wide   a
   -> narrow a
-handleBase handler action =
+rescueBase handler action =
   liftBase (attempt action) >>= \case
     Left err    -> openUnionHandle raise handler err
     Right value -> return value
 
-handleM
+rescueM
   :: ( MonadBase (m (OpenUnion errs)) (m (OpenUnion (Remove err errs)))
      --
      , MonadRescue (m (OpenUnion errs))
@@ -124,7 +128,7 @@ handleM
   => (err -> m (OpenUnion (Remove err errs)) a)
   -> m (OpenUnion             errs)  a
   -> m (OpenUnion (Remove err errs)) a
-handleM handler action =
+rescueM handler action =
   liftBase (attempt action) >>= \case
     Right val ->
       return val
@@ -134,16 +138,16 @@ handleM handler action =
         Left  remainingErrs -> raise remainingErrs
         Right matchedErr    -> handler matchedErr
 
-handleEach
+rescueEach
   :: ( Bifunctor m
      , ToOpenProduct handlerTuple (ReturnX (OpenUnion narrowErrs) errs)
      )
   => handlerTuple
   -> m (OpenUnion errs)       a
   -> m (OpenUnion narrowErrs) a
-handleEach handleCases action = Bifunctor.first (catchesOpenUnion handleCases) action
+rescueEach handleCases action = Bifunctor.first (catchesOpenUnion handleCases) action
 
-handleEachM
+rescueEachM
   :: ( errs ~ Errors (m (OpenUnion errs))
      , MonadRescue   (m (OpenUnion errs))
      , MonadBase     (m (OpenUnion errs))  (m (OpenUnion narrowErrs))
@@ -152,12 +156,12 @@ handleEachM
   => handlerTuple
   -> m (OpenUnion errs) a
   -> m (OpenUnion narrowErrs) a
-handleEachM handleCases action =
+rescueEachM handleCases action =
   liftBase (attempt action) >>= \case
     Left errs -> catchesOpenUnion handleCases errs
     Right val -> return val
 
-handleAll
+rescueAll
   :: ( MonadRescue   (m (OpenUnion errs))
      , MonadBase     (m (OpenUnion errs)) (m ())
      , errs ~ Errors (m (OpenUnion errs))
@@ -165,7 +169,7 @@ handleAll
   => (OpenUnion errs -> m () a)
   -> m (OpenUnion errs) a
   -> m () a
-handleAll handler action =
+rescueAll handler action =
   liftBase (attempt action) >>= \case
     Left errs -> handler errs
     Right val -> return val

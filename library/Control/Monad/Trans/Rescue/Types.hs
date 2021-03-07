@@ -12,14 +12,13 @@ module Control.Monad.Trans.Rescue.Types
   , runRescue
   ) where
 
-import           Prelude
-
 import           Control.Monad.Base
 import           Control.Monad.Catch
 import           Control.Monad.Cont
 import           Control.Monad.Fix
 import           Control.Monad.Reader
 import           Control.Monad.Rescue
+import           Control.Monad.Trans.Error.Class
 
 import           Data.Functor.Identity
 import           Data.WorldPeace
@@ -50,6 +49,13 @@ instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT errs m a) where
 
 instance Functor m => Functor (RescueT errs m) where
   fmap f (RescueT inner) = RescueT $ fmap (fmap f) inner
+
+instance Monad m => MonadTransError RescueT m where
+  mappy' f (RescueT inner) =
+    RescueT $
+      inner >>= \case
+        Left  errs -> return . Left $ f errs
+        Right val  -> return $ Right val
 
 instance Applicative m => Applicative (RescueT errs m) where
   pure = RescueT . pure . pure
