@@ -237,13 +237,7 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly
-  :: ( CheckErrors m
-     , MonadRescue m
-     )
-  => m a
-  -> m b
-  -> m a
+lastly :: (CheckErrors m, MonadRescue m) => m a -> m b -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
