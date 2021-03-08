@@ -1,6 +1,6 @@
 {-# LANGUAGE ApplicativeDo         #-}
-{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -12,14 +12,13 @@ module Control.Monad.Trans.Rescue.Types
   , runRescue
   ) where
 
-import Prelude
-
+import           Control.Monad.Base
 import           Control.Monad.Catch
 import           Control.Monad.Cont
 import           Control.Monad.Fix
 import           Control.Monad.Reader
 import           Control.Monad.Rescue
-import           Control.Monad.Base
+import           Control.Monad.Trans.Error.Class
 
 import           Data.Functor.Identity
 import           Data.WorldPeace
@@ -66,6 +65,13 @@ instance Monad m => Monad (RescueT errs m) where
 instance MonadTrans (RescueT errs) where
   lift action = RescueT (Right <$> action)
 
+instance Monad m => MonadTransError RescueT errs m where
+  onRaise f (RescueT inner) =
+    RescueT $
+      inner >>= \case
+        Left  err -> runRescueT $ f err
+        Right val -> return $ Right val
+
 instance MonadBase b m => MonadBase b (RescueT errs m) where
   liftBase = liftBaseDefault
 
@@ -95,12 +101,12 @@ instance Monad m => MonadRaise (RescueT errs m) where
   type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
 
-instance
-  ( Monad       m
-  , MonadBase n m
-  )
-  => MonadRescueFrom (RescueT errs n) m where
-    attempt (RescueT action) = liftBase action
+instance Monad m => MonadRescue (RescueT errs m) where
+  attempt (RescueT inner) =
+    RescueT $
+      inner >>= \case
+        Left err  -> return . Right $ Left err
+        Right val -> return . Right $ Right val
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM

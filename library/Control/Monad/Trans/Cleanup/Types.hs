@@ -24,9 +24,7 @@ import           Control.Monad.Fix
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
 
-import           Data.Functor
 import           Data.Functor.Contravariant
-
 import           Data.WorldPeace
 
 -- | Adds 'SomeException' to an exception stack,
@@ -122,36 +120,30 @@ instance
 instance MonadBase m m => MonadBase m (CleanupT m) where
   liftBase = liftBaseDefault
 
-instance (Monad m, MonadRescue m) => MonadRescueFrom m (CleanupT m) where
-  attempt = CleanupT . attempt
-
-instance forall n m .
-  ( MonadRescueFrom n m
-  , MonadBase       n m
-  , MonadRescue     n
-  , MonadCatch      n
-  , Contains (Errors n) (Errors n)
-  , Contains (Errors n) (SomeException ': Errors n)
+instance
+  ( MonadRescue m
+  , MonadCatch  m
+  , CheckErrors m
+  , Errors m `Contains` (SomeException ': Errors m)
   )
-  => MonadRescueFrom (CleanupT n) m where
+  => MonadRescue (CleanupT m) where
     attempt (CleanupT action) =
-      liftBase $
-        inner <&> \case
-          Left err          -> Left $ include err
-          Right (Left  err) -> Left $ include err
-          Right (Right val) -> Right val
+      CleanupT $
+        inner >>= \case
+          Left err          -> return . Left $ include err
+          Right (Left  err) -> return . Left $ include err
+          Right (Right val) -> return $ Right val
       where
         inner =
           Catch.try action >>= \case
             Left  e@(SomeException _) -> return $ Left e
-            Right (val :: a)          -> Right <$> attempt (pure val :: n a)
+            Right val                 -> Right <$> attempt (pure val)
 
 instance
-  ( Contains (Errors m) (Errors m)
-  , Contains (Errors m) (SomeException ': Errors m)
-  , MonadBase m m
-  , MonadRescue m
+  ( MonadRescue m
   , MonadMask   m
+  , CheckErrors m
+  , Contains (Errors m) (SomeException ': Errors m)
   )
   => MonadCleanup (CleanupT m) where
   cleanup acquire onErr onOk action =
