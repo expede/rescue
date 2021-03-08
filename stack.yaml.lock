@@ -5,22 +5,22 @@
 
 packages:
 - completed:
-    hackage: alex-3.2.6@sha256:7e15b8ba44f4e858d7e302ae234c05ca10a120c401f0db5ea5bc6135347debca,4156
+    hackage: alex-3.2.5@sha256:af0c4aac67849d8b35e8c16063517642a5c6b809d09fdb040ed9369f91cb26fb,4054
     pantry-tree:
       size: 5732
-      sha256: f11298f6d54429981bbef30e17d215c227b0aab607bdf8ea786781a574188260
+      sha256: fdfac077ffd006b5bb8102edb3187f2d2587d9cde1d94cd9852b5ee077d05add
   original:
-    hackage: alex-3.2.6
+    hackage: alex-3.2.5
 - completed:
-    hackage: happy-1.20.0@sha256:f99e612b29d68d784d7e193943a13466f0923de69452a2585081491efed0436b,5709
+    hackage: happy-1.19.12@sha256:acc67bfbf3af87892766781dd064c9447181ea81269a7a1e5fc9ace4a8fa4768,5691
     pantry-tree:
-      size: 8749
-      sha256: a90122967031e2feb99adbbacf57ddf8627a7c0444720402513d3f11ec7f990a
+      size: 8693
+      sha256: 91502601a560862a5b90d776c0bd58bc2779ba5b7945c984817eaa3b9ca64564
   original:
-    hackage: happy-1.20.0
+    hackage: happy-1.19.12
 snapshots:
 - completed:
-    size: 565266
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/5.yaml
-    sha256: 78e8ebabf11406261abbc95b44f240acf71802630b368888f6d758de7fc3a2f7
-  original: lts-17.5
+    size: 531674
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/2.yaml
+    sha256: 4b08fb9338ca297de7ade8318f4be1216f14dff8c0426c001fb7886ee88cb84a
+  original: lts-16.2

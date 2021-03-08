@@ -18,6 +18,7 @@ import           Control.Exception
 
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Cont
+
 import           Control.Monad.ST
 
 import           Control.Monad.Trans.Except
@@ -127,9 +128,13 @@ instance MonadRaise m => MonadRaise (IdentityT m) where
   type Errors (IdentityT m) = Errors m
   raise = lift . raise
 
-instance (MonadRaise m, () `IsMember` Errors m) => MonadRaise (MaybeT m) where
-  type Errors (MaybeT m) = Errors m
-  raise err = MaybeT $ raise err
+instance
+  ( () `IsMember` Errors m
+  , MonadRaise m
+  )
+  => MonadRaise (MaybeT m) where
+    type Errors (MaybeT m) = Errors m
+    raise err = MaybeT $ raise err
 
 instance MonadRaise m => MonadRaise (ReaderT cfg m) where
   type Errors (ReaderT cfg m) = Errors m

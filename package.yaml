@@ -1,15 +1,15 @@
 name: rescue
-version: '0.4.0'
+version: '0.3.0'
 synopsis: More understandable exceptions
 description: An error handling library focused on clarity and control
 category: Error Handling
 author: Brooklyn Zelenka
 maintainer: hello@brooklynzelenka.com
-copyright: © 2021 Brooklyn Zelenka
+copyright: © 2020 Brooklyn Zelenka
 license: Apache-2.0
 license-file: LICENSE
 github: expede/rescue
-tested-with: GHC==8.10.4
+tested-with: GHC==8.8.3
 extra-source-files:
   - README.md
 
