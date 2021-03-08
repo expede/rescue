@@ -1,5 +1,3 @@
--- FIXME Constraint kinds & Type Operators for CheckErrors
-{-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
@@ -14,14 +12,12 @@
 module Control.Monad.Raise.Class
   ( MonadRaise (..)
   , ErrorCase
-  , CheckErrors
   ) where
 
 import           Control.Exception
 
 import           Control.Monad.Catch.Pure
 import           Control.Monad.Cont
-
 import           Control.Monad.ST
 
 import           Control.Monad.Trans.Except
@@ -45,9 +41,6 @@ import           Data.WorldPeace.Subset.Class
 import           GHC.Base
 import           GHC.Conc
 import           GHC.IO
-
--- FIXME move to own place
-type CheckErrors m = Errors m `Contains` Errors m
 
 -- $setup
 --

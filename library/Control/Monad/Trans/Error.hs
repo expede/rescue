@@ -5,6 +5,7 @@ module Control.Monad.Trans.Error
   ) where
 
 import           Control.Monad.Raise
+import           Control.Monad.Rescue.Constraint
 import           Control.Monad.Trans.Error.Class
 
 import           Data.WorldPeace

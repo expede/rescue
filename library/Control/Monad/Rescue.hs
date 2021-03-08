@@ -44,17 +44,19 @@ module Control.Monad.Rescue
 
   , module Control.Monad.Raise
   , module Control.Monad.Rescue.Class
+  , module Control.Monad.Rescue.Constraint
   ) where
 
-import           Data.Exception.Types
 import           Numeric.Natural
 
-import           Control.Monad.Base
-import           Data.Bifunctor             as Bifunctor
+import           Data.Bifunctor                  as Bifunctor
+import           Data.Exception.Types
 import           Data.WorldPeace
 
+import           Control.Monad.Base
 import           Control.Monad.Raise
 import           Control.Monad.Rescue.Class
+import           Control.Monad.Rescue.Constraint
 import           Control.Monad.Trans.Error
 
 -- $setup
