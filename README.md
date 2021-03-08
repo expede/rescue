@@ -52,7 +52,7 @@ in the current context.
 2. `MonadRescue` -- roughly `MonadCatch`
 3. `MonadCleanup` -- roughly `MonadBracket`
 
-`Monad m => MonadRaise m => MonadRescueFrom n m => MonadRescue m => MonadCleanup m`
+`Monad m => MonadRaise m => MonadRescue m => MonadRescue m => MonadCleanup m`
 
 ## Errors / Asynchronous Exceptions
 
