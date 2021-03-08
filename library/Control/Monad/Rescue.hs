@@ -139,18 +139,19 @@ rescueBase handler action =
     Right value -> return value
 
 rescueM
-  :: ( MonadBase (m (OpenUnion errs)) (m (OpenUnion (Remove err errs)))
+  :: ( MonadBase   (m (OpenUnion wide)) (m (OpenUnion (Remove err wide)))
+     , MonadRescue (m (OpenUnion wide))
+     , MonadRaise  (m (OpenUnion narrow))
      --
-     , MonadRescue (m (OpenUnion errs))
-     , MonadRaise  (m (OpenUnion (Remove err errs)))
-     --
-     ,  errs ~ Errors (m (OpenUnion errs))
-     , ElemRemove err errs
-     , Contains (Remove err errs) (Errors (m (OpenUnion (Remove err errs))))
+     , wide   ~ Errors (m (OpenUnion wide))
+     , narrow ~ Errors (m (OpenUnion narrow))
+     , narrow ~ Remove err wide
+     , CheckErrors (m (OpenUnion narrow))
+     , ElemRemove err wide
      )
-  => (err -> m (OpenUnion (Remove err errs)) a)
-  -> m (OpenUnion             errs)  a
-  -> m (OpenUnion (Remove err errs)) a
+  => (err -> m (OpenUnion narrow) a)
+  -> m (OpenUnion wide)   a
+  -> m (OpenUnion narrow) a
 rescueM handler action =
   liftBase (attempt action) >>= \case
     Right val ->
