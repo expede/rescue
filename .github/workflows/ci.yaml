@@ -12,19 +12,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        stack: ["2.5.1"]
+        stack:
+          - "2.5.1"
         ghc:
-          - "8.8"
-          - "8.10"
+          - "8.10.4"
         os:
+          - macos-10.15
           - ubuntu-16.04
           - ubuntu-18.04
           - ubuntu-20.04
-        include:
-          - os: macos-10.15
-            ghc: "8.8"
-          - os: macos-10.15
-            ghc: "8.10.3" # Action cannot execute GHC 8.10.4 yet
+          - windows-2019
 
     steps:
     - uses: actions/checkout@v2
