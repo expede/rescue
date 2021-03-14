@@ -3,10 +3,6 @@ resolver: lts-17.5
 packages:
 - .
 
-extra-deps:
-- alex-3.2.6
-- happy-1.20.0
-
 nix:
   enable:     false
   pure:       true
