@@ -20,6 +20,9 @@ jobs:
           - macos-10.15
           - ubuntu-18.04
           - ubuntu-20.04
+        exclude:
+          - os: macos-10.15
+            ghc: "8.8" # Install GHC fails for some reason
 
     steps:
     - uses: actions/checkout@v2
