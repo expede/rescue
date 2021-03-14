@@ -12,11 +12,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        stack: ["2.5.1"]
+        stack:
+          - "2.5.1"
         ghc:
-          - "8.8"
-          - "8.10"
+          - "8.10.4"
         os:
+          # - macos-10.15 -- Giving up for now, S3 certificate issue
+          - ubuntu-18.04
           - ubuntu-20.04
 
     steps:
