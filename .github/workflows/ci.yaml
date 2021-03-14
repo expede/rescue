@@ -17,12 +17,14 @@ jobs:
           - "8.8"
           - "8.10"
         os:
-          - macos-10.15
+          - ubuntu-16.04
           - ubuntu-18.04
           - ubuntu-20.04
-        exclude:
+        include:
           - os: macos-10.15
-            ghc: "8.8" # Install GHC fails for some reason
+            ghc: "8.8"
+          - os: macos-10.15
+            ghc: "8.10.3" # Action cannot execute GHC 8.10.4 yet
 
     steps:
     - uses: actions/checkout@v2
