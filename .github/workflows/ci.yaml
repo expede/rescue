@@ -19,14 +19,11 @@ jobs:
           - "8.10.4"
         os:
           - macos-10.15
-          - macos-11.0
           - ubuntu-18.04
           - ubuntu-20.04
         exclude:
-          - os: macos-11.0
-            ghc: "8.8"
-          - os: macos-11.0
-            ghc: "8.10.3"
+          - os: macos-10.15
+            ghc: "8.10.4"
 
     steps:
     - uses: actions/checkout@v2
