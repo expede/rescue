@@ -22,7 +22,7 @@ jobs:
           - macos-10.11
           - ubuntu-18.04
           - ubuntu-20.04
-       exclude:
+        exclude:
           - os: macos-10.11
             ghc:
               - "8.8"
