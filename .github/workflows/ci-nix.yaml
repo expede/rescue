@@ -17,7 +17,7 @@ jobs:
         ghc:
           - "8.10.4"
         os:
-          - macos-10.15
+          # - macos-10.15 "The TLS certificate issue rears its head"
           - ubuntu-18.04
           - ubuntu-20.04
 
