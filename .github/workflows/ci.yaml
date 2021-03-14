@@ -40,7 +40,7 @@ jobs:
 
     - name: 📦 Install dependencies
       run: |
-        stack build -system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+        stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
 
     - name: 🏗️  Build
       run: |
