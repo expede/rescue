@@ -9,9 +9,10 @@ on:
 jobs:
   stack:
     name: ${{ matrix.os }} / GHC ${{ matrix.ghc }} / Stack ${{ matrix.stack }}
+    runs_on: ${{ matrix.os }}
     strategy:
       matrix:
-        runs-on:
+        os:
           - ubuntu-20.04
           - ubuntu-18.04
           - macos-11.0
