@@ -20,6 +20,7 @@ let
     haskell = [
       unstable.ghcid
       unstable.ghc
+      unstable.hlint
       unstable.stack
       unstable.stylish-haskell
       unstable.haskellPackages.hie-bios

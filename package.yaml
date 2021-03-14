@@ -9,7 +9,10 @@ copyright: © 2021 Brooklyn Zelenka
 license: Apache-2.0
 license-file: LICENSE
 github: expede/rescue
-tested-with: GHC==8.10.4
+tested-with:
+  - GHC==8.8.3
+  - GHC==8.10.3
+  - GHC==8.10.4
 extra-source-files:
   - README.md
 
