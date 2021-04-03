@@ -4,8 +4,8 @@ module Control.Monad.Trans.Error
   , module Control.Monad.Trans.Error.Class
   ) where
 
+import           Control.Monad.Attempt.Constraint
 import           Control.Monad.Raise
-import           Control.Monad.Rescue.Constraint
 import           Control.Monad.Trans.Error.Class
 
 import           Data.WorldPeace

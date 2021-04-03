@@ -1,6 +1,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 
-module Control.Monad.Rescue.Constraint (CheckErrors) where
+module Control.Monad.Attempt.Constraint (CheckErrors) where
 
 import           Control.Monad.Raise.Class
 import           Data.WorldPeace

@@ -5,14 +5,14 @@
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- | Rescue semantics & helpers
+-- | Attempt semantics & helpers
 --
 -- Essentially a type-directed version of 'Control.Monad.Catch'.
 --
 -- This is the opposite of 'Control.Monad.Raise', which embeds en error.
--- 'Rescue' takes a potential error out of the surrounding context
+-- 'Attempt' takes a potential error out of the surrounding context
 -- and either handles or exposes it.
-module Control.Monad.Rescue
+module Control.Monad.Attempt
   ( attemptM
 
   -- * Recover from exceptions
@@ -43,20 +43,20 @@ module Control.Monad.Rescue
   -- * Reexports
 
   , module Control.Monad.Raise
-  , module Control.Monad.Rescue.Class
-  , module Control.Monad.Rescue.Constraint
+  , module Control.Monad.Attempt.Class
+  , module Control.Monad.Attempt.Constraint
   ) where
 
 import           Numeric.Natural
 
-import           Data.Bifunctor                  as Bifunctor
+import           Data.Bifunctor                   as Bifunctor
 import           Data.Exception.Types
 import           Data.WorldPeace
 
+import           Control.Monad.Attempt.Class
+import           Control.Monad.Attempt.Constraint
 import           Control.Monad.Base
 import           Control.Monad.Raise
-import           Control.Monad.Rescue.Class
-import           Control.Monad.Rescue.Constraint
 import           Control.Monad.Trans.Error
 
 -- $setup
@@ -66,7 +66,7 @@ import           Control.Monad.Trans.Error
 -- >>> :set -XTypeApplications
 -- >>> :set -XLambdaCase
 --
--- >>> import Control.Monad.Trans.Rescue
+-- >>> import Control.Monad.Trans.Attempt
 -- >>> import Data.Proxy
 -- >>> import Data.WorldPeace as OpenUnion
 --
@@ -79,7 +79,7 @@ import           Control.Monad.Trans.Error
 -- >>> type MyErrs = '[FooErr, BarErr]
 --
 -- >>> :{
--- boom :: Rescue MyErrs String
+-- boom :: Attempt MyErrs String
 -- boom = raise FooErr
 -- :}
 --
@@ -88,15 +88,15 @@ import           Control.Monad.Trans.Error
 --   Left  err -> return ("err: " ++ show err)
 --   Right val -> return val
 -- :}
--- RescueT (Identity (Right "err: Identity FooErr"))
+-- AttemptT (Identity (Right "err: Identity FooErr"))
 --
 -- >>> :{
 -- attemptM boom $ \case
 --   Left  err -> return ("err: " ++ show err)
 --   Right val -> return val
 -- :}
--- RescueT (Identity (Right "err: Identity FooErr"))
-attemptM :: MonadRescue m => m a -> (Either (ErrorCase m) a -> m b) -> m b
+-- AttemptT (Identity (Right "err: Identity FooErr"))
+attemptM :: MonadAttempt m => m a -> (Either (ErrorCase m) a -> m b) -> m b
 attemptM action handler = attempt action >>= handler
 
 rescue
@@ -123,7 +123,7 @@ rescueT handler = onRaise (openUnionHandle raise handler)
 
 -- | The more generic (MonadBase-ified) version of handle
 rescueBase
-  :: ( MonadRescue wide
+  :: ( MonadAttempt wide
      , MonadBase   wide narrow
      , MonadRaise       narrow
      , CheckErrors      narrow
@@ -140,7 +140,7 @@ rescueBase handler action =
 
 rescueM
   :: ( MonadBase   (m (OpenUnion wide)) (m (OpenUnion (Remove err wide)))
-     , MonadRescue (m (OpenUnion wide))
+     , MonadAttempt (m (OpenUnion wide))
      , MonadRaise  (m (OpenUnion narrow))
      --
      , wide   ~ Errors (m (OpenUnion wide))
@@ -173,7 +173,7 @@ rescueEach handleCases = Bifunctor.first (catchesOpenUnion handleCases)
 
 rescueEachM
   :: ( sourceErrs ~ Errors (m (OpenUnion sourceErrs))
-     , MonadRescue         (m (OpenUnion sourceErrs))
+     , MonadAttempt         (m (OpenUnion sourceErrs))
      , MonadBase           (m (OpenUnion sourceErrs)) (m (OpenUnion targetErrs))
      , ToOpenProduct handlerTuple            (ReturnX (m (OpenUnion targetErrs) a) sourceErrs)
      )
@@ -196,7 +196,7 @@ rescueEachT
 rescueEachT handleCases = onRaise (catchesOpenUnion handleCases)
 
 rescueAll
-  :: ( MonadRescue   (m (OpenUnion errs))
+  :: ( MonadAttempt   (m (OpenUnion errs))
      , MonadBase     (m (OpenUnion errs)) (m ())
      , errs ~ Errors (m (OpenUnion errs))
      )
@@ -209,7 +209,7 @@ rescueAll handler action =
     Right val -> return val
 
 report
-  :: ( MonadRescue m
+  :: ( MonadAttempt m
      , RaisesOnly  m errs
      , CheckErrors m
      )
@@ -228,7 +228,7 @@ report withErr action =
 -- | 'retry' without asynchoronous exception cleanup.
 --   Useful when not dealing with external resources that may
 --   be dangerous to close suddenly.
-reattempt :: MonadRescue m => Natural -> m a -> m a
+reattempt :: MonadAttempt m => Natural -> m a -> m a
 reattempt 0     action = action
 reattempt times action =
   attempt action >>= \case
@@ -237,7 +237,7 @@ reattempt times action =
 
 -- | Run an additional step, and throw away the result.
 --   Return the result of the action passed.
-lastly :: (CheckErrors m, MonadRescue m) => m a -> m b -> m a
+lastly :: (CheckErrors m, MonadAttempt m) => m a -> m b -> m a
 lastly action finalizer = do
   errOrOk <- attempt action
   _       <- finalizer
@@ -245,7 +245,7 @@ lastly action finalizer = do
 
 -- AKA reinterpret
 mapError
-  :: ( MonadRescue m
+  :: ( MonadAttempt m
      , MonadBase   m n
      , MonadRaise    n
      , CheckErrors   n
@@ -259,7 +259,7 @@ mapError mapper action =
     Right value    -> return value
 
 replaceError
-  :: ( MonadRescue m
+  :: ( MonadAttempt m
      , MonadBase   m n
      , MonadRaise    n
      , n `Raises` err
@@ -274,7 +274,7 @@ replaceError err action =
 
 asNotFound
   :: forall n m a .
-    ( MonadRescue m
+    ( MonadAttempt m
     , MonadBase   m n
     , MonadRaise    n
     , n `Raises` NotFound a

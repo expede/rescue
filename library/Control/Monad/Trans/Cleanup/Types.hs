@@ -121,12 +121,12 @@ instance MonadBase m m => MonadBase m (CleanupT m) where
   liftBase = liftBaseDefault
 
 instance
-  ( MonadRescue m
+  ( MonadAttempt m
   , MonadCatch  m
   , CheckErrors m
   , Errors m `Contains` (SomeException ': Errors m)
   )
-  => MonadRescue (CleanupT m) where
+  => MonadAttempt (CleanupT m) where
     attempt (CleanupT action) =
       CleanupT $
         inner >>= \case
@@ -140,7 +140,7 @@ instance
             Right val                 -> Right <$> attempt (pure val)
 
 instance
-  ( MonadRescue m
+  ( MonadAttempt m
   , MonadMask   m
   , CheckErrors m
   , Contains (Errors m) (SomeException ': Errors m)

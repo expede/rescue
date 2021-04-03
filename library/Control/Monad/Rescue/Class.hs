@@ -1,170 +1,95 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE DataKinds               #-}
+{-# LANGUAGE FlexibleContexts        #-}
+{-# LANGUAGE FlexibleInstances       #-}
+{-# LANGUAGE InstanceSigs            #-}
+{-# LANGUAGE LambdaCase              #-}
+{-# LANGUAGE MultiParamTypeClasses   #-}
+{-# LANGUAGE ScopedTypeVariables     #-}
+{-# LANGUAGE TypeFamilies            #-}
+{-# LANGUAGE TypeOperators           #-}
+{-# LANGUAGE UndecidableInstances    #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
 
--- | The 'MonadRescue' class, meant for retrieving the success/failure branches
+module Control.Monad.Rescue.Class where
 
-module Control.Monad.Rescue.Class (MonadRescue (..)) where
+import           Control.Monad.Attempt.Class
+import           Control.Monad.Raise.Class
 
+import           Data.Kind
+import           Data.Proxy
 import           Data.WorldPeace
 
-import           Control.Exception
+-- FIXME swap where the instance lives
+import           Control.Monad.Trans.Rescue.Types
 
-import qualified Control.Monad.Catch          as Catch
-import           Control.Monad.Cont
+class MonadAttempt (m (OpenUnion errs)) => MonadRescue m errs where
+  rescue ::
+    ( errs ~ Remove err outerErrs
+    , ElemRemove err outerErrs
+    )
+    => (err -> m (OpenUnion errs) a)
+    -> m (OpenUnion outerErrs) a
+    -> m (OpenUnion errs) a
 
-import           Control.Monad.Raise
+instance Contains errs errs => MonadRescue Either errs where
+  rescue handler = \case
+    Right val      -> return val
+    Left outerErrs -> openUnionHandle raise handler outerErrs
 
-import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.Identity
-import           Control.Monad.Trans.Maybe
-import           Control.Monad.Trans.Reader
-
-import qualified Control.Monad.RWS.Lazy       as Lazy
-import qualified Control.Monad.RWS.Strict     as Strict
-
-import qualified Control.Monad.State.Lazy     as Lazy
-import qualified Control.Monad.State.Strict   as Strict
-
-import qualified Control.Monad.Writer.Lazy    as Lazy
-import qualified Control.Monad.Writer.Strict  as Strict
-
--- $setup
---
--- >>> :set -XDataKinds
--- >>> :set -XFlexibleContexts
--- >>> :set -XTypeApplications
--- >>> :set -XLambdaCase
---
--- >>> import Control.Monad.Trans.Rescue
--- >>> import Data.Functor.Identity
--- >>> import Data.Proxy
--- >>> import Data.WorldPeace as OpenUnion
---
--- >>> data FooErr  = FooErr  deriving Show
--- >>> data BarErr  = BarErr  deriving Show
--- >>> data QuuxErr = QuuxErr deriving Show
-
--- | Pull a potential error out of the surrounding context
--- NOTE that the target `m` may not even be aware of Raise/Rescue. It's an escape to the "normal" world
-class MonadRaise m => MonadRescue m where
-  -- | Attempt some action, exposing the success and error branches
-  --
-  --  ==== __Examples__
-  --
-  --  >>> :{
-  --    goesBoom :: Int -> Rescue '[FooErr, BarErr] Int
-  --    goesBoom x =
-  --      if x > 50
-  --        then return x
-  --        else raise FooErr
-  -- :}
-  --
-  -- >>> runRescue . attempt $ goesBoom 42
-  -- Right (Left (Identity FooErr))
-  --
-  -- Where @Identity fooErr@ is the selection of the 'OpenUnion'.
-  -- In practice you would handle the 'OpenUnion' like so:
-  --
-  -- >>> let handleErr = catchesOpenUnion (show, show)
-  -- >>> let x = attempt (goesBoom 42) >>= pure . either handleErr show
-  -- >>> runRescue x
-  -- Right "FooErr"
-  --
-  -- Where @Identity FooErr@ is the selection of the 'OpenUnion'.
-  attempt :: m a -> m (Either (ErrorCase m) a)
-
-instance MonadRescue Maybe where
-  attempt Nothing  = Just . Left $ openUnionLift ()
-  attempt (Just x) = Just $ Right x
-
-instance MonadRescue [] where
-  attempt [] = [Left $ include ()]
-  attempt xs = Right <$> xs
-
-instance MonadRescue (Either (OpenUnion errs)) where
-  attempt action = Right action
-
-instance MonadRescue IO where
-  attempt action =
-    Catch.try action >>= \case
-      Left (err :: IOException) -> return . Left $ include err
-      Right val                 -> return $ Right val
+newtype FlippedRescueT m errs a = FlippedRescueT { runFlipped :: RescueT errs m a }
 
 instance
-  ( MonadRescue m
-  , () `IsMember` Errors m
-  , Errors m `Contains` Errors m
+  ( Monad m
+  , MonadAttempt (FlippedRescueT m (OpenUnion errs))
   )
-  => MonadRescue (MaybeT m) where
-  attempt (MaybeT action) =
-    MaybeT $
-      attempt action >>= \case
-        Left errs        -> return . Just . Left $ include errs
-        Right Nothing    -> return . Just . Left $ include ()
-        Right (Just val) -> return . Just $ Right val
+  => MonadRescue (FlippedRescueT m) errs where
+    rescue handler (FlippedRescueT (RescueT action)) =
+      FlippedRescueT $ RescueT $
+        action >>= \case
+          Left outerErrs -> openUnionHandle (return . Left) (runRescueT . runFlipped . handler) outerErrs
+          Right val      -> return $ Right val
 
-instance MonadRescue m => MonadRescue (IdentityT m) where
-  attempt (IdentityT action) = IdentityT $ attempt action
+-- instance (Monad m, Contains errs errs) => MonadRescue (FlippedRescueT m) errs where
+--   rescue handler (FlippedRescueT (RescueT action)) =
+--     FlippedRescueT . RescueT $
+--       action >>= \case
+--         Right val      -> return $ Right val
+--         Left outerErrs -> openUnionHandle (return . Left) (runRescueT . runFlipped . handler) outerErrs
 
-instance
-  ( MonadRescue m
-  , Contains (Errors m) errs
-  )
-  => MonadRescue (ExceptT (OpenUnion errs) m) where
-  attempt (ExceptT action) =
-    lift $
-      attempt action >>= \case
-        Left err       -> return . Left $ include err
-        Right errOrVal -> return errOrVal
-
-instance MonadRescue m => MonadRescue (ReaderT cfg m) where
-  attempt = mapReaderT attempt
-
-instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.WriterT w m) where
-  attempt = Lazy.mapWriterT runner2
-
-instance (Monoid w, MonadRescue m) => MonadRescue (Strict.WriterT w m) where
-  attempt = Strict.mapWriterT runner2
-
-instance MonadRescue m => MonadRescue (Lazy.StateT s m) where
-  attempt = Lazy.mapStateT runner2
-
-instance MonadRescue m => MonadRescue (Strict.StateT s m) where
-  attempt = Strict.mapStateT runner2
-
-instance (Monoid w, MonadRescue m) => MonadRescue (Lazy.RWST r w s m) where
-  attempt = Lazy.mapRWST runner3
-
-instance (Monoid w, MonadRescue m) => MonadRescue (Strict.RWST r w s m) where
-  attempt = Strict.mapRWST runner3
-
-instance MonadRescue m => MonadRescue (ContT r m) where
-  attempt = withContT $ \b_mr current -> b_mr =<< attempt (pure current)
-
-runner2
-  :: ( MonadRescue m
-     , RaisesOnly  m errs
-     )
-  => m (a, w)
-  -> m (Either (OpenUnion errs) a, w)
-runner2 inner = do
-  (a, w)   <- inner
-  errOrVal <- attempt (pure a)
-  return (errOrVal, w)
-
-runner3
-  :: ( MonadRescue m
-     , RaisesOnly  m errs
-     )
-  => m (a, b, c)
-  -> m (Either (OpenUnion errs) a, b, c)
-runner3 inner = do
-  (a, s, w) <- inner
-  errOrVal  <- attempt (pure a)
-  return (errOrVal, s, w)
+-- class MonadAttempt m => MonadRescue m where
+--   type Exposed m :: Type -> Type -> Type
+--
+--   toExposed   :: Contains (Errors m) errs => Proxy errs -> m a -> Exposed m (OpenUnion errs) a
+--
+--   rescue ::
+--     ( Errors m ~ Remove err outerErrs
+--     , ElemRemove err outerErrs
+--     )
+--     => (err -> m a)
+--     -> Exposed m (OpenUnion outerErrs) a
+--     -> m a
+--
+-- instance Contains errs errs => MonadRescue (Either (OpenUnion errs)) where
+--   type Exposed (Either (OpenUnion errs)) = Either
+--
+--   toExposed _ = \case
+--     Right val -> Right val
+--     Left err  -> raise err
+--
+--   rescue handler = \case
+--     Right val      -> return val
+--     Left outerErrs -> openUnionHandle raise handler outerErrs
+--
+-- newtype FlippedRescueT m errs a = FlippedRescueT (RescueT errs m a)
+--
+-- instance (Monad m, Contains errs errs) => MonadRescue (RescueT (OpenUnion errs) m) where
+--   type Exposed (RescueT (OpenUnion errs) m) = FlippedRescueT m
+--
+--   toExposed :: Proxy outerErrs -> RescueT (OpenUnion outerErrs) m a -> FlippedRescueT m (OpenUnion outerErrs) a
+--   toExposed _ action = FlippedRescueT action
+--
+--   rescue handler (FlippedRescueT (RescueT action)) =
+--     RescueT $
+--       action >>= \case
+--         Right val      -> return $ Right val
+--         Left outerErrs -> openUnionHandle (return . Left) (runRescueT . handler) outerErrs

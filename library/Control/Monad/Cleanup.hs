@@ -4,12 +4,12 @@ module Control.Monad.Cleanup
   ( retry
   , always
   -- * Reexport
-  , module Control.Monad.Rescue
+  , module Control.Monad.Attempt
   , module Control.Monad.Cleanup.Class
   ) where
 
+import           Control.Monad.Attempt
 import           Control.Monad.Cleanup.Class
-import           Control.Monad.Rescue
 
 import           Numeric.Natural
 

@@ -5,10 +5,10 @@
 module Control.Monad.Cleanup.Class (MonadCleanup (..)) where
 
 import           Control.Exception
-import           Control.Monad.Rescue
+import           Control.Monad.Attempt
 
 -- | Safely work with resources when an asynchronous exception may be thrown
-class (m `Raises` SomeException, MonadRescue m) => MonadCleanup m where
+class (m `Raises` SomeException, MonadAttempt m) => MonadCleanup m where
   cleanup
     :: m resource                          -- ^ Acquire some resource
     -> (resource -> ErrorCase m -> m _ig1) -- ^ Cleanup and re-raise
