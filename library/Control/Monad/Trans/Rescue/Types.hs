@@ -13,6 +13,8 @@ module Control.Monad.Trans.Rescue.Types
   ( RescueT (..)
   , Rescue
   , runRescue
+  , fromExceptT
+  , toExceptT
   ) where
 
 import           Control.Monad.Attempt
@@ -27,42 +29,40 @@ import           Data.Functor.Identity
 import           Data.Kind
 import           Data.WorldPeace
 
+import           Control.Monad.Rescue.Class
+
+import           Control.Monad.Trans.Except
+
 -- | Add type-directed error handling abilities to a 'Monad'
 newtype RescueT errs m a
-  = RescueT { runRescueT :: m (Either errs a) }
+  = RescueT { runRescueT :: m (Either (OpenUnion errs) a) }
+
+type FooT errs m a = ExceptT (OpenUnion errs) m a
 
 -- | A specialized version of 'RescueT' to be used without a transfromer stack
-type Rescue errs = RescueT (OpenUnion errs) Identity
-
-resc ::
-  ( innerErrs ~ Remove err outerErrs
-  , ElemRemove err outerErrs
-  , Monad m
-  )
-  => (err -> RescueT (OpenUnion innerErrs) m a)
-  -> RescueT (OpenUnion outerErrs) m a
-  -> RescueT (OpenUnion innerErrs) m a
-resc handler (RescueT action) =
-  RescueT $
-    action >>= \case
-      Left err  -> openUnionHandle (return . Left) (runRescueT . handler) err
-      Right val -> return $ Right val
+type Rescue errs = RescueT errs Identity
 
 runRescue :: Rescue errs a -> Either (OpenUnion errs) a
 runRescue = runIdentity . runRescueT
+
+fromExceptT :: ExceptT (OpenUnion errs) m a -> RescueT errs m a
+fromExceptT (ExceptT action) = RescueT action
+
+toExceptT :: RescueT errs m a -> ExceptT (OpenUnion errs) m a
+toExceptT (RescueT action) = ExceptT action
 
 mapRescueT
   :: (  n (Either (OpenUnion errs)  a)
      -> m (Either (OpenUnion errs') b)
      )
-  -> RescueT (OpenUnion errs)  n a
-  -> RescueT (OpenUnion errs') m b
+  -> RescueT errs  n a -- FIXME m a ?
+  -> RescueT errs' m b
 mapRescueT f (RescueT n) = RescueT $ f n
 
-instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT (OpenUnion errs) m a) where
+instance Eq (m (Either (OpenUnion errs) a)) => Eq (RescueT errs m a) where
   RescueT a == RescueT b = a == b
 
-instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT (OpenUnion errs) m a) where
+instance Show (m (Either (OpenUnion errs) a)) => Show (RescueT errs m a) where
   show (RescueT inner) = "RescueT (" <> show inner <> ")"
 
 instance Functor m => Functor (RescueT errs m) where
@@ -108,16 +108,23 @@ instance (Monad m, Traversable m) => Traversable (RescueT errs m) where
       traverseEither g (Right val) = Right <$> g val
       traverseEither _ (Left  err) = pure (Left err)
 
-instance Monad m => MonadRaise (RescueT (OpenUnion errs) m) where
-  type Errors (RescueT (OpenUnion errs) m) = errs
+instance Monad m => MonadRaise (RescueT errs m) where
+  type Errors (RescueT errs m) = errs
   raise err = RescueT . pure $ raise err
 
-instance Monad m => MonadAttempt (RescueT (OpenUnion errs) m) where
+instance Monad m => MonadAttempt (RescueT errs m) where
   attempt (RescueT inner) =
     RescueT $
       inner >>= \case
         Left err  -> return . Right $ Left err
         Right val -> return . Right $ Right val
+
+instance Monad m => MonadRescue RescueT m where
+ rescue handler (RescueT action) =
+   RescueT $
+     action >>= \case
+       Left outerErrs -> openUnionHandle (return . Left) (runRescueT . handler) outerErrs
+       Right val      -> return $ Right val
 
 instance MonadThrow m => MonadThrow (RescueT errs m) where
   throwM = lift . throwM
@@ -125,7 +132,7 @@ instance MonadThrow m => MonadThrow (RescueT errs m) where
 instance MonadCatch m => MonadCatch (RescueT errs m) where
   catch (RescueT m) f = RescueT $ catch m (runRescueT . f)
 
-instance MonadReader cfg m => MonadReader cfg (RescueT (OpenUnion errs) m) where
+instance MonadReader cfg m => MonadReader cfg (RescueT errs m) where
   ask    = lift ask
   local  = mapRescueT . local
   reader = lift . reader
