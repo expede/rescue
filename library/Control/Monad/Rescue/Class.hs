@@ -22,32 +22,54 @@ import           Data.WorldPeace
 -- FIXME swap where the instance lives
 import           Control.Monad.Trans.Rescue.Types
 
-class MonadAttempt (m (OpenUnion errs)) => MonadRescue m errs where
+import           Control.Monad.Trans.Class
+
+import           Control.Monad.Trans.Except
+import           Data.Functor.Identity
+
+-- class MonadRescue m where
+--   rescue ::
+--     ( errs ~ Remove err outerErrs
+--     , ElemRemove err outerErrs
+--     , Contains (Errors (m errs)) (Errors (m errs))
+--     )
+--     => (err -> m (OpenUnion errs) a)
+--     -> m (OpenUnion outerErrs) a
+--     -> m (OpenUnion errs) a
+
+class MonadRescue t (m :: Type -> Type) where
   rescue ::
-    ( errs ~ Remove err outerErrs
+    ( innerErrs ~ Remove err outerErrs
     , ElemRemove err outerErrs
     )
-    => (err -> m (OpenUnion errs) a)
-    -> m (OpenUnion outerErrs) a
-    -> m (OpenUnion errs) a
+    => (err -> t (OpenUnion innerErrs) m a)
+    -> t (OpenUnion outerErrs) m a
+    -> t (OpenUnion innerErrs) m a
 
-instance Contains errs errs => MonadRescue Either errs where
-  rescue handler = \case
-    Right val      -> return val
-    Left outerErrs -> openUnionHandle raise handler outerErrs
-
-newtype FlippedRescueT m errs a = FlippedRescueT { runFlipped :: RescueT errs m a }
+-- instance Contains errs errs => MonadRescue Either errs Identity where
+--   rescue handler = \case
+--     Right val      -> return val
+--     Left outerErrs -> openUnionHandle raise handler outerErrs
 
 instance
-  ( Monad m
-  , MonadAttempt (FlippedRescueT m (OpenUnion errs))
-  )
-  => MonadRescue (FlippedRescueT m) errs where
-    rescue handler (FlippedRescueT (RescueT action)) =
-      FlippedRescueT $ RescueT $
-        action >>= \case
-          Left outerErrs -> openUnionHandle (return . Left) (runRescueT . runFlipped . handler) outerErrs
-          Right val      -> return $ Right val
+ ( Monad m
+ )
+ => MonadRescue ExceptT m where
+   rescue handler (ExceptT action) =
+     ExceptT $
+       action >>= \case
+         Left outerErrs -> openUnionHandle (return . Left) (runExceptT . handler) outerErrs
+         Right val      -> return $ Right val
+
+instance
+ ( Monad m
+ )
+ => MonadRescue RescueT m where
+   rescue handler (RescueT action) =
+     RescueT $
+       action >>= \case
+         Left outerErrs -> openUnionHandle (return . Left) (runRescueT . handler) outerErrs
+         Right val      -> return $ Right val
 
 -- instance (Monad m, Contains errs errs) => MonadRescue (FlippedRescueT m) errs where
 --   rescue handler (FlippedRescueT (RescueT action)) =

@@ -6,6 +6,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
+{-# LANGUAGE FlexibleContexts      #-}
+
 -- | The 'RescueT' transformer
 module Control.Monad.Trans.Rescue.Types
   ( RescueT (..)
@@ -31,6 +33,20 @@ newtype RescueT errs m a
 
 -- | A specialized version of 'RescueT' to be used without a transfromer stack
 type Rescue errs = RescueT (OpenUnion errs) Identity
+
+resc ::
+  ( innerErrs ~ Remove err outerErrs
+  , ElemRemove err outerErrs
+  , Monad m
+  )
+  => (err -> RescueT (OpenUnion innerErrs) m a)
+  -> RescueT (OpenUnion outerErrs) m a
+  -> RescueT (OpenUnion innerErrs) m a
+resc handler (RescueT action) =
+  RescueT $
+    action >>= \case
+      Left err  -> openUnionHandle (return . Left) (runRescueT . handler) err
+      Right val -> return $ Right val
 
 runRescue :: Rescue errs a -> Either (OpenUnion errs) a
 runRescue = runIdentity . runRescueT
@@ -66,13 +82,6 @@ instance Monad m => Monad (RescueT errs m) where
 
 instance MonadTrans (RescueT errs) where
   lift action = RescueT (Right <$> action)
-
--- instance Monad m => MonadTransError RescueT (OpenUnion errs m where
---   onRaise f (RescueT inner) =
---     RescueT $
---       inner >>= \case
---         Left  err -> runRescueT $ f err
---         Right val -> return $ Right val
 
 instance MonadBase b m => MonadBase b (RescueT errs m) where
   liftBase = liftBaseDefault
