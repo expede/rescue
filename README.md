@@ -13,7 +13,7 @@ other ecosystems.
 
 A core goal of `rescue` is to give the programmer clarity about which execptions
 are possible at any given point in the code. We achieve this by using (open) variants
-for composition rather than inheritance. We hide the detail as much as posisble,
+for composition rather than inheritance. We hide the detail as much as possible,
 and attempt to make this work in a flexible, constraint-driven style as much 
 as possible.
 
