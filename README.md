@@ -8,12 +8,12 @@
 
 The standard library approach to error handling is to use an existential type to
 _subclass_ any error as `SomeException`. This is very convenient 
-(requires nealy zero set up), and matches what  developers expect coming from 
+(requires nearly zero set up), and matches what developers expect coming from 
 other ecosystems.
 
 A core goal of `rescue` is to give the programmer clarity about which execptions
 are possible at any given point in the code. We achieve this by using (open) variants
-for compositon rather than inheritance. We hide the detail as much as posisble,
+for composition rather than inheritance. We hide the detail as much as possible,
 and attempt to make this work in a flexible, constraint-driven style as much 
 as possible.
 
@@ -41,8 +41,8 @@ Our goals are to have:
 # Approach
 
 The closest approach is `MonadError`, except that our implementation uses 
-type-level lists for flexiblity,  and hides the exception parameter from the 
-class constraint as a type family.  `rescue` also splits `raise` and `attempt` 
+type-level lists for flexiblity, and hides the exception parameter from the 
+class constraint as a type family. `rescue` also splits `raise` and `attempt` 
 into separate classes to help us more granularly express the effects available 
 in the current context. 
 
@@ -59,8 +59,8 @@ in the current context.
 An asynchronous error (e.g. coming from another thread)
 comes with a lot more uncertainty. We may not be aware of the type of error
 being thrown to us, or when it's thrown (since the runtime will interrupt).
-The purpose of this scenraio is typically to cleanup some resource 
-and immeditely rethrow.
+The purpose of this scenario is typically to cleanup some resource 
+and immediately rethrow.
 
 While a more structured, type-driven style would be appreciated here, this is
 fundamentally how the runtime works. As such, we do need to contend 
@@ -83,7 +83,7 @@ The basic flow for an async execption is then:
 3. Run the normal cleanup
 4. Rethrow the original asynchronous error
 
-This means that any instacne of MonadAsyncCleanup needs a MonadCleanup and `Raises m SomeAsyncException`
+This means that any instance of MonadAsyncCleanup needs a MonadCleanup and `Raises m SomeAsyncException`
 
 # FAQ
 
@@ -105,7 +105,7 @@ fromThrow :: (MonadCatch m, MonadRaise n) => m a -> n a
 In fact, with async exceptions, you may need to handle an error interrupting
 your execution _even if you don't have a `MonadThrow`_ in your context.
 
-By treating exceptions as something visible and tarckable (though hidden
+By treating exceptions as something visible and trackable (though hidden
 when you don't need it), we gain a lot of ability to reason about our program,
 and avoid writing lots of nested `Either`s.
 
@@ -119,7 +119,7 @@ This separation of the `SomeException` and `OpenUnion` can help determine the
 intention of the exception. `SomeException` (and `SomeAsyncException`) are really
 more like errors -- things that should fail and not be recovered from. In a world
 with async exceptions, the cleanest way to respond to an error is to stop
-our execution, cleanup any resources, and propogate the error.
+our execution, cleanup any resources, and propagate the error.
 
 ## Are there other packages attempting to solve this problem?
 
@@ -144,5 +144,5 @@ They distinguish between three kinds of exceptions:
 >   All asynchronous exceptions should not be recoverable
 >   In both cases, cleanup code needs to work reliably
 
-Rescue is primarily focused on deligering a great experince when dealing with 
-synchronous excpetions, though touches on async ones as well. 
+Rescue is primarily focused on delivering a great experince when dealing with 
+synchronous exceptions, though touches on async ones as well. 
