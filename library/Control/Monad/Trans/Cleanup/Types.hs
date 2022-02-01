@@ -124,7 +124,7 @@ instance
   ( MonadAttempt m
   , MonadCatch  m
   , CheckErrors m
-  , Errors m `Contains` (SomeException ': Errors m)
+  , Contains (Errors m) (SomeException ': Errors m)
   )
   => MonadAttempt (CleanupT m) where
     attempt (CleanupT action) =
